@@ -1,7 +1,7 @@
-from logging import basicConfig, log, DEBUG
+from logging import basicConfig as logg_basicConfig, log as logg_log, DEBUG as logg_DEBUG
 from inspect import currentframe as i_currentframe, getouterframes as i_getouterframes
 
-basicConfig(format = "[%(levelname)s]: %(message)s", level = DEBUG, encoding = "utf-8")
+logg_basicConfig(format = "[%(levelname)s]: %(message)s", level = logg_DEBUG, encoding = "utf-8")
 
 DEFAULT_ENABLED = 1
 ALL_USES_DEFAULT = 0
@@ -16,6 +16,8 @@ COMPONENTS_ENABLED = {
     "run.py": 0
 }
 
+DEFAULT_LOG_MESSAGE = "[UNSPECIFIED MESSAGE]"
+
 class DebugMessage:
     def __init__(self):
         curframe = i_currentframe()
@@ -24,12 +26,12 @@ class DebugMessage:
         
         self.set_enabled(COMPONENTS_ENABLED.get(self.caller, DEFAULT_ENABLED) if not ALL_USES_DEFAULT else DEFAULT_ENABLED)
         
-    def display(self, message: str):
+    def log(self, message: str = DEFAULT_LOG_MESSAGE):
         if not self.enabled: return
         curframe = i_currentframe()
         calframe = i_getouterframes(curframe, 2)
  
-        log(DEBUG, f"[{self.caller}]: [{calframe[2][3]}]: {message}")
+        logg_log(logg_DEBUG, f"[{self.caller}]: [{calframe[2][3]}]: {message}")
     
     def set_enabled(self, enabled):
         self.enabled = enabled

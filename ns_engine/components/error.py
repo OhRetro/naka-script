@@ -1,33 +1,18 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from .position import Position
 
-@dataclass(frozen=True)
-class NSError:
+@dataclass(frozen=True, slots=True)
+class Error:
     name: str
     details: str
+    pos_start: Position
+    pos_end: Position
     
-    filename: str
-    line: int
+    def as_string(self):
+        message = f"{self.name}: {self.details}"
+        message += f"\nFile {self.pos_start.filename}, line {self.pos_start.line + 1}"
+        return message
 
-    def __str__(self) -> str:
-        result = f"{self.name}: {self.details}\n"
-        result += f"\tFile {self.filename}, line {self.line + 1}"
-        return result
-
-
-# Happens at Lexer Process
-class NSIllegalCharacterError(NSError):
-    def __init__(self, details: str, filename: str, line: int):
-        super().__init__("Illegal Character Error", details, filename, line)
-
-class NSExpectedCharacterError(NSError):
-    def __init__(self, details: str, filename: str, line: int):
-        super().__init__("Expected Character Error", details, filename, line)
-        
-class NSLoadingError(NSError):
-    def __init__(self, details: str, filename: str, line: int):
-        super().__init__("Loading Error", details, filename, line)
-
-# Happens at AST Process
-class NSInvalidSyntaxError(NSError):
-    def __init__(self, details: str, filename: str, line: int):
-        super().__init__("Invalid Syntax Error", details, filename, line)
+@dataclass(frozen=True, slots=True)
+class ErrorIllegalCharacter(Error):
+    name: str = field(default="Illegal Character Error", init=False)

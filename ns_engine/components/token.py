@@ -1,18 +1,18 @@
+from dataclasses import dataclass, field
 from enum import Enum
-from dataclasses import dataclass
 from typing import Any
 
 class TokenType(Enum):
     # General types
-    KEYWORD = None # "keyword"
-    IDENTIFIER = None # "identifier"
+    KEYWORD = "keyword"
+    IDENTIFIER = "identifier"
     EQUALS = "="
     
     # Data types
-    INT = None # "int"
-    FLOAT = None # "float"
+    INT = "int"
+    FLOAT = "float"
     
-    NUMBER = None # "number"
+    NUMBER = "number"
     STRING = '"'
     
     # Mathmatic types
@@ -50,10 +50,28 @@ class TokenType(Enum):
     COMMENT = "#"
     COMMENTBLOCK = "###"
     
-    EOF = None # "EOF"
+    EOF = "EOF"
 
-@dataclass()
+SIMPLE_TOKENS = {
+    "+": TokenType.PLUS,
+    "-": TokenType.MINUS,
+    "*": TokenType.MULT,
+    "/": TokenType.DIV,
+    "(": TokenType.LPAREN,
+    ")": TokenType.RPAREN,
+    "[": TokenType.LSQUARE,
+    "]": TokenType.RSQUARE,
+    "{": TokenType.LBRACE,
+    "}": TokenType.RBRACE,
+}
+
+@dataclass(frozen=True, slots=True)
 class Token:
     type: TokenType
-    value: Any = None
-    
+    value: Any = field(default=None)
+
+    def __repr__(self) -> str:
+        if self.value:
+            return f"Token(type={self.type.name}, value={self.value})"
+        else:
+            return f"Token(type={self.type.name})"
