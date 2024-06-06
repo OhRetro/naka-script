@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+from .position import Position
 
 class TokenType(Enum):
     # General types
@@ -65,13 +66,25 @@ SIMPLE_TOKENS = {
     "}": TokenType.RBRACE,
 }
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=False, slots=True)
 class Token:
     type: TokenType
     value: Any = field(default=None)
+    pos_start: Position = field(default=None)
+    pos_end: Position = field(default=None)
+    
+    def __post_init__(self):
+        if self.pos_start:
+            self.pos_start = self.pos_start.copy()
+            if not self.pos_end:
+                self.pos_end = self.pos_start.copy()
+                self.pos_end.advance()
 
+        # if self.pos_end:
+        #     self.pos_end = self.pos_end
+    
     def __repr__(self) -> str:
         if self.value:
-            return f"Token(type={self.type.name}, value={self.value})"
+            return f"Token({self.type.name}, {self.value})"
         else:
-            return f"Token(type={self.type.name})"
+            return f"Token({self.type.name})"

@@ -26,19 +26,21 @@ class Lexer:
             elif self.current_char in DIGITS:
                 tokens.append(self.make_token_number())
             elif self.current_char in SIMPLE_TOKENS:
-                tokens.append(Token(SIMPLE_TOKENS[self.current_char]))
+                tokens.append(Token(SIMPLE_TOKENS[self.current_char], pos_start=self.pos))
                 self.advance()
             else:
                 pos_start = self.pos.copy()
                 illegal_char = self.current_char
                 self.advance()
                 return None, ErrorIllegalCharacter(f"'{illegal_char}'", pos_start, self.pos)
-                
+        
+        tokens.append(Token(TokenType.EOF, pos_start=self.pos))
         return tokens, None
     
     def make_token_number(self) -> Token:
         number_string = ""
         dot_count = 0
+        pos_start = self.pos.copy()
         
         while self.current_char != None and self.current_char in DIGITS + ".":
             if self.current_char == ".":
@@ -51,7 +53,7 @@ class Lexer:
             self.advance()
                 
         if dot_count:
-            return Token(TokenType.NUMBER, float(number_string))
+            return Token(TokenType.NUMBER, float(number_string), pos_start, self.pos)
         else:
-            return Token(TokenType.NUMBER, int(number_string))
+            return Token(TokenType.NUMBER, int(number_string), pos_start, self.pos)
         
