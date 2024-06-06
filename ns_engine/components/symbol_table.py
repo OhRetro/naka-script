@@ -1,26 +1,24 @@
-from dataclasses import dataclass
-from typing import Self
-# from copy import deepcopy
+from dataclasses import dataclass, field
+from typing import Self, Dict
 from ..datatype.value import Value
 
 #TODO: still need to refactor this
 
 @dataclass
 class SymbolTable:
-    symbols: dict[str, Value] = {}
-    immutable_symbols: dict[str, Value] = {}
-    scoped_symbols: dict[str, Value] = {}
+    symbols: Dict[str, Value] = field(default_factory=dict)
+    immutable_symbols: Dict[str, Value] = field(default_factory=dict)
+    scoped_symbols: Dict[str, Value] = field(default_factory=dict)
     
-    builtin_symbols: dict[str, Value] = {}
+    builtin_symbols: Dict[str, Value] = field(default_factory=dict)
     
     parent: Self = None
-        
-    def _exists(self, name: str, symbols_name: str, extra_condition: bool = True):
-        return name in getattr(self, symbols_name) and extra_condition
 
+    def _exists(self, name: str, symbols_name: str):
+        return name in getattr(self, symbols_name)
+    
     def exists_in(self, name: str, get_from_parent: bool = False):
         symbol_type_name = None
-        found_in_parent = False
         
         if name in self.scoped_symbols and not get_from_parent:
             symbol_type_name = "scoped_symbols"
@@ -35,23 +33,25 @@ class SymbolTable:
             symbol_type_name = "builtin_symbols"
             
         if symbol_type_name is None and self.parent:
-            symbol_type_name, _ = self.parent.exists_in(name, True)
-            if symbol_type_name: found_in_parent = True
+            symbol_type_name = self.parent.exists_in(name, True)
             
-        return symbol_type_name, found_in_parent
+        return symbol_type_name
             
     def exists(self, name: str, get_from_parent: bool = False) -> bool:
         exists = False
 
-        symbols_list = [
-            ("scoped_symbols", not get_from_parent),
-            ("immutable_symbols", 1),
-            ("symbols", 1),
-            ("builtin_symbols", 1)
+        symbols_name_list = [
+            "scoped_symbols",
+            "immutable_symbols",
+            "symbols",
+            "builtin_symbols"
         ]
         
-        for symbols in symbols_list:
-            exists = self._exists(name, symbols[0], symbols[1])
+        if get_from_parent:
+            symbols_name_list.remove("scoped_symbols")
+        
+        for symbols in symbols_name_list:
+            exists = self._exists(name, symbols)
             if exists: break
             
         if not exists and self.parent:
@@ -68,23 +68,22 @@ class SymbolTable:
         return exists
     
     def _get(self, name: str, get_from_parent: bool = False):
-        symbol_type_name, found_in_parent = self.exists_in(name)
+        symbol_type_name = self.exists_in(name)
         
-        value = getattr(self, symbol_type_name).get(name)
+        if symbol_type_name == "scoped_symbols" and get_from_parent:
+            value = None
+        else:
+            value = getattr(self, symbol_type_name).get(name)
 
-        if value is None and self.parent and found_in_parent:
-            value = self.parent._get(name, True)[0]
-            type = self.parent._get(name, True)[1]
+        if value is None and self.parent:
+            value = self.parent._get(name, True)
                 
-        return value, type
+        return value
 
-    def get(self, name: str, calling_from_parent: bool = False) -> Value:
-        return self._get(name, calling_from_parent)[0]
+    def get(self, name: str) -> Value:
+        return self._get(name)
     
-    def get_type(self, name: str, calling_from_parent: bool = False) -> Value:
-        return self._get(name, calling_from_parent)[1]
-    
-    def _set_symbol(self, name: str, value: Value, type: Value, symbols_name: str, **kwargs):
+    def _set_symbol(self, name: str, value: Value, symbols_name: str):
         success = False
         fail_type = "const"
         
