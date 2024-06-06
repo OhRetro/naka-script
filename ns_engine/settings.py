@@ -1,0 +1,1 @@
+SCRIPT_FILE_EXTENSION = "ns"
