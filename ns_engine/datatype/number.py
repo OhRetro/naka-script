@@ -6,6 +6,8 @@ from ..utils.strings_template import DIVISION_BY_ZERO_ERROR
 
 @dataclass(slots=True)
 class Number(Datatype):
+    value: int | float
+    
     def __repr__(self) -> str:
         return str(self.value)
     
@@ -34,7 +36,11 @@ class Number(Datatype):
     def powered_by(self, other: Self) -> Self:
         if isinstance(other, Number):
             return Number(self.value ** other.value).set_context(self.context), None
-    
+
+    def modulo_by(self, other: Self) -> Self:
+        if isinstance(other, Number):
+            return Number(self.value % other.value).set_context(self.context), None
+          
     def is_equal_to(self, other: Self) -> Self:
         return Number(int(self.value == other.value)).set_context(self.context), None
     

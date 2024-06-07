@@ -115,7 +115,7 @@ class Parser:
         return self.power()
     
     def term(self) -> ParseResult:
-        return self.bin_op((TokenType.MULT, TokenType.DIV), self.factor)
+        return self.bin_op((TokenType.MULT, TokenType.DIV, TokenType.MOD), self.factor)
     
     def arith_expr(self) -> ParseResult:
         return self.bin_op((TokenType.PLUS, TokenType.MINUS), self.term)
@@ -193,7 +193,7 @@ class Parser:
         left = p_result.register(function_a())
         
         if p_result.error: return p_result
-    
+
         while self.current_token.type in operations or (self.current_token.type == TokenType.KEYWORD and self.current_token.value in operations):
             operation_token = self.current_token
             p_result.register_advancement()

@@ -26,6 +26,7 @@ class Lexer:
         SIMPLE_TOKENS = {
             "+": TokenType.PLUS,
             "/": TokenType.DIV,
+            "%": TokenType.MOD,
             "(": TokenType.LPAREN,
             ")": TokenType.RPAREN,
             "[": TokenType.LSQUARE,
@@ -35,29 +36,44 @@ class Lexer:
         }
         
         ADVANCED_TOKENS = {
-            # Check if it's a Mult or Power Token
-            "-": lambda: self._make_token_advanced(TokenType.MINUS, ( (">", TokenType.ARROW), )), 
+            # Check if it's a Mult or Power Token, the rest follow the same rules
             "*": lambda: self._make_token_advanced(TokenType.MULT, ( ("*", TokenType.POWER), )), 
+            "-": lambda: self._make_token_advanced(TokenType.MINUS, ( (">", TokenType.ARROW), )), 
             
             "=": lambda: self._make_token_advanced(TokenType.EQUALS, ( ("=", TokenType.EE), )), 
             "<": lambda: self._make_token_advanced(TokenType.LT, ( ("=", TokenType.LTE), )), 
-            ">": lambda: self._make_token_advanced(TokenType.GT, ( ("=", TokenType.GTE), )),
-            
-            "!": lambda: self._make_token_enforced(TokenType.NE, "!", ("=", )),
+            ">": lambda: self._make_token_advanced(TokenType.GT, ( ("=", TokenType.GTE), ))
+        }
+        
+        ENFORCED_TOKENS = {
+            # Instead of checking for multiple tokens, it check for a token that's is multiple chars
+            "!": lambda: self._make_token_enforced(TokenType.NE, "!", ("=", ))
         }
         
         while self.current_char != None:
             if self.current_char in " \t":
                 self.advance()
+                
             elif self.current_char in DIGITS:
                 tokens.append(self.make_token_number())
+                
             elif self.current_char in LETTERS:
                 tokens.append(self.make_token_identifier())
+            
+            elif self.current_char in ENFORCED_TOKENS:
+                token, error = ENFORCED_TOKENS[self.current_char]()
+                
+                if error: return None, error
+                
+                tokens.append(token)
+                
             elif self.current_char in ADVANCED_TOKENS:
                 tokens.append(ADVANCED_TOKENS[self.current_char]())
+                
             elif self.current_char in SIMPLE_TOKENS:
                 tokens.append(Token(SIMPLE_TOKENS[self.current_char], pos_start=self.pos))
                 self.advance()
+                
             else:
                 pos_start = self.pos.copy()
                 illegal_char = self.current_char

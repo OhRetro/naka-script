@@ -69,6 +69,8 @@ class Interpreter:
                 result, error = left.divided_by(right)
             case TokenType.POWER:
                 result, error = left.powered_by(right)
+            case TokenType.MOD:
+                result, error = left.modulo_by(right)
                 
             case TokenType.EE:
                 result, error = left.is_equal_to(right)

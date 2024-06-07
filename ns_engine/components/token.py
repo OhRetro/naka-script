@@ -26,7 +26,7 @@ class TokenType(Enum):
     MULT = "*"
     POWER = "**"
     DIV = "/"
-    DIVREST = "%"
+    MOD = "%"
     
     # Parenthesis, Square and Brace
     LPAREN = "("

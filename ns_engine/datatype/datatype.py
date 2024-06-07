@@ -20,11 +20,18 @@ class Datatype:
         self.context = context
         return self
     
+    def copy(self) -> Self:
+        copy = type(self)(self.value)
+        copy.set_pos(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+    
     def added_to(self, other: Self) -> Self: pass
     def subtracted_by(self, other: Self) -> Self: pass
     def multiplied_by(self, other: Self) -> Self: pass
     def divided_by(self, other: Self) -> Self: pass
     def powered_by(self, other: Self) -> Self: pass
+    def modulo_by(self, other: Self) -> Self: pass
     def is_equal_to(self, other: Self) -> Self: pass
     def is_not_equal_to(self, other: Self) -> Self: pass
     def is_less_than(self, other: Self) -> Self: pass
@@ -34,10 +41,4 @@ class Datatype:
     def and_with(self, other: Self) -> Self:  pass
     def or_with(self, other: Self) -> Self: pass
     def notted(self) -> Self: pass
-    
-    def copy(self) -> Self:
-        copy = type(self)(self.value)
-        copy.set_pos(self.pos_start, self.pos_end)
-        copy.set_context(self.context)
-        return copy
     
