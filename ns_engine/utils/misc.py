@@ -5,10 +5,6 @@ def set_console_title(title):
     if os_name == "nt":
         from ctypes import windll
         windll.kernel32.SetConsoleTitleW(title)
-    else:
-        from sys import stdout
-        stdout.write(f"\x1b]2;{title}\x07")
-        stdout.flush()
 
 def convert_to_snake_case(input_string: str) -> str:
     result = ""
