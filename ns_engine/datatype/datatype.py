@@ -35,3 +35,9 @@ class Datatype:
     def powered_by(self, other: Self) -> Self:
         pass
     
+    def copy(self) -> Self:
+        copy = type(self)(self.value)
+        copy.set_pos(self.pos_start, self.pos_end)
+        copy.set_context(self.context)
+        return copy
+    

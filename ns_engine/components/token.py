@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 from .position import Position
+from .keyword import Keyword
 
 class TokenType(Enum):
     # def __repr__(self) -> str:
@@ -75,3 +76,10 @@ class Token:
             return f"Token({self.type.name}, {self.value})"
         else:
             return f"Token({self.type.name})"
+
+    def is_keyword_of(self, keyword: Keyword | str) -> bool:
+        if isinstance(keyword, Keyword):
+            keyword = keyword.value
+        
+        return self.type == TokenType.KEYWORD and self.value == keyword
+    

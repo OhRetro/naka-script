@@ -3,6 +3,10 @@ from ns_engine.components.parser import Parser
 from ns_engine.components.interpreter import Interpreter
 
 from ns_engine.components.context import Context
+from ns_engine.components.symbol_table import SymbolTable
+
+global_symbol_table = SymbolTable()
+global_symbol_table.set("null", -1)
 
 def execute(src_filename: str, src_data: str):
     lexer = Lexer(src_filename, src_data)
@@ -15,6 +19,7 @@ def execute(src_filename: str, src_data: str):
     
     interpreter = Interpreter()
     context = Context("__main__")
+    context.symbol_table = global_symbol_table
     result = interpreter.visit(ast.node, context)
     
     return result.value, result.error

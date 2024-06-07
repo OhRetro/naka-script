@@ -18,6 +18,26 @@ class NumberNode(Node):
         return f"NumberNode({self.token.value})"
 
 @dataclass(slots=True)
+class VarAccessNode(Node):
+    def __post_init__(self):
+        self.pos_start = self.token.pos_start
+        self.pos_end = self.token.pos_end
+
+    def __repr__(self) -> str:
+        return f"VarAccessNode({self.token})"
+    
+@dataclass(slots=True)
+class VarAssignNode(Node):
+    value_node: Node
+
+    def __post_init__(self):
+        self.pos_start = self.token.pos_start
+        self.pos_end = self.value_node.pos_end
+
+    def __repr__(self) -> str:
+        return f"VarAssignNode({self.token}, {self.value_node})"
+    
+@dataclass(slots=True)
 class BinOpNode(Node):
     left_node: Node
     right_node: Node
@@ -39,3 +59,4 @@ class UnaryOpNode(Node):
 
     def __repr__(self) -> str:
         return f"UnaryOpNode({self.token}, {self.node})"
+    

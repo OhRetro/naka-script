@@ -1,9 +1,12 @@
 from typing import Tuple, List, Optional
+from string import ascii_letters as LETTERS
 from .token import TokenType, Token
+from .keyword import Keyword
 from .error import Error, ErrorIllegalCharacter
 from .position import Position
 
 DIGITS = "0123456789"
+LETTERS_DIGITS = LETTERS + DIGITS
 
 class Lexer:
     def __init__(self, source_name: str, source_code: str):
@@ -21,6 +24,7 @@ class Lexer:
         tokens: list[Token] = []
         
         SIMPLE_TOKENS = {
+            "=": TokenType.EQUALS,
             "+": TokenType.PLUS,
             "-": TokenType.MINUS,
             "/": TokenType.DIV,
@@ -42,6 +46,8 @@ class Lexer:
                 self.advance()
             elif self.current_char in DIGITS:
                 tokens.append(self.make_token_number())
+            elif self.current_char in LETTERS:
+                tokens.append(self.make_token_identifier())
             elif self.current_char in ADVANCED_TOKENS:
                 tokens.append(ADVANCED_TOKENS[self.current_char]())
             elif self.current_char in SIMPLE_TOKENS:
@@ -75,6 +81,19 @@ class Lexer:
             return Token(TokenType.NUMBER, float(number_string), pos_start, self.pos)
         else:
             return Token(TokenType.NUMBER, int(number_string), pos_start, self.pos)
+        
+    def make_token_identifier(self) -> Token:
+        identifier_string = ""
+        pos_start = self.pos.copy()
+        
+        reversed_keyword_map = Keyword._value2member_map_
+        
+        while self.current_char != None and self.current_char in LETTERS_DIGITS + "_":
+            identifier_string += self.current_char
+            self.advance()
+        
+        token_type = TokenType.KEYWORD if identifier_string in reversed_keyword_map else TokenType.IDENTIFIER
+        return Token(token_type, identifier_string, pos_start, self.pos)
     
     #! THE ORDER OF THE ITEMS IN THE CONDITIONS TUPLE MATTERS
     def _make_token_advanced(self, start_token_type: TokenType, conditions: tuple) -> Token:

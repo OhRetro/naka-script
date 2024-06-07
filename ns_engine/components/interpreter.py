@@ -1,9 +1,11 @@
 from typing import Callable
 from .node import (Node, NumberNode,
-                   BinOpNode, UnaryOpNode)
+                   BinOpNode, UnaryOpNode,
+                   VarAccessNode, VarAssignNode)
 from .token import TokenType
 from .runtime import RuntimeResult
 from .context import Context
+from .error import ErrorRuntime
 from ..datatype.datatypes import Datatype, Number
 
 class Interpreter:
@@ -20,6 +22,31 @@ class Interpreter:
         return RuntimeResult().success(
             Number(node.token.value).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
+        
+    def visit_VarAccessNode(self, node: VarAccessNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
+        var_name = node.token.value
+        var_value = context.symbol_table.get(var_name)
+        
+        if not var_value:
+            return rt_result.failure(ErrorRuntime(
+                f"Variable '{var_name}' is not defined.",
+                node.pos_start, node.pos_end, context
+            ))
+        
+        var_value = var_value.copy().set_pos(node.pos_start, node.pos_end)
+        return rt_result.success(var_value)
+
+    def visit_VarAssignNode(self, node: VarAssignNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
+        var_name: str = node.token.value
+        value = rt_result.register(self.visit(node.value_node, context))
+        
+        if rt_result.error: return rt_result
+        
+        context.symbol_table.set(var_name, value)
+        
+        return rt_result.success(value)
     
     def visit_BinOpNode(self, node: BinOpNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
