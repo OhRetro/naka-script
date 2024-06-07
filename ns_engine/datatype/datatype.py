@@ -10,13 +10,11 @@ class Datatype:
     
     def __post_init__(self):
         self.set_pos()
-
-    def __repr__(self) -> str:
-        return str(self.value)
     
     def set_pos(self, pos_start: Position = None, pos_end: Position = None):
         self.pos_start = pos_start
         self.pos_end = pos_end
+        return self
         
     def added_to(self, other: Self) -> Self:
         pass

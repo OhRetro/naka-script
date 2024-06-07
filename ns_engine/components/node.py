@@ -2,13 +2,13 @@ from dataclasses import dataclass, field
 from .token import Token
 from .position import Position
 
-@dataclass(frozen=False, slots=True)
+@dataclass(slots=True)
 class Node:
     token: Token
     pos_start: Position = field(default=None, init=False)
     pos_end: Position = field(default=None, init=False)
     
-@dataclass(frozen=False, slots=True)
+@dataclass(slots=True)
 class NumberNode(Node):
     def __post_init__(self):
         self.pos_start = self.token.pos_start
@@ -17,7 +17,7 @@ class NumberNode(Node):
     def __repr__(self) -> str:
         return f"NumberNode({self.token.value})"
 
-@dataclass(frozen=False, slots=True)
+@dataclass(slots=True)
 class BinOpNode(Node):
     left_node: Node
     right_node: Node
@@ -29,7 +29,7 @@ class BinOpNode(Node):
     def __repr__(self) -> str:
         return f"BinOpNode({self.left_node}, {self.token}, {self.right_node})"
         
-@dataclass(frozen=False, slots=True)
+@dataclass(slots=True)
 class UnaryOpNode(Node):
     node: Node
 

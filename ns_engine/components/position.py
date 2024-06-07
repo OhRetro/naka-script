@@ -10,6 +10,12 @@ class Position:
     filename: str
     filedata: str
     
+    def __repr__(self) -> str:
+        return f"Position({self.index}, {self.line}, {self.column}, {self.filename})"
+    
+    def __int__(self) -> int:
+        return self.index
+    
     def advance(self, current_char: str = None) -> Self:
         self.index += 1
         self.column += 1
@@ -23,6 +29,4 @@ class Position:
     def copy(self) -> Self:
         return Position(self.index, self.line, self.column, self.filename, self.filedata)
     
-    def __int__(self) -> int:
-        return self.index
     
