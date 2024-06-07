@@ -3,6 +3,7 @@ from .node import (Node, NumberNode,
                    BinOpNode, UnaryOpNode,
                    VarAccessNode, VarAssignNode)
 from .token import TokenType
+from .keyword import Keyword
 from .runtime import RuntimeResult
 from .context import Context
 from .error import ErrorRuntime
@@ -68,6 +69,25 @@ class Interpreter:
                 result, error = left.divided_by(right)
             case TokenType.POWER:
                 result, error = left.powered_by(right)
+                
+            case TokenType.EE:
+                result, error = left.is_equal_to(right)
+            case TokenType.NE:
+                result, error = left.is_not_equal_to(right)
+            case TokenType.LT:
+                result, error = left.is_less_than(right)
+            case TokenType.GT:
+                result, error = left.is_greater_than(right)
+            case TokenType.LTE:
+                result, error = left.is_less_equal_than(right)
+            case TokenType.GTE:
+                result, error = left.is_greater_equal_than(right)
+                
+            case TokenType.KEYWORD:
+                if node.token.is_keyword_of(Keyword.AND):
+                    result, error = left.and_with(right)
+                elif node.token.is_keyword_of(Keyword.OR):
+                    result, error = left.or_with(right)
 
         if error:
             return rt_result.failure(error)
@@ -84,6 +104,8 @@ class Interpreter:
         
         if node.token.type == TokenType.MINUS:
             number, error = number.multiplied_by(Number(-1))
+        elif node.token.is_keyword_of(Keyword.NOT):
+            number, error = number.notted()
 
         if error:
             return rt_result.failure(error)

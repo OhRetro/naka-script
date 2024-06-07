@@ -9,8 +9,8 @@ class Keyword(Enum):
     SETCLASS = "class"
       
     # Conditional
-    AND = "&&"
-    OR = "||"
+    AND = "and"
+    OR = "or"
     NOT = "not"
     IF = "if"
     ELSEIF = "elseif"

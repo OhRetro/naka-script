@@ -7,3 +7,4 @@ def makeout_datatype(value: Any) -> Datatype:
         return Number(value)
     else:
         raise TypeError(f"Cannot convert {value} to a datatype")
+    

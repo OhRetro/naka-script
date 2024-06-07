@@ -7,6 +7,8 @@ from ns_engine.components.symbol_table import SymbolTable
 
 global_symbol_table = SymbolTable()
 global_symbol_table.set("null", -1)
+global_symbol_table.set("true", 1)
+global_symbol_table.set("false", 0)
 
 def execute(src_filename: str, src_data: str):
     lexer = Lexer(src_filename, src_data)

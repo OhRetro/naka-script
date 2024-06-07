@@ -35,3 +35,30 @@ class Number(Datatype):
         if isinstance(other, Number):
             return Number(self.value ** other.value).set_context(self.context), None
     
+    def is_equal_to(self, other: Self) -> Self:
+        return Number(int(self.value == other.value)).set_context(self.context), None
+    
+    def is_not_equal_to(self, other: Self) -> Self:
+        return Number(int(self.value != other.value)).set_context(self.context), None
+    
+    def is_less_than(self, other: Self) -> Self:
+        return Number(int(self.value < other.value)).set_context(self.context), None
+    
+    def is_greater_than(self, other: Self) -> Self:
+        return Number(int(self.value > other.value)).set_context(self.context), None
+    
+    def is_less_equal_than(self, other: Self) -> Self:
+        return Number(int(self.value <= other.value)).set_context(self.context), None
+    
+    def is_greater_equal_than(self, other: Self) -> Self:
+        return Number(int(self.value >= other.value)).set_context(self.context), None
+    
+    def and_with(self, other: Self) -> Self:
+        return Number(int(self.value and other.value)).set_context(self.context), None
+    
+    def or_with(self, other: Self) -> Self:
+        return Number(int(self.value or other.value)).set_context(self.context), None
+    
+    def notted(self) -> Self:
+        return Number(1 if self.value == 0 else 0).set_context(self.context), None
+    

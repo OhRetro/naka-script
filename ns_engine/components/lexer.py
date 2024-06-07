@@ -2,7 +2,7 @@ from typing import Tuple, List, Optional
 from string import ascii_letters as LETTERS
 from .token import TokenType, Token
 from .keyword import Keyword
-from .error import Error, ErrorIllegalCharacter
+from .error import Error, ErrorIllegalCharacter, ErrorExpectedCharacter
 from .position import Position
 
 DIGITS = "0123456789"
@@ -24,9 +24,7 @@ class Lexer:
         tokens: list[Token] = []
         
         SIMPLE_TOKENS = {
-            "=": TokenType.EQUALS,
             "+": TokenType.PLUS,
-            "-": TokenType.MINUS,
             "/": TokenType.DIV,
             "(": TokenType.LPAREN,
             ")": TokenType.RPAREN,
@@ -38,7 +36,14 @@ class Lexer:
         
         ADVANCED_TOKENS = {
             # Check if it's a Mult or Power Token
+            "-": lambda: self._make_token_advanced(TokenType.MINUS, ( (">", TokenType.ARROW), )), 
             "*": lambda: self._make_token_advanced(TokenType.MULT, ( ("*", TokenType.POWER), )), 
+            
+            "=": lambda: self._make_token_advanced(TokenType.EQUALS, ( ("=", TokenType.EE), )), 
+            "<": lambda: self._make_token_advanced(TokenType.LT, ( ("=", TokenType.LTE), )), 
+            ">": lambda: self._make_token_advanced(TokenType.GT, ( ("=", TokenType.GTE), )),
+            
+            "!": lambda: self._make_token_enforced(TokenType.NE, "!", ("=", )),
         }
         
         while self.current_char != None:
@@ -61,6 +66,43 @@ class Lexer:
         
         tokens.append(Token(TokenType.EOF, pos_start=self.pos))
         return tokens, None
+    
+    #! THE ORDER OF THE ITEMS IN THE CONDITIONS TUPLE MATTERS
+    def _make_token_advanced(self, start_token_type: TokenType, conditions: tuple) -> Token:
+        token_type = start_token_type
+        pos_start = self.pos.copy()
+        self.advance()
+        
+        for condition in conditions:
+            condition_char = condition[0]
+            condition_token_type = condition[1]
+            condition_break = len(condition) == 3
+            
+            if self.current_char == condition_char:
+                token_type = condition_token_type
+                self.advance()
+                
+                if condition_break: break
+        
+        return Token(token_type, pos_start=pos_start, pos_end=self.pos)
+    
+    #! THE ORDER OF THE ITEMS IN THE CHARS_QUEUE TUPLE MATTERS
+    def _make_token_enforced(self, token_type: TokenType, start_char: str, chars_queue: tuple) -> Tuple[Optional[Token], Optional[Error]]:
+        pos_start = self.pos.copy()
+        self.advance()
+        
+        for char in chars_queue:
+            if self.current_char == char:
+                start_char += char
+                self.advance()
+            else:
+                self.advance()
+                return None, ErrorExpectedCharacter(
+                    f"{char} (after {start_char})",
+                    pos_start, self.pos
+                )
+        
+        return Token(token_type, pos_start=pos_start, pos_end=self.pos), None
     
     def make_token_number(self) -> Token:
         number_string = ""
@@ -93,22 +135,8 @@ class Lexer:
             self.advance()
         
         token_type = TokenType.KEYWORD if identifier_string in reversed_keyword_map else TokenType.IDENTIFIER
-        return Token(token_type, identifier_string, pos_start, self.pos)
+        token_value = reversed_keyword_map[identifier_string] if token_type == TokenType.KEYWORD else identifier_string
+        
+        return Token(token_type, token_value, pos_start, self.pos)
     
-    #! THE ORDER OF THE ITEMS IN THE CONDITIONS TUPLE MATTERS
-    def _make_token_advanced(self, start_token_type: TokenType, conditions: tuple) -> Token:
-        token_type = start_token_type
-        pos_start = self.pos.copy()
-        
-        self.advance()
-        
-        for condition in conditions:
-            condition_char = condition[0]
-            condition_token_type = condition[1]
-            
-            if self.current_char == condition_char:
-                token_type = condition_token_type
-                self.advance()
-        
-        return Token(token_type, pos_start=pos_start, pos_end=self.pos)
     

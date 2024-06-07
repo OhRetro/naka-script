@@ -117,6 +117,35 @@ class Parser:
     def term(self) -> ParseResult:
         return self.bin_op((TokenType.MULT, TokenType.DIV), self.factor)
     
+    def arith_expr(self) -> ParseResult:
+        return self.bin_op((TokenType.PLUS, TokenType.MINUS), self.term)
+        
+    def comp_expr(self) -> ParseResult:
+        p_result = ParseResult()
+        
+        if self.current_token.is_keyword_of(Keyword.NOT):
+            operation_token = self.current_token
+            p_result.register_advancement()
+            self.advance()
+            
+            node = p_result.register(self.comp_expr())
+            if p_result.error: return p_result
+            return p_result.success(UnaryOpNode(operation_token, node))
+        
+        node = p_result.register(self.bin_op(
+            (TokenType.EE, TokenType.NE,
+             TokenType.LT, TokenType.GT, 
+             TokenType.LTE, TokenType.GTE), 
+            self.arith_expr))
+        
+        if p_result.error:
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, Keyword.NOT),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+            
+        return p_result.success(node)
+    
     def expr(self) -> ParseResult:
         p_result = ParseResult()
         if self.current_token.is_keyword_of(Keyword.SETVAR):
@@ -147,11 +176,11 @@ class Parser:
                 
             return p_result.success(VarAssignNode(var_name_token, expr))
         
-        node = p_result.register(self.bin_op((TokenType.PLUS, TokenType.MINUS), self.term))
+        node = p_result.register(self.bin_op((Keyword.AND, Keyword.OR), self.comp_expr))
         
         if p_result.error:
             return p_result.failure(ErrorInvalidSyntax(
-                expected(Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN),
+                expected(Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, Keyword.NOT),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
         
@@ -165,7 +194,7 @@ class Parser:
         
         if p_result.error: return p_result
     
-        while self.current_token.type in operations:
+        while self.current_token.type in operations or (self.current_token.type == TokenType.KEYWORD and self.current_token.value in operations):
             operation_token = self.current_token
             p_result.register_advancement()
             self.advance()

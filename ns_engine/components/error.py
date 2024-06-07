@@ -21,6 +21,10 @@ class ErrorIllegalCharacter(Error):
     name: str = field(default="Illegal Character Error", init=False)
 
 @dataclass(frozen=True, slots=True)
+class ErrorExpectedCharacter(Error):
+    name: str = field(default="Expected Character Error", init=False)
+    
+@dataclass(frozen=True, slots=True)
 class ErrorInvalidSyntax(Error):
     name: str = field(default="Invalid Syntax Error", init=False)
     

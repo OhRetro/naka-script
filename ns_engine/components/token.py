@@ -77,9 +77,6 @@ class Token:
         else:
             return f"Token({self.type.name})"
 
-    def is_keyword_of(self, keyword: Keyword | str) -> bool:
-        if isinstance(keyword, Keyword):
-            keyword = keyword.value
-        
+    def is_keyword_of(self, keyword: Keyword) -> bool:
         return self.type == TokenType.KEYWORD and self.value == keyword
     
