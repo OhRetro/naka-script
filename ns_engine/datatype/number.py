@@ -30,4 +30,8 @@ class Number(Datatype):
                 )
                 
             return Number(self.value / other.value).set_context(self.context), None
+        
+    def powered_by(self, other: Self) -> Self:
+        if isinstance(other, Number):
+            return Number(self.value ** other.value).set_context(self.context), None
     

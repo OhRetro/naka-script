@@ -1,5 +1,5 @@
 from typing import Tuple, List, Optional
-from .token import TokenType, Token, SIMPLE_TOKENS
+from .token import TokenType, Token
 from .error import Error, ErrorIllegalCharacter
 from .position import Position
 
@@ -20,11 +20,30 @@ class Lexer:
     def make_tokens(self) -> Tuple[Optional[List[Token]], Optional[Error]]:
         tokens: list[Token] = []
         
+        SIMPLE_TOKENS = {
+            "+": TokenType.PLUS,
+            "-": TokenType.MINUS,
+            "/": TokenType.DIV,
+            "(": TokenType.LPAREN,
+            ")": TokenType.RPAREN,
+            "[": TokenType.LSQUARE,
+            "]": TokenType.RSQUARE,
+            "{": TokenType.LBRACE,
+            "}": TokenType.RBRACE,
+        }
+        
+        ADVANCED_TOKENS = {
+            # Check if it's a Mult or Power Token
+            "*": lambda: self._make_token_advanced(TokenType.MULT, ( ("*", TokenType.POWER), )), 
+        }
+        
         while self.current_char != None:
             if self.current_char in " \t":
                 self.advance()
             elif self.current_char in DIGITS:
                 tokens.append(self.make_token_number())
+            elif self.current_char in ADVANCED_TOKENS:
+                tokens.append(ADVANCED_TOKENS[self.current_char]())
             elif self.current_char in SIMPLE_TOKENS:
                 tokens.append(Token(SIMPLE_TOKENS[self.current_char], pos_start=self.pos))
                 self.advance()
@@ -56,4 +75,21 @@ class Lexer:
             return Token(TokenType.NUMBER, float(number_string), pos_start, self.pos)
         else:
             return Token(TokenType.NUMBER, int(number_string), pos_start, self.pos)
+    
+    #! THE ORDER OF THE ITEMS IN THE CONDITIONS TUPLE MATTERS
+    def _make_token_advanced(self, start_token_type: TokenType, conditions: tuple) -> Token:
+        token_type = start_token_type
+        pos_start = self.pos.copy()
         
+        self.advance()
+        
+        for condition in conditions:
+            condition_char = condition[0]
+            condition_token_type = condition[1]
+            
+            if self.current_char == condition_char:
+                token_type = condition_token_type
+                self.advance()
+        
+        return Token(token_type, pos_start=pos_start, pos_end=self.pos)
+    

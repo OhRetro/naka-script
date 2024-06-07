@@ -4,6 +4,9 @@ from typing import Any
 from .position import Position
 
 class TokenType(Enum):
+    # def __repr__(self) -> str:
+    #     return f"{self.name}"
+    
     # General types
     KEYWORD = "keyword"
     IDENTIFIER = "identifier"
@@ -53,19 +56,6 @@ class TokenType(Enum):
     
     EOF = "EOF"
 
-SIMPLE_TOKENS = {
-    "+": TokenType.PLUS,
-    "-": TokenType.MINUS,
-    "*": TokenType.MULT,
-    "/": TokenType.DIV,
-    "(": TokenType.LPAREN,
-    ")": TokenType.RPAREN,
-    "[": TokenType.LSQUARE,
-    "]": TokenType.RSQUARE,
-    "{": TokenType.LBRACE,
-    "}": TokenType.RBRACE,
-}
-
 @dataclass(frozen=False, slots=True)
 class Token:
     type: TokenType
@@ -79,9 +69,6 @@ class Token:
             if not self.pos_end:
                 self.pos_end = self.pos_start.copy()
                 self.pos_end.advance()
-
-        # if self.pos_end:
-        #     self.pos_end = self.pos_end
     
     def __repr__(self) -> str:
         if self.value:

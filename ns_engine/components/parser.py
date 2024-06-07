@@ -54,41 +54,50 @@ class Parser:
         
         return response
     
-    def factor(self) -> ParseResult:
-        response = ParseResult()
+    def atom(self) -> ParseResult:
+        p_result = ParseResult()
         token = self.current_token
-        
-        if token.type in (TokenType.PLUS, TokenType.MINUS):
-            response.register(self.advance())
-            factor = response.register(self.factor())
-            
-            if response.error: return response
-            
-            return response.success(UnaryOpNode(token, factor))
-        
-        elif token.type == TokenType.NUMBER:
-            response.register(self.advance())
-            return response.success(NumberNode(token))
+
+        if token.type == TokenType.NUMBER:
+            p_result.register(self.advance())
+            return p_result.success(NumberNode(token))
         
         elif token.type == TokenType.LPAREN:
-            response.register(self.advance())
-            expr = response.register(self.expr())
+            p_result.register(self.advance())
+            expr = p_result.register(self.expr())
             
-            if response.error: return response
+            if p_result.error: return p_result
             
             if self.current_token.type == TokenType.RPAREN:
-                response.register(self.advance())
-                return response.success(expr)
+                p_result.register(self.advance())
+                return p_result.success(expr)
             else:
-                return response.failure(ErrorInvalidSyntax(
+                return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.RPAREN),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
         
-        return response.failure(ErrorInvalidSyntax(
-            expected(TokenType.NUMBER),
+        return p_result.failure(ErrorInvalidSyntax(
+            expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.LPAREN),
             token.pos_start, token.pos_end
         ))
+    
+    def power(self) -> ParseResult:
+        return self.bin_op((TokenType.POWER, ), self.atom, self.factor)
+    
+    def factor(self) -> ParseResult:
+        p_result = ParseResult()
+        token = self.current_token
+        
+        if token.type in (TokenType.PLUS, TokenType.MINUS):
+            p_result.register(self.advance())
+            factor = p_result.register(self.factor())
+            
+            if p_result.error: return p_result
+            
+            return p_result.success(UnaryOpNode(token, factor))
+        
+        return self.power()
     
     def term(self) -> ParseResult:
         return self.bin_op((TokenType.MULT, TokenType.DIV), self.factor)
@@ -99,16 +108,17 @@ class Parser:
     def bin_op(self, operations: tuple, function_a: Callable, function_b: Callable = None) -> ParseResult:
         function_b = function_b or function_a
         
-        response = ParseResult()
-        left = response.register(function_a())
+        p_result = ParseResult()
+        left = p_result.register(function_a())
         
-        if response.error: return response
+        if p_result.error: return p_result
     
         while self.current_token.type in operations:
             operation_token = self.current_token
-            response.register(self.advance())
-            right = response.register(function_b())
-            if response.error: return response
+            p_result.register(self.advance())
+            right = p_result.register(function_b())
+            if p_result.error: return p_result
             left = BinOpNode(operation_token, left, right)
             
-        return response.success(left)
+        return p_result.success(left)
+    

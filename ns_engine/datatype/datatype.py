@@ -32,3 +32,6 @@ class Datatype:
     def divided_by(self, other: Self) -> Self:
         pass
     
+    def powered_by(self, other: Self) -> Self:
+        pass
+    

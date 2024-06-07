@@ -39,6 +39,8 @@ class Interpreter:
                 result, error = left.multiplied_by(right)
             case TokenType.DIV:
                 result, error = left.divided_by(right)
+            case TokenType.POWER:
+                result, error = left.powered_by(right)
 
         if error:
             return rt_result.failure(error)
@@ -50,6 +52,8 @@ class Interpreter:
         
         number: Number = rt_result.register(self.visit(node.node, context))
         if rt_result.error: return rt_result
+        
+        error = None
         
         if node.token.type == TokenType.MINUS:
             number, error = number.multiplied_by(Number(-1))
