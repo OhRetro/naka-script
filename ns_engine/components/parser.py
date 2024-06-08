@@ -4,6 +4,7 @@ from .token import Token, TokenType
 from .keyword import Keyword
 from .node import (Node, NumberNode, 
                    BinOpNode, UnaryOpNode, 
+                   IfNode,
                    VarAssignNode, VarAccessNode)
 from .error import Error, ErrorInvalidSyntax
 from ..utils.expected import expected
@@ -49,7 +50,7 @@ class Parser:
             
         return self.current_token
     
-    def parse(self):
+    def parse(self) -> ParseResult:
         response = self.expr()
         
         if not response.error and self.current_token.type != TokenType.EOF:
@@ -59,7 +60,68 @@ class Parser:
             ))
         
         return response
-    
+
+    #!========================
+
+    def if_expr(self) -> ParseResult:
+        p_result = ParseResult()
+        cases: list[tuple[Node, Node]] = []
+        else_case = None
+
+        if not self.current_token.is_keyword_of(Keyword.IF):
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(Keyword.IF),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+
+        p_result.register_advancement()
+        self.advance()
+
+        condition = p_result.register(self.expr())
+        if p_result.error: return p_result
+
+        if not self.current_token.is_keyword_of(Keyword.THEN):
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(Keyword.THEN),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+
+        p_result.register_advancement()
+        self.advance()
+
+        expr = p_result.register(self.expr())
+        if p_result.error: return p_result
+        cases.append((condition, expr))
+
+        while self.current_token.is_keyword_of(Keyword.ELSEIF):
+            p_result.register_advancement()
+            self.advance()
+
+            condition = p_result.register(self.expr())
+            if p_result.error: return p_result
+
+            if not self.current_token.is_keyword_of(Keyword.THEN):
+                return p_result.failure(ErrorInvalidSyntax(
+                    expected(Keyword.THEN),
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+
+            p_result.register_advancement()
+            self.advance()
+
+            expr = p_result.register(self.expr())
+            if p_result.error: return p_result
+            cases.append((condition, expr))
+
+        if self.current_token.is_keyword_of(Keyword.ELSE):
+            p_result.register_advancement()
+            self.advance()
+
+            else_case: Node = p_result.register(self.expr())
+            if p_result.error: return p_result
+
+        return p_result.success(IfNode(cases, else_case))
+
     def atom(self) -> ParseResult:
         p_result = ParseResult()
         token = self.current_token
@@ -90,6 +152,11 @@ class Parser:
                     expected(TokenType.RPAREN),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
+                
+        elif token.is_keyword_of(Keyword.IF):
+            if_expr = p_result.register(self.if_expr())
+            if p_result.error: return p_result
+            return p_result.success(if_expr)
         
         return p_result.failure(ErrorInvalidSyntax(
             expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN),

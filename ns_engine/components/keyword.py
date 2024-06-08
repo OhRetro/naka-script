@@ -16,6 +16,7 @@ class Keyword(Enum):
     ELSEIF = "elseif"
     ELSE = "else"
     IS = "is"
+    THEN = "then"
     
     # Loops
     FOR = "for"

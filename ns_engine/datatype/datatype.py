@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
-from typing import Any, Self
+from typing import Any, Self, Tuple, Optional
 from ..components.position import Position
 from ..components.context import Context
+from ..components.error import Error
 
 @dataclass(slots=True)
 class Datatype:
@@ -26,19 +27,21 @@ class Datatype:
         copy.set_context(self.context)
         return copy
     
-    def added_to(self, other: Self) -> Self: pass
-    def subtracted_by(self, other: Self) -> Self: pass
-    def multiplied_by(self, other: Self) -> Self: pass
-    def divided_by(self, other: Self) -> Self: pass
-    def powered_by(self, other: Self) -> Self: pass
-    def modulo_by(self, other: Self) -> Self: pass
-    def is_equal_to(self, other: Self) -> Self: pass
-    def is_not_equal_to(self, other: Self) -> Self: pass
-    def is_less_than(self, other: Self) -> Self: pass
-    def is_greater_than(self, other: Self) -> Self: pass
-    def is_less_equal_than(self, other: Self) -> Self: pass
-    def is_greater_equal_than(self, other: Self) -> Self: pass
-    def and_with(self, other: Self) -> Self:  pass
-    def or_with(self, other: Self) -> Self: pass
-    def notted(self) -> Self: pass
+    def added_to(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def subtracted_by(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def multiplied_by(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def divided_by(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def powered_by(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def modulo_by(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def is_equal_to(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def is_not_equal_to(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def is_less_than(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def is_greater_than(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def is_less_equal_than(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def is_greater_equal_than(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def and_with(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:  pass
+    def or_with(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def notted(self) -> Tuple[Optional[Self], Optional[Error]]: pass
+    def is_true(self) -> bool: pass
     
+DATATYPE_OR_ERROR = Tuple[Optional[Datatype], Optional[Error]]

@@ -1,6 +1,7 @@
 from typing import Callable
 from .node import (Node, NumberNode,
                    BinOpNode, UnaryOpNode,
+                   IfNode,
                    VarAccessNode, VarAssignNode)
 from .token import TokenType
 from .keyword import Keyword
@@ -114,3 +115,21 @@ class Interpreter:
         
         return rt_result.success(number.set_pos(node.pos_start, node.pos_end))
     
+    def visit_IfNode(self, node: IfNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
+        
+        for condition, expr in node.cases:
+            condition_value = rt_result.register(self.visit(condition, context))
+            if rt_result.error: return rt_result
+            
+            if condition_value.is_true():
+                expr_value = rt_result.register(self.visit(expr, context))
+                if rt_result.error: return rt_result
+                return rt_result.success(expr_value)
+            
+        if node.else_case:
+            else_value = rt_result.register(self.visit(node.else_case, context))
+            if rt_result.error: return rt_result
+            return rt_result.success(else_value)
+        
+        return rt_result.success(None)

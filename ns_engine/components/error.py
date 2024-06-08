@@ -10,6 +10,9 @@ class Error:
     pos_start: Position
     pos_end: Position
     
+    def __repr__(self) -> str:
+        return f"Error({self.name}, {self.details})"
+    
     def as_string(self) -> str:
         message = f"File {self.pos_start.filename}, line {self.pos_start.line + 1}\n"
         message += f"{self.name}: {self.details}\n"
@@ -27,6 +30,10 @@ class ErrorExpectedCharacter(Error):
 @dataclass(frozen=True, slots=True)
 class ErrorInvalidSyntax(Error):
     name: str = field(default="Invalid Syntax Error", init=False)
+
+@dataclass(frozen=True, slots=True)
+class ErrorIllegalOperation(Error):
+    name: str = field(default="Illegal Operation Error", init=False)
     
 @dataclass(frozen=True, slots=True)
 class ErrorRuntime(Error):

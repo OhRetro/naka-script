@@ -2,11 +2,11 @@ from dataclasses import dataclass, field
 from .token import Token
 from .position import Position
 
-@dataclass(slots=True,)
+@dataclass(slots=True)
 class Node:
     token: Token
-    pos_start: Position = field(default=None, init=False, repr=False)
-    pos_end: Position = field(default=None, init=False, repr=False)
+    pos_start: Position = field(default=None, init=False)
+    pos_end: Position = field(default=None, init=False)
     
 @dataclass(slots=True)
 class NumberNode(Node):
@@ -59,4 +59,17 @@ class UnaryOpNode(Node):
 
     def __repr__(self) -> str:
         return f"UnaryOpNode({self.token}, {self.node})"
+    
+@dataclass(slots=True)
+class IfNode(Node):
+    token: Token = field(default=None, init=False)
+    cases: list[tuple[Node, Node]]
+    else_case: Node
+    
+    def __post_init__(self):
+        self.pos_start = self.cases[0][0].pos_start
+        self.pos_end = (self.else_case or self.cases[-1][0]).pos_end
+        
+    def __repr__(self) -> str:
+        return f"IfNode({self.cases}, {self.else_case})"
     

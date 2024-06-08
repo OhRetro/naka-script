@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Self
-from .datatype import Datatype
+from .datatype import Datatype, DATATYPE_OR_ERROR
 from ..components.error import ErrorRuntime
 from ..utils.strings_template import DIVISION_BY_ZERO_ERROR
 
@@ -10,61 +10,78 @@ class Number(Datatype):
     
     def __repr__(self) -> str:
         return str(self.value)
-    
-    def added_to(self, other: Datatype) -> Self:
+
+    def _number(self, value: int | float) -> DATATYPE_OR_ERROR:
+        return Number(value).set_context(self.context), None
+
+    def _number_bool(self, value: bool) -> DATATYPE_OR_ERROR:
+        return self._number(int(value))
+
+    def _clone(self, other: Datatype, operation: str) -> DATATYPE_OR_ERROR:
+        OPERATIONS = {
+            "+": lambda a, b: a + b,
+            "-": lambda a, b: a - b,
+            "*": lambda a, b: a * b,
+            "/": lambda a, b: a / b,
+            "**": lambda a, b: a ** b,
+            "%": lambda a, b: a % b,
+        }
+
         if isinstance(other, Number):
-            return Number(self.value + other.value).set_context(self.context), None
-            
-    def subtracted_by(self, other: Datatype) -> Self:
-        if isinstance(other, Number):
-            return Number(self.value - other.value).set_context(self.context), None
-            
-    def multiplied_by(self, other: Datatype) -> Self:
-        if isinstance(other, Number):
-            return Number(self.value * other.value).set_context(self.context), None
-            
-    def divided_by(self, other: Datatype) -> Self:
-        if isinstance(other, Number):
-            if other.value == 0:
+            try:
+                result = OPERATIONS[operation](self.value, other.value)
+                return self._number(result)
+            except ZeroDivisionError:
                 return None, ErrorRuntime(
                     DIVISION_BY_ZERO_ERROR,
                     other.pos_start, other.pos_end, self.context
                 )
-                
-            return Number(self.value / other.value).set_context(self.context), None
-        
-    def powered_by(self, other: Self) -> Self:
-        if isinstance(other, Number):
-            return Number(self.value ** other.value).set_context(self.context), None
 
-    def modulo_by(self, other: Self) -> Self:
-        if isinstance(other, Number):
-            return Number(self.value % other.value).set_context(self.context), None
+    def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._clone(other, "+")
+
+    def subtracted_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._clone(other, "-")
+        
+    def multiplied_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._clone(other, "*")
+        
+    def divided_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._clone(other, "/")
+        
+    def powered_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._clone(other, "**")
+
+    def modulo_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._clone(other, "%")
           
-    def is_equal_to(self, other: Self) -> Self:
-        return Number(int(self.value == other.value)).set_context(self.context), None
+    def is_equal_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._number_bool(self.value == other.value)
     
-    def is_not_equal_to(self, other: Self) -> Self:
-        return Number(int(self.value != other.value)).set_context(self.context), None
+    def is_not_equal_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._number_bool(self.value != other.value)
     
-    def is_less_than(self, other: Self) -> Self:
-        return Number(int(self.value < other.value)).set_context(self.context), None
+    def is_less_than(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._number_bool(self.value < other.value)
     
-    def is_greater_than(self, other: Self) -> Self:
-        return Number(int(self.value > other.value)).set_context(self.context), None
+    def is_greater_than(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._number_bool(self.value > other.value)
     
-    def is_less_equal_than(self, other: Self) -> Self:
-        return Number(int(self.value <= other.value)).set_context(self.context), None
+    def is_less_equal_than(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._number_bool(self.value <= other.value)
     
-    def is_greater_equal_than(self, other: Self) -> Self:
-        return Number(int(self.value >= other.value)).set_context(self.context), None
+    def is_greater_equal_than(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._number_bool(self.value >= other.value)
     
-    def and_with(self, other: Self) -> Self:
-        return Number(int(self.value and other.value)).set_context(self.context), None
+    def and_with(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._number_bool(self.value and other.value)
     
-    def or_with(self, other: Self) -> Self:
-        return Number(int(self.value or other.value)).set_context(self.context), None
+    def or_with(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        return self._number_bool(self.value or other.value)
     
-    def notted(self) -> Self:
-        return Number(1 if self.value == 0 else 0).set_context(self.context), None
+    def notted(self) -> DATATYPE_OR_ERROR:
+        return self._number(1 if self.value == 0 else 0)
+
+    def is_true(self) -> bool:
+        return self.value != 0
     
