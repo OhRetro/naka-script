@@ -7,22 +7,18 @@ class Node:
     token: Token
     pos_start: Position = field(default=None, init=False)
     pos_end: Position = field(default=None, init=False)
-    
-@dataclass(slots=True)
-class NumberNode(Node):
+
     def __post_init__(self):
         self.pos_start = self.token.pos_start
         self.pos_end = self.token.pos_end
-
+        
+@dataclass(slots=True)
+class NumberNode(Node):
     def __repr__(self) -> str:
         return f"NumberNode({self.token.value})"
 
 @dataclass(slots=True)
 class VarAccessNode(Node):
-    def __post_init__(self):
-        self.pos_start = self.token.pos_start
-        self.pos_end = self.token.pos_end
-
     def __repr__(self) -> str:
         return f"VarAccessNode({self.token})"
     
@@ -72,4 +68,30 @@ class IfNode(Node):
         
     def __repr__(self) -> str:
         return f"IfNode({self.cases}, {self.else_case})"
-    
+
+@dataclass(slots=True)
+class ForNode(Node):
+    start_value_node: Node
+    end_value_node: Node
+    step_value_node: Node
+    body_node: Node
+
+    def __post_init__(self):
+        self.pos_start = self.token.pos_start
+        self.pos_end = self.body_node.pos_end
+
+    def __repr__(self) -> str:
+        return f"ForNode({self.start_value_node.token.value}, {self.end_value_node.token.value}, {self.step_value_node.token.value}, {self.body_node})"
+
+@dataclass(slots=True)
+class WhileNode(Node):
+    condition_node: Node
+    body_node: Node
+
+    def __post_init__(self):
+        self.pos_start = self.condition_node.pos_start
+        self.pos_end = self.body_node.pos_end
+
+    def __repr__(self) -> str:
+        return f"WhileNode({self.condition_node}, {self.body_node})"
+  

@@ -20,7 +20,10 @@ class Keyword(Enum):
     
     # Loops
     FOR = "for"
+    TO = "to"
+    STEP = "step"
     WHILE = "while"
+    
     CONTINUE = "continue"
     BREAK = "break"
     

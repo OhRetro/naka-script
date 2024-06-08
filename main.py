@@ -5,7 +5,7 @@ if __name__ == "__main__":
     while True:
         try:
             command_text = input(">>> ")
-            result, error = run.execute(run.SHELL_FILENAME, command_text)
+            result, error = run.execute("<shell>", command_text)
             
             if error: print(error.as_string())
             elif result: print(result)

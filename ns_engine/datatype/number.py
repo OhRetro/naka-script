@@ -10,7 +10,7 @@ class Number(Datatype):
     
     def __repr__(self) -> str:
         return str(self.value)
-
+    
     def _number(self, value: int | float) -> DATATYPE_OR_ERROR:
         return Number(value).set_context(self.context), None
 

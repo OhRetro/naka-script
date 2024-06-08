@@ -5,6 +5,8 @@ from ..datatype.datatypes import Datatype, makeout_datatype
 @dataclass(slots=True)
 class SymbolTable:
     symbols: dict[str, Datatype] = field(default_factory=dict, init=False)
+    local_symbols: dict[str, Datatype] = field(default_factory=dict, init=False)
+    
     parent: Self = field(default=None, init=False)
     
     def get(self, name: str) -> Datatype:

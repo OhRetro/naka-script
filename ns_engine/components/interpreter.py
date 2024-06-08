@@ -1,7 +1,7 @@
 from typing import Callable
 from .node import (Node, NumberNode,
                    BinOpNode, UnaryOpNode,
-                   IfNode,
+                   IfNode, ForNode, WhileNode,
                    VarAccessNode, VarAssignNode)
 from .token import TokenType
 from .keyword import Keyword
@@ -133,3 +133,49 @@ class Interpreter:
             return rt_result.success(else_value)
         
         return rt_result.success(None)
+    
+    def visit_ForNode(self, node: ForNode, context: Context):
+        rt_result = RuntimeResult()
+
+        start_value_number: Number = rt_result.register(self.visit(node.start_value_node, context))
+        if rt_result.error: return rt_result
+
+        end_value_number: Number = rt_result.register(self.visit(node.end_value_node, context))
+        if rt_result.error: return rt_result
+
+        if node.step_value_node:
+            step_value_number: Number = rt_result.register(self.visit(node.step_value_node, context))
+            if rt_result.error: return rt_result
+        else:
+            step_value_number = Number(1)
+
+        i: int = start_value_number.value
+
+        if step_value_number.value >= 0:
+            condition = lambda: i < end_value_number.value
+        else:
+            condition = lambda: i > end_value_number.value
+        
+        while condition():
+            context.symbol_table.set(node.token.value, Number(i))
+            i += step_value_number.value
+
+            rt_result.register(self.visit(node.body_node, context))
+            if rt_result.error: return rt_result
+
+        return rt_result.success(None)
+
+    def visit_WhileNode(self, node: WhileNode, context: Context):
+        rt_result = RuntimeResult()
+
+        while True:
+            condition: Datatype = rt_result.register(self.visit(node.condition_node, context))
+            if rt_result.error: return rt_result
+
+            if not condition.is_true(): break
+
+            rt_result.register(self.visit(node.body_node, context))
+            if rt_result.error: return rt_result
+
+        return rt_result.success(None)
+    

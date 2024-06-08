@@ -4,7 +4,7 @@ from .token import Token, TokenType
 from .keyword import Keyword
 from .node import (Node, NumberNode, 
                    BinOpNode, UnaryOpNode, 
-                   IfNode,
+                   IfNode, ForNode, WhileNode,
                    VarAssignNode, VarAccessNode)
 from .error import Error, ErrorInvalidSyntax
 from ..utils.expected import expected
@@ -122,6 +122,104 @@ class Parser:
 
         return p_result.success(IfNode(cases, else_case))
 
+    def for_expr(self) -> ParseResult:
+        p_result = ParseResult()
+
+        if not self.current_token.is_keyword_of(Keyword.FOR):
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(Keyword.FOR),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+
+        p_result.register_advancement()
+        self.advance()
+
+        if self.current_token.type != TokenType.IDENTIFIER:
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(TokenType.IDENTIFIER),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+
+        var_name_token = self.current_token
+        p_result.register_advancement()
+        self.advance()
+
+        if self.current_token.type != TokenType.EQUALS:
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(TokenType.EQUALS),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+        
+        p_result.register_advancement()
+        self.advance()
+
+        start_value_node: Node = p_result.register(self.expr())
+        if p_result.error: return p_result
+
+        if not self.current_token.is_keyword_of(Keyword.TO):
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(Keyword.TO),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+        
+        p_result.register_advancement()
+        self.advance()
+
+        end_value_node: Node = p_result.register(self.expr())
+        if p_result.error: return p_result
+
+        if self.current_token.is_keyword_of(Keyword.STEP):
+            p_result.register_advancement()
+            self.advance()
+
+            step_value_node: Node = p_result.register(self.expr())
+            if p_result.error: return p_result
+        else:
+            step_value_node = None
+
+        if not self.current_token.is_keyword_of(Keyword.THEN):
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(Keyword.THEN),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+
+        p_result.register_advancement()
+        self.advance()
+
+        body_node: Node = p_result.register(self.expr())
+        if p_result.error: return p_result
+
+        return p_result.success(ForNode(var_name_token, start_value_node, end_value_node, step_value_node, body_node))
+
+    def while_expr(self) -> ParseResult:
+        p_result = ParseResult()
+
+        if not self.current_token.is_keyword_of(Keyword.WHILE):
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(Keyword.WHILE),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+
+        p_result.register_advancement()
+        self.advance()
+
+        condition_node: Node = p_result.register(self.expr())
+        if p_result.error: return p_result
+
+        if not self.current_token.is_keyword_of(Keyword.THEN):
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(Keyword.THEN),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+
+        p_result.register_advancement()
+        self.advance()
+
+        body_node: Node = p_result.register(self.expr())
+        if p_result.error: return p_result
+
+        return p_result.success(WhileNode(condition_node, body_node))
+
     def atom(self) -> ParseResult:
         p_result = ParseResult()
         token = self.current_token
@@ -157,6 +255,16 @@ class Parser:
             if_expr = p_result.register(self.if_expr())
             if p_result.error: return p_result
             return p_result.success(if_expr)
+
+        elif token.is_keyword_of(Keyword.FOR):
+            for_expr = p_result.register(self.for_expr())
+            if p_result.error: return p_result
+            return p_result.success(for_expr)
+        
+        elif token.is_keyword_of(Keyword.WHILE):
+            while_expr = p_result.register(self.while_expr())
+            if p_result.error: return p_result
+            return p_result.success(while_expr)
         
         return p_result.failure(ErrorInvalidSyntax(
             expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN),
