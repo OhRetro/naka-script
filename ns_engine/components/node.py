@@ -2,11 +2,11 @@ from dataclasses import dataclass, field
 from .token import Token
 from .position import Position
 
-@dataclass(slots=True)
+@dataclass(slots=True,)
 class Node:
     token: Token
-    pos_start: Position = field(default=None, init=False)
-    pos_end: Position = field(default=None, init=False)
+    pos_start: Position = field(default=None, init=False, repr=False)
+    pos_end: Position = field(default=None, init=False, repr=False)
     
 @dataclass(slots=True)
 class NumberNode(Node):

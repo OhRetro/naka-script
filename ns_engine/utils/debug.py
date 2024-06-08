@@ -7,16 +7,18 @@ DEFAULT_ENABLED = 1
 ALL_USES_DEFAULT = 0
 
 COMPONENTS_ENABLED = {
-    "context.py": 0,
-    "interpreter.py": 0,
-    "node.py": 0,
+    "lexer.py": 0,
     "parser.py": 0,
-    "symbol_table.py": 0,
-    "token.py": 0,
-    "run.py": 0
+    "interpreter.py": 0,
+    
+    "run.py": 0,
+    
+    "context.py": 0,
+    "node.py": 0,
+    "token.py": 0
 }
 
-DEFAULT_LOG_MESSAGE = "[UNSPECIFIED MESSAGE]"
+DEFAULT_LOG_MESSAGE = "[MESSAGE NOT SET]"
 
 class DebugMessage:
     def __init__(self):
