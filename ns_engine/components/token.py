@@ -48,10 +48,13 @@ class TokenType(Enum):
     # Other
     DOT = "."
     COMMA = ","
-    ARROW = "->"
+    RIGHTARROW = "->"
     LEFTARROW = "<-"
     SEMICOLON = ";"
     COLON = ":"
+    AT = "@"
+    AND = "&"
+    PIPE = "|"
     COMMENT = "#"
     COMMENTBLOCK = "###"
     

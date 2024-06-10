@@ -187,11 +187,11 @@ class Parser:
         
         return p_result.success(atom)
 
-    def index(self) -> ParseResult:
+    def reference(self) -> ParseResult:
         return self.bin_op((TokenType.COLON, ), self.call, self.power)
 
     def power(self) -> ParseResult:
-        return self.bin_op((TokenType.POWER, ), self.index, self.factor)
+        return self.bin_op((TokenType.POWER, ), self.reference, self.factor)
     
     def factor(self) -> ParseResult:
         p_result = ParseResult()
@@ -575,9 +575,9 @@ class Parser:
         p_result.register_advancement()
         self.advance()
         
-        if self.current_token.type != TokenType.ARROW:
+        if self.current_token.type != TokenType.RIGHTARROW:
             return p_result.failure(ErrorInvalidSyntax(
-                expected(TokenType.ARROW),
+                expected(TokenType.RIGHTARROW),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
         

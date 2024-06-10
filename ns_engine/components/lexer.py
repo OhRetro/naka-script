@@ -41,14 +41,13 @@ class Lexer:
         # Advanced Tokens are tokens that require more complex handling in comparison to Simple Tokens
         ADVANCED_TOKENS = {
             # Check if it's a Mult or Power Token, the rest follow the same rules
-            "*": lambda: self.make_token_advanced(TokenType.MULT, ( ("*", TokenType.POWER), )), 
-            "-": lambda: self.make_token_advanced(TokenType.MINUS, ( (">", TokenType.ARROW), )), 
-            "=": lambda: self.make_token_advanced(TokenType.EQUALS, ( ("=", TokenType.EE), )), 
-            "<": lambda: self.make_token_advanced(TokenType.LT, ( ("=", TokenType.LTE), )), 
-            ">": lambda: self.make_token_advanced(TokenType.GT, ( ("=", TokenType.GTE), )),
+            "*": lambda: self.make_token_advanced(TokenType.MULT, ( {"char": "*", "token_type": TokenType.POWER}, )), 
+            "-": lambda: self.make_token_advanced(TokenType.MINUS, ( {"char": ">", "token_type": TokenType.RIGHTARROW}, )), 
             
-            # Instead of checking for multiple tokens, it check for a token that's is multiple chars
-            "!": lambda: self.make_token_enforced(TokenType.NE, "!", ("=", )),
+            "=": lambda: self.make_token_advanced(TokenType.EQUALS, ( {"char": "=", "token_type": TokenType.EQUALS}, )), 
+            "<": lambda: self.make_token_advanced(TokenType.LT, ( {"char": "=", "token_type": TokenType.LTE}, )), 
+            ">": lambda: self.make_token_advanced(TokenType.GT, ( {"char": "=", "token_type": TokenType.GTE}, )),
+            "!": lambda: self.make_token_advanced(None, ( {"char": "=", "token_type": TokenType.NE, "enforced": True}, )),
             
             '"': lambda: self.make_token_string()
         }
@@ -84,39 +83,34 @@ class Lexer:
         return tokens, None
     
     #! THE ORDER OF THE ITEMS IN THE CONDITIONS TUPLE MATTERS
-    def make_token_advanced(self, start_token_type: TokenType, conditions: tuple) -> Tuple[Token, None]:
+    def make_token_advanced(self, start_token_type: TokenType, conditions: tuple[dict]) -> Tuple[Token, None]:
+        full_char = self.current_char
         token_type = start_token_type
         pos_start = self.pos.copy()
         self.advance()
         
         for condition in conditions:
-            condition_char = condition[0]
-            condition_token_type = condition[1]
-            condition_break = len(condition) == 3
+            char = condition.get("char")
             
-            if self.current_char == condition_char:
-                token_type = condition_token_type
+            if self.current_char == char:
+                full_char += char
+                token_type = condition.get("token_type")
                 self.advance()
                 
-                if condition_break: break
-        
-        return Token(token_type, pos_start=pos_start, pos_end=self.pos), None
-    
-    #! THE ORDER OF THE ITEMS IN THE CHARS_QUEUE TUPLE MATTERS
-    def make_token_enforced(self, token_type: TokenType, start_char: str, chars_queue: tuple) -> Tuple[Optional[Token], Optional[Error]]:
-        pos_start = self.pos.copy()
-        self.advance()
-        
-        for char in chars_queue:
-            if self.current_char == char:
-                start_char += char
-                self.advance()
-            else:
+                if condition.get("break", False): break
+            
+            elif self.current_char != char and condition.get("enforced", False):
                 self.advance()
                 return None, ErrorExpectedCharacter(
-                    f"{char} (after {start_char})",
+                    f"'{char}' (after '{full_char}')",
                     pos_start, self.pos
                 )
+        
+        if not token_type:
+            return None, ErrorExpectedCharacter(
+                f"'{conditions[0].get('char')}'",
+                pos_start, self.pos
+            )
         
         return Token(token_type, pos_start=pos_start, pos_end=self.pos), None
     
@@ -179,5 +173,4 @@ class Lexer:
         token_value = reversed_keyword_map[identifier_string] if token_type == TokenType.KEYWORD else identifier_string
         
         return Token(token_type, token_value, pos_start, self.pos)
-    
     
