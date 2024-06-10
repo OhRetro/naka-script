@@ -3,11 +3,6 @@ from typing import Self, Never
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from ..components.error import ErrorRuntime
 from ..components.node import Node
-# from ..components.runtime import RuntimeResult
-# from ..components.interpreter import Interpreter
-# from ..components.context import Context
-# from ..components.symbol_table import SymbolTable
-
 
 @dataclass(slots=True)
 class Function(Datatype):
@@ -15,15 +10,12 @@ class Function(Datatype):
     name: str
     body_node: Node
     arg_names: list
-    
+
+    def __post_init__(self):
+        self._values_to_copy = (self.name, self.body_node, self.arg_names)
+
     def __repr__(self) -> str:
         return f"<function {self.name}>"
-    
-    def copy(self) -> Self:
-        copy = Function(self.name, self.body_node, self.arg_names)
-        copy.set_pos(self.pos_start, self.pos_end)
-        copy.set_context(self.context)
-        return copy
     
     def execute(self, args: list[Datatype]) -> DATATYPE_OR_ERROR:
         from ..components.runtime import RuntimeResult

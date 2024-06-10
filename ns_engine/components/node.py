@@ -16,7 +16,12 @@ class Node:
 class NumberNode(Node):
     def __repr__(self) -> str:
         return f"NumberNode({self.token.value})"
-
+    
+@dataclass(slots=True)
+class StringNode(Node):
+    def __repr__(self) -> str:
+        return f"StringNode(\"{self.token.value}\")"
+    
 @dataclass(slots=True)
 class VarAccessNode(Node):
     def __repr__(self) -> str:

@@ -1,5 +1,6 @@
 from typing import Callable
-from .node import (Node, NumberNode,
+from .node import (Node, 
+                   NumberNode, StringNode,
                    BinOpNode, UnaryOpNode,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
@@ -9,7 +10,7 @@ from .keyword import Keyword
 from .runtime import RuntimeResult
 from .context import Context
 from .error import ErrorRuntime
-from ..datatype.datatypes import Datatype, Number, Function
+from ..datatype.datatypes import Datatype, Number, String, Function
 
 class Interpreter:
     def visit(self, node: Node, context: Context) -> RuntimeResult:
@@ -25,7 +26,12 @@ class Interpreter:
         return RuntimeResult().success(
             Number(node.token.value).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
-        
+
+    def visit_StringNode(self, node: StringNode, context: Context) -> RuntimeResult:
+        return RuntimeResult().success(
+            String(node.token.value).set_context(context).set_pos(node.pos_start, node.pos_end)
+        )
+           
     def visit_VarAccessNode(self, node: VarAccessNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
         var_name: str = node.token.value

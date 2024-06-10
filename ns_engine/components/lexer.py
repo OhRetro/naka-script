@@ -38,19 +38,19 @@ class Lexer:
             ":": TokenType.COLON
         }
         
+        # Advanced Tokens are tokens that require more complex handling in comparison to Simple Tokens
         ADVANCED_TOKENS = {
             # Check if it's a Mult or Power Token, the rest follow the same rules
-            "*": lambda: self._make_token_advanced(TokenType.MULT, ( ("*", TokenType.POWER), )), 
-            "-": lambda: self._make_token_advanced(TokenType.MINUS, ( (">", TokenType.ARROW), )), 
+            "*": lambda: self.make_token_advanced(TokenType.MULT, ( ("*", TokenType.POWER), )), 
+            "-": lambda: self.make_token_advanced(TokenType.MINUS, ( (">", TokenType.ARROW), )), 
+            "=": lambda: self.make_token_advanced(TokenType.EQUALS, ( ("=", TokenType.EE), )), 
+            "<": lambda: self.make_token_advanced(TokenType.LT, ( ("=", TokenType.LTE), )), 
+            ">": lambda: self.make_token_advanced(TokenType.GT, ( ("=", TokenType.GTE), )),
             
-            "=": lambda: self._make_token_advanced(TokenType.EQUALS, ( ("=", TokenType.EE), )), 
-            "<": lambda: self._make_token_advanced(TokenType.LT, ( ("=", TokenType.LTE), )), 
-            ">": lambda: self._make_token_advanced(TokenType.GT, ( ("=", TokenType.GTE), ))
-        }
-        
-        ENFORCED_TOKENS = {
             # Instead of checking for multiple tokens, it check for a token that's is multiple chars
-            "!": lambda: self._make_token_enforced(TokenType.NE, "!", ("=", ))
+            "!": lambda: self.make_token_enforced(TokenType.NE, "!", ("=", )),
+            
+            '"': lambda: self.make_token_string()
         }
         
         while self.current_char != None:
@@ -63,15 +63,12 @@ class Lexer:
             elif self.current_char in LETTERS:
                 tokens.append(self.make_token_identifier())
             
-            elif self.current_char in ENFORCED_TOKENS:
-                token, error = ENFORCED_TOKENS[self.current_char]()
+            elif self.current_char in ADVANCED_TOKENS:
+                token, error = ADVANCED_TOKENS[self.current_char]()
                 
                 if error: return None, error
                 
                 tokens.append(token)
-                
-            elif self.current_char in ADVANCED_TOKENS:
-                tokens.append(ADVANCED_TOKENS[self.current_char]())
                 
             elif self.current_char in SIMPLE_TOKENS:
                 tokens.append(Token(SIMPLE_TOKENS[self.current_char], pos_start=self.pos))
@@ -87,7 +84,7 @@ class Lexer:
         return tokens, None
     
     #! THE ORDER OF THE ITEMS IN THE CONDITIONS TUPLE MATTERS
-    def _make_token_advanced(self, start_token_type: TokenType, conditions: tuple) -> Token:
+    def make_token_advanced(self, start_token_type: TokenType, conditions: tuple) -> Tuple[Token, None]:
         token_type = start_token_type
         pos_start = self.pos.copy()
         self.advance()
@@ -103,10 +100,10 @@ class Lexer:
                 
                 if condition_break: break
         
-        return Token(token_type, pos_start=pos_start, pos_end=self.pos)
+        return Token(token_type, pos_start=pos_start, pos_end=self.pos), None
     
     #! THE ORDER OF THE ITEMS IN THE CHARS_QUEUE TUPLE MATTERS
-    def _make_token_enforced(self, token_type: TokenType, start_char: str, chars_queue: tuple) -> Tuple[Optional[Token], Optional[Error]]:
+    def make_token_enforced(self, token_type: TokenType, start_char: str, chars_queue: tuple) -> Tuple[Optional[Token], Optional[Error]]:
         pos_start = self.pos.copy()
         self.advance()
         
@@ -142,7 +139,32 @@ class Lexer:
             return Token(TokenType.NUMBER, float(number_string), pos_start, self.pos)
         else:
             return Token(TokenType.NUMBER, int(number_string), pos_start, self.pos)
+
+    def make_token_string(self) -> Tuple[Token, None]:
+        string = ""
+        pos_start = self.pos.copy()
+        escape_character = False
+        escape_characters = {
+            "n": "\n",
+            "t": "\t"
+        }
         
+        self.advance()
+        while self.current_char != None and (self.current_char != '"' or escape_character):
+            if escape_character:
+                string += escape_characters.get(self.current_char, self.current_char)
+            else:       
+                if self.current_char == "\\":
+                    escape_character = True
+                else:
+                    string += self.current_char
+                    
+            self.advance()
+            escape_character = False
+                
+        self.advance()
+        return Token(TokenType.STRING, string, pos_start, self.pos), None
+
     def make_token_identifier(self) -> Token:
         identifier_string = ""
         pos_start = self.pos.copy()

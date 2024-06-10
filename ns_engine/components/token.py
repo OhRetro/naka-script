@@ -18,7 +18,7 @@ class TokenType(Enum):
     FLOAT = "float"
     
     NUMBER = "number"
-    STRING = '"'
+    STRING = 'string'
     
     # Mathmatic types
     PLUS = "+"
@@ -51,9 +51,10 @@ class TokenType(Enum):
     ARROW = "->"
     SEMICOLON = ";"
     COLON = ":"
-    NEWLINE = "\n"
     COMMENT = "#"
     COMMENTBLOCK = "###"
+    
+    NEWLINE = "newline"
     
     EOF = "EOF"
 

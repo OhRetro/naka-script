@@ -2,7 +2,8 @@ from dataclasses import dataclass, field
 from typing import Callable, Self
 from .token import Token, TokenType
 from .keyword import Keyword
-from .node import (Node, NumberNode, 
+from .node import (Node, 
+                   NumberNode, StringNode,
                    BinOpNode, UnaryOpNode, 
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
@@ -78,7 +79,12 @@ class Parser:
             p_result.register_advancement()
             self.advance()
             return p_result.success(NumberNode(token))
-        
+ 
+        elif token.type == TokenType.STRING:
+            p_result.register_advancement()
+            self.advance()
+            return p_result.success(StringNode(token))
+               
         elif token.type == TokenType.IDENTIFIER:
             p_result.register_advancement()
             self.advance()
