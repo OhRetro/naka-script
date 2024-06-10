@@ -32,10 +32,6 @@ class ErrorInvalidSyntax(Error):
     name: str = field(default="Invalid Syntax Error", init=False)
 
 @dataclass(frozen=True, slots=True)
-class ErrorIllegalOperation(Error):
-    name: str = field(default="Illegal Operation Error", init=False)
-    
-@dataclass(frozen=True, slots=True)
 class ErrorRuntime(Error):
     name: str = field(default="Runtime Error", init=False)
     context: Context

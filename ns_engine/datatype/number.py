@@ -36,6 +36,8 @@ class Number(Datatype):
                     DIVISION_BY_ZERO_ERROR,
                     other.pos_start, other.pos_end, self.context
                 )
+        else:
+            return self._illegal_operation(other)
 
     def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
         return self._clone(other, "+")

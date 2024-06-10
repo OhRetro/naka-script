@@ -1,6 +1,9 @@
 from enum import Enum
 
 class Keyword(Enum):
+    def __repr__(self) -> str:
+        return f"Keyword({self.name})"
+    
     # Variables and Methods/Functions
     SETVAR = "var"
     SETIMMUTABLEVAR = "const"

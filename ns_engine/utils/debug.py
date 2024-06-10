@@ -8,7 +8,7 @@ ALL_USES_DEFAULT = 0
 
 COMPONENTS_ENABLED = {
     "lexer.py": 0,
-    "parser.py": 0,
+    "parser.py": 1,
     "interpreter.py": 0,
     
     "run.py": 0,
@@ -32,7 +32,7 @@ class DebugMessage:
         if not self.enabled: return
         curframe = i_currentframe()
         calframe = i_getouterframes(curframe, 2)
- 
+        
         logg_log(logg_DEBUG, f"[{self.caller}]: [{calframe[2][3]}]: {message}")
     
     def set_enabled(self, enabled):

@@ -2,13 +2,14 @@ from typing import Callable
 from .node import (Node, NumberNode,
                    BinOpNode, UnaryOpNode,
                    IfNode, ForNode, WhileNode,
+                   FuncDefNode, CallNode,
                    VarAccessNode, VarAssignNode)
 from .token import TokenType
 from .keyword import Keyword
 from .runtime import RuntimeResult
 from .context import Context
 from .error import ErrorRuntime
-from ..datatype.datatypes import Datatype, Number
+from ..datatype.datatypes import Datatype, Number, Function
 
 class Interpreter:
     def visit(self, node: Node, context: Context) -> RuntimeResult:
@@ -27,8 +28,8 @@ class Interpreter:
         
     def visit_VarAccessNode(self, node: VarAccessNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
-        var_name = node.token.value
-        var_value = context.symbol_table.get(var_name)
+        var_name: str = node.token.value
+        var_value: Datatype = context.symbol_table.get(var_name)
         
         if not var_value:
             return rt_result.failure(ErrorRuntime(
@@ -178,4 +179,35 @@ class Interpreter:
             if rt_result.error: return rt_result
 
         return rt_result.success(None)
+    
+    def visit_FuncDefNode(self, node: FuncDefNode, context: Context):
+        rt_result = RuntimeResult()
+        
+        func_name: str = node.token.value if node.token else "<anon>"
+        body_node = node.body_node
+        arg_names: list[str] = [arg_name.value for arg_name in node.arg_name_tokens]
+        func_value = Function(func_name, body_node, arg_names).set_context(context).set_pos(node.pos_start, node.pos_end)
+        
+        if node.token:
+            context.symbol_table.set(func_name, func_value)
+            
+        return rt_result.success(func_value)
+        
+    def visit_CallNode(self, node: CallNode, context: Context):
+        rt_result = RuntimeResult()
+        args: list[Datatype] = []
+        
+        value_to_call = rt_result.register(self.visit(node.node_to_call, context))
+        if rt_result.error: return rt_result
+        
+        value_to_call = value_to_call.copy().set_pos(node.pos_start, node.pos_end)
+        
+        for arg_node in node.arg_nodes:
+            args.append(rt_result.register(self.visit(arg_node, context)))
+            if rt_result.error: return rt_result
+            
+        return_value = rt_result.register(value_to_call.execute(args))
+        if rt_result.error: return rt_result
+        
+        return rt_result.success(return_value)
     

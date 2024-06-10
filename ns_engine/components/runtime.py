@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
-from typing import Self
+from typing import Self, TypeVar
 from .error import Error
-from ..datatype.datatypes import Datatype
+#from ..datatype.datatypes import Datatype
+
+Datatype = TypeVar("Datatype")
 
 @dataclass(slots=True)
 class RuntimeResult:

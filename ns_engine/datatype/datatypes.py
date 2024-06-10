@@ -1,6 +1,7 @@
 from typing import Any
 from .datatype import Datatype
 from .number import Number
+from .function import Function
 
 def makeout_datatype(value: Any) -> Datatype:
     if isinstance(value, int) or isinstance(value, float):

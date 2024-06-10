@@ -5,8 +5,8 @@ from .position import Position
 from .keyword import Keyword
 
 class TokenType(Enum):
-    # def __repr__(self) -> str:
-    #     return f"{self.name}"
+    def __repr__(self) -> str:
+        return f"TokenType({self.name})"
     
     # General types
     KEYWORD = "keyword"

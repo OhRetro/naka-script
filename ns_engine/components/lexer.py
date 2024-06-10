@@ -33,6 +33,9 @@ class Lexer:
             "]": TokenType.RSQUARE,
             "{": TokenType.LBRACE,
             "}": TokenType.RBRACE,
+            ",": TokenType.COMMA,
+            ";": TokenType.SEMICOLON,
+            ":": TokenType.COLON
         }
         
         ADVANCED_TOKENS = {
