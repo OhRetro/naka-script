@@ -75,9 +75,6 @@ class Datatype:
 
     def modulo_by(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
         return self._illegal_operation(other)
-    
-    def indexing_on(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
-        return self._illegal_operation(other)
 
     def is_equal_to(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
         return self._illegal_operation(other)
@@ -108,6 +105,9 @@ class Datatype:
     
     def execute(self) -> Tuple[Optional[Self], Optional[Error]]:
         return self._illegal_operation()
+    
+    def indexing_on(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
+        return self._illegal_operation(other)
 
     def is_true(self) -> bool:
         return False

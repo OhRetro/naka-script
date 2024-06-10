@@ -167,7 +167,8 @@ cython_debug/
 # Ignore Python bytecode files
 *.pyc
 
-output/
-.output/
+build/
 
 test/
+
+nuitka-crash-report.xml

@@ -1,1 +1,1 @@
-# Naka Script (WIP)
+# NakaScript (WIP)
