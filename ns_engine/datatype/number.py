@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Self
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from ..components.error import ErrorRuntime
 from ..utils.strings_template import DIVISION_BY_ZERO_ERROR

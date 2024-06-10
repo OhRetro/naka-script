@@ -9,8 +9,8 @@ class Node:
     pos_end: Position = field(default=None, init=False)
 
     def __post_init__(self):
-        self.pos_start = self.token.pos_start
-        self.pos_end = self.token.pos_end
+        self.pos_start = self.pos_start or self.token.pos_start
+        self.pos_end = self.pos_end or self.token.pos_end
         
 @dataclass(slots=True)
 class NumberNode(Node):
@@ -21,7 +21,17 @@ class NumberNode(Node):
 class StringNode(Node):
     def __repr__(self) -> str:
         return f"StringNode(\"{self.token.value}\")"
-    
+
+@dataclass(slots=True)
+class ListNode(Node):
+    token: Token = field(default=None, init=False)
+    element_nodes: list[Node]
+    pos_start: Position
+    pos_end: Position
+        
+    def __repr__(self) -> str:
+        return f"ListNode({self.element_nodes})"
+
 @dataclass(slots=True)
 class VarAccessNode(Node):
     def __repr__(self) -> str:
@@ -60,7 +70,22 @@ class UnaryOpNode(Node):
 
     def __repr__(self) -> str:
         return f"UnaryOpNode({self.token}, {self.node})"
-    
+
+
+#! UNUSED FOR NOW, JUST FOR REFERENCING
+@dataclass(slots=True)
+class IndexingNode(Node):
+    token: Token = field(default=None, init=False)
+    element_nodes: list[Node]
+    indexing_token: Token
+    pos_start: Position
+
+    def __post_init__(self):
+        self.pos_end = self.indexing_token.pos_end
+
+    def __repr__(self) -> str:
+        return f"IndexingNode({self.token}, {self.indexing_token})"
+
 @dataclass(slots=True)
 class IfNode(Node):
     token: Token = field(default=None, init=False)

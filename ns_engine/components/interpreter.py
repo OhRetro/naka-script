@@ -1,16 +1,17 @@
 from typing import Callable
 from .node import (Node, 
-                   NumberNode, StringNode,
+                   NumberNode, StringNode, ListNode,
                    BinOpNode, UnaryOpNode,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
-                   VarAccessNode, VarAssignNode)
+                   VarAccessNode, VarAssignNode,
+                   IndexingNode)
 from .token import TokenType
 from .keyword import Keyword
 from .runtime import RuntimeResult
 from .context import Context
 from .error import ErrorRuntime
-from ..datatype.datatypes import Datatype, Number, String, Function
+from ..datatype.datatypes import Datatype, Number, String, List, Function
 
 class Interpreter:
     def visit(self, node: Node, context: Context) -> RuntimeResult:
@@ -30,6 +31,18 @@ class Interpreter:
     def visit_StringNode(self, node: StringNode, context: Context) -> RuntimeResult:
         return RuntimeResult().success(
             String(node.token.value).set_context(context).set_pos(node.pos_start, node.pos_end)
+        )
+        
+    def visit_ListNode(self, node: ListNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
+        elements: list[Datatype] = []
+        
+        for element_node in node.element_nodes:
+            elements.append(rt_result.register(self.visit(element_node, context)))
+            if rt_result.error: return rt_result
+            
+        return rt_result.success(
+            List(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
            
     def visit_VarAccessNode(self, node: VarAccessNode, context: Context) -> RuntimeResult:
@@ -92,7 +105,10 @@ class Interpreter:
                 result, error = left.is_less_equal_than(right)
             case TokenType.GTE:
                 result, error = left.is_greater_equal_than(right)
-                
+
+            case TokenType.COLON:
+                result, error = left.indexing_on(right)
+                    
             case TokenType.KEYWORD:
                 if node.token.is_keyword_of(Keyword.AND):
                     result, error = left.and_with(right)
@@ -121,6 +137,18 @@ class Interpreter:
             return rt_result.failure(error)
         
         return rt_result.success(number.set_pos(node.pos_start, node.pos_end))
+
+    # def visit_IndexingNode(self, node: IndexingNode, context: Context) -> RuntimeResult:
+    #     rt_result = RuntimeResult()
+    #     list_value: List = rt_result.register(self.visit(ListNode(node.pos_start, node.indexing_token.pos_end.copy(), node.element_nodes), context))
+    #     index_value: Number = rt_result.register(self.visit(NumberNode(node.indexing_token), context))
+        
+    #     value, error = list_value.indexing_on(index_value) # (None, None)
+        
+    #     if error:
+    #         return rt_result.failure(error)
+        
+    #     return rt_result.success(value)
     
     def visit_IfNode(self, node: IfNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
@@ -143,6 +171,7 @@ class Interpreter:
     
     def visit_ForNode(self, node: ForNode, context: Context):
         rt_result = RuntimeResult()
+        elements: list[Datatype] = []
 
         start_value_number: Number = rt_result.register(self.visit(node.start_value_node, context))
         if rt_result.error: return rt_result
@@ -167,13 +196,16 @@ class Interpreter:
             context.symbol_table.set(node.token.value, Number(i))
             i += step_value_number.value
 
-            rt_result.register(self.visit(node.body_node, context))
+            elements.append(rt_result.register(self.visit(node.body_node, context)))
             if rt_result.error: return rt_result
 
-        return rt_result.success(None)
+        return rt_result.success(
+            List(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
+        )
 
     def visit_WhileNode(self, node: WhileNode, context: Context):
         rt_result = RuntimeResult()
+        elements: list[Datatype] = []
 
         while True:
             condition: Datatype = rt_result.register(self.visit(node.condition_node, context))
@@ -181,10 +213,12 @@ class Interpreter:
 
             if not condition.is_true(): break
 
-            rt_result.register(self.visit(node.body_node, context))
+            elements.append(rt_result.register(self.visit(node.body_node, context)))
             if rt_result.error: return rt_result
 
-        return rt_result.success(None)
+        return rt_result.success(
+            List(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
+        )
     
     def visit_FuncDefNode(self, node: FuncDefNode, context: Context):
         rt_result = RuntimeResult()

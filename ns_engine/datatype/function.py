@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Self, Never
+from typing import Never
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from ..components.error import ErrorRuntime
 from ..components.node import Node
@@ -12,7 +12,7 @@ class Function(Datatype):
     arg_names: list
 
     def __post_init__(self):
-        self._values_to_copy = (self.name, self.body_node, self.arg_names)
+        self._values_to_copy = ("name", "body_node", "arg_names")
 
     def __repr__(self) -> str:
         return f"<function {self.name}>"

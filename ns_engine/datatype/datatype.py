@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any, Self, Tuple, Optional
+from copy import deepcopy
 from ..components.position import Position
 from ..components.context import Context
 from ..components.error import Error, ErrorRuntime
@@ -12,10 +13,13 @@ class Datatype:
     pos_end: Position = field(default=None, init=False)
     context: Context = field(default=None, init=False)
     
-    _values_to_copy: Tuple[Any] = field(default=None, init=False)
+    _values_to_copy: Tuple[str] = field(default=None, init=False)
 
     def _new(self, value: Any) -> Tuple[Self, None]:
         return type(self)(value).set_context(self.context), None
+    
+    def _value_copy(self) -> Any:
+        return deepcopy(self.value)
         
     def _illegal_operation(self, other: Self = None) -> Tuple[None, ErrorRuntime]:
         other = other or self
@@ -38,7 +42,16 @@ class Datatype:
         if type(self).__name__ == "Datatype":
             raise Exception("Cannot copy pure Datatype, only defined")
         
-        values_to_copy = self._values_to_copy or (self.value, )
+        values_to_copy = self._values_to_copy or ("value", )
+        _temp = []
+        for value in values_to_copy:
+            if value.startswith(":"):
+                _temp.append(getattr(self, value)[:])
+            else:
+                _temp.append(getattr(self, value))
+                
+        values_to_copy = tuple(_temp)
+        del _temp
         
         copy = type(self)(*values_to_copy)
         copy.set_pos(self.pos_start, self.pos_end)
@@ -61,6 +74,9 @@ class Datatype:
         return self._illegal_operation(other)
 
     def modulo_by(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
+        return self._illegal_operation(other)
+    
+    def indexing_on(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
         return self._illegal_operation(other)
 
     def is_equal_to(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:

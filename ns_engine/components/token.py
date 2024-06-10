@@ -49,6 +49,7 @@ class TokenType(Enum):
     DOT = "."
     COMMA = ","
     ARROW = "->"
+    LEFTARROW = "<-"
     SEMICOLON = ";"
     COLON = ":"
     COMMENT = "#"

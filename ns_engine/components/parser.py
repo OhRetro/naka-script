@@ -3,11 +3,12 @@ from typing import Callable, Self
 from .token import Token, TokenType
 from .keyword import Keyword
 from .node import (Node, 
-                   NumberNode, StringNode,
+                   NumberNode, StringNode, ListNode,
                    BinOpNode, UnaryOpNode, 
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
-                   VarAssignNode, VarAccessNode)
+                   VarAssignNode, VarAccessNode,
+                   IndexingNode)
 from .error import Error, ErrorInvalidSyntax
 from ..utils.expected import expected
 from ..utils.debug import DebugMessage
@@ -109,6 +110,11 @@ class Parser:
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
                 
+        elif token.type == TokenType.LSQUARE:
+            list_expr = p_result.register(self.list_expr())
+            if p_result.error: return p_result
+            return p_result.success(list_expr)
+                           
         elif token.is_keyword_of(Keyword.IF):
             if_expr = p_result.register(self.if_expr())
             if p_result.error: return p_result
@@ -130,7 +136,8 @@ class Parser:
             return p_result.success(func_def)
         
         return p_result.failure(ErrorInvalidSyntax(
-            expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN,
+            expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
+                     TokenType.LPAREN, TokenType.LSQUARE,
                      Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION),
             token.pos_start, token.pos_end
         ))
@@ -155,7 +162,8 @@ class Parser:
                 
                 if p_result.error: 
                     return p_result.failure(ErrorInvalidSyntax(
-                        expected(TokenType.RPAREN, Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, Keyword.NOT),
+                        expected(TokenType.RPAREN, Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE,
+                                 Keyword.NOT),
                         self.current_token.pos_start, self.current_token.pos_end
                     ))
                     
@@ -179,8 +187,11 @@ class Parser:
         
         return p_result.success(atom)
 
+    def index(self) -> ParseResult:
+        return self.bin_op((TokenType.COLON, ), self.call, self.power)
+
     def power(self) -> ParseResult:
-        return self.bin_op((TokenType.POWER, ), self.call, self.factor)
+        return self.bin_op((TokenType.POWER, ), self.index, self.factor)
     
     def factor(self) -> ParseResult:
         p_result = ParseResult()
@@ -223,11 +234,75 @@ class Parser:
         
         if p_result.error:
             return p_result.failure(ErrorInvalidSyntax(
-                expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, Keyword.NOT),
+                expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE,
+                         Keyword.NOT),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
             
         return p_result.success(node)
+
+    def list_expr(self) -> ParseResult:
+        p_result = ParseResult()
+        element_nodes: list[Node] = []
+        pos_start = self.current_token.pos_start.copy()
+        
+        if self.current_token.type != TokenType.LSQUARE:
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(TokenType.LSQUARE),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+
+        p_result.register_advancement()
+        self.advance()
+
+        if self.current_token.type == TokenType.RSQUARE:
+            p_result.register_advancement()
+            self.advance()
+            
+        else:
+            element_nodes.append(p_result.register(self.expr()))
+            
+            if p_result.error: 
+                return p_result.failure(ErrorInvalidSyntax(
+                    expected(TokenType.RSQUARE, Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN,
+                             Keyword.NOT),
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+                
+            while self.current_token.type == TokenType.COMMA:
+                p_result.register_advancement()
+                self.advance()
+                
+                element_nodes.append(p_result.register(self.expr()))
+                if p_result.error: return p_result
+                
+            if self.current_token.type != TokenType.RSQUARE:
+                return p_result.failure(ErrorInvalidSyntax(
+                    expected(TokenType.COMMA, TokenType.RSQUARE),
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+                
+            p_result.register_advancement()
+            self.advance()
+            
+        # if self.current_token.type == TokenType.COLON:
+        #     p_result.register_advancement()
+        #     self.advance()
+            
+        #     if self.current_token.type != TokenType.NUMBER:
+        #         return p_result.failure(ErrorInvalidSyntax(
+        #             expected(TokenType.NUMBER),
+        #             self.current_token.pos_start, self.current_token.pos_end
+        #         ))
+            
+        #     index_token: Token = self.current_token
+            
+        #     p_result.register_advancement()
+        #     self.advance()
+        
+        #     return p_result.success(IndexingNode(pos_start, element_nodes, index_token))
+
+        return p_result.success(ListNode(pos_start, self.current_token.pos_end.copy(), element_nodes))
 
     def if_expr(self) -> ParseResult:
         p_result = ParseResult()
@@ -421,7 +496,7 @@ class Parser:
         
         if p_result.error:
             return p_result.failure(ErrorInvalidSyntax(
-                expected(Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, Keyword.NOT,
+                expected(Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE, Keyword.NOT,
                          Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
