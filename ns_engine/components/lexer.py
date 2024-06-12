@@ -129,24 +129,25 @@ class Lexer:
             
             self.advance()
                 
-        if dot_count:
-            return Token(TokenType.NUMBER, float(number_string), pos_start, self.pos)
-        else:
-            return Token(TokenType.NUMBER, int(number_string), pos_start, self.pos)
+        number_value = float(number_string) if dot_count else int(number_string)
+        return Token(TokenType.NUMBER, number_value, pos_start, self.pos)
 
-    def make_token_string(self) -> Tuple[Token, None]:
+    def make_token_string(self) -> Tuple[Optional[Token], Optional[Error]]:
         string = ""
         pos_start = self.pos.copy()
         escape_character = False
         escape_characters = {
             "n": "\n",
-            "t": "\t"
+            "t": "\t",
+            "\\": "\\",
+            '"': '"'
         }
         
         self.advance()
         while self.current_char != None and (self.current_char != '"' or escape_character):
             if escape_character:
                 string += escape_characters.get(self.current_char, self.current_char)
+                escape_character = False
             else:       
                 if self.current_char == "\\":
                     escape_character = True
@@ -154,9 +155,16 @@ class Lexer:
                     string += self.current_char
                     
             self.advance()
-            escape_character = False
-                
+        
+        if self.current_char != '"':
+            self.advance()
+            return None, ErrorExpectedCharacter(
+                "'\"'",
+                pos_start, self.pos
+            )
+        
         self.advance()
+        
         return Token(TokenType.STRING, string, pos_start, self.pos), None
 
     def make_token_identifier(self) -> Token:

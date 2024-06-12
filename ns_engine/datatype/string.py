@@ -1,14 +1,17 @@
 from dataclasses import dataclass
 from .datatype import Datatype, DATATYPE_OR_ERROR
-from .datatypes import Number
+from .number import Number
 from ..components.error import ErrorRuntime
 
 @dataclass(slots=True)
 class String(Datatype):
     value: str
     
+    def __str__(self) -> str:
+        return self.value
+    
     def __repr__(self) -> str:
-        return str(self.value)
+        return f'"{self.value}"'
     
     def _number(self, value: int | float) -> DATATYPE_OR_ERROR:
         return Number(value).set_context(self.context), None

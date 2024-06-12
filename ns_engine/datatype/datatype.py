@@ -14,7 +14,7 @@ class Datatype:
     context: Context = field(default=None, init=False)
     
     _values_to_copy: Tuple[str] = field(default=None, init=False)
-
+    
     def _new(self, value: Any) -> Tuple[Self, None]:
         return type(self)(value).set_context(self.context), None
     

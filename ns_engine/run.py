@@ -1,14 +1,13 @@
 from ns_engine.components.lexer import Lexer
 from ns_engine.components.parser import Parser
 from ns_engine.components.interpreter import Interpreter
-
 from ns_engine.components.context import Context
 from ns_engine.components.symbol_table import SymbolTable
+from ns_engine.datatype.datatypes import set_builtin_symbols
+
 
 global_symbol_table = SymbolTable()
-global_symbol_table.set("null", -1)
-global_symbol_table.set("true", 1)
-global_symbol_table.set("false", 0)
+set_builtin_symbols(global_symbol_table)
 
 def execute(src_filename: str, src_data: str):
     lexer = Lexer(src_filename, src_data)

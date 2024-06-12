@@ -83,3 +83,6 @@ class Number(Datatype):
     def is_true(self) -> bool:
         return self.value != 0
     
+Number.null = Number(-1)
+Number.true = Number(1)
+Number.false = Number(0)

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from .datatype import Datatype, DATATYPE_OR_ERROR
-from .datatypes import Number
+from .number import Number
 from ..components.error import ErrorRuntime
 
 @dataclass(slots=True)
@@ -8,10 +8,16 @@ class List(Datatype):
     value: list[Datatype]
 
     def __post_init__(self):
-        self._values_to_copy = (":value", )
-        
+        self._values_to_copy = ("value", )
+
+    def __str__(self) -> str:
+        return self._elements_string()
+
     def __repr__(self) -> str:
-        return f"[{', '.join([str(x) for x in self.value])}]"
+        return f"[{self._elements_string()}]"
+    
+    def _elements_string(self):
+        return ", ".join([str(x) for x in self.value])
     
     def _number(self, value: int | float) -> DATATYPE_OR_ERROR:
         return Number(value).set_context(self.context), None

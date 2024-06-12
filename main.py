@@ -8,7 +8,7 @@ if __name__ == "__main__":
             result, error = run.execute("<shell>", command_text)
             
             if error: print(error.as_string())
-            elif result: print(result)
+            elif result: print(repr(result))
             
         except KeyboardInterrupt:
             quit()

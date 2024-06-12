@@ -56,7 +56,7 @@ class Interpreter:
                 node.pos_start, node.pos_end, context
             ))
         
-        var_value = var_value.copy().set_pos(node.pos_start, node.pos_end)
+        var_value = var_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
         return rt_result.success(var_value)
 
     def visit_VarAssignNode(self, node: VarAssignNode, context: Context) -> RuntimeResult:
@@ -246,8 +246,9 @@ class Interpreter:
             args.append(rt_result.register(self.visit(arg_node, context)))
             if rt_result.error: return rt_result
             
-        return_value = rt_result.register(value_to_call.execute(args))
+        return_value: Datatype = rt_result.register(value_to_call.execute(args))
         if rt_result.error: return rt_result
         
+        return_value = return_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
         return rt_result.success(return_value)
     

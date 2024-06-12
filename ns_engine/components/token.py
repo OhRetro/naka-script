@@ -62,7 +62,7 @@ class TokenType(Enum):
     
     EOF = "EOF"
 
-@dataclass(frozen=False, slots=True)
+@dataclass(slots=True)
 class Token:
     type: TokenType
     value: Any = field(default=None)
