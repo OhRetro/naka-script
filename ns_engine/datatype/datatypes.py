@@ -21,7 +21,7 @@ def set_builtin_symbols(symbol_table):
     symbol_table.set("true", Number.true)
     symbol_table.set("false", Number.false)
     symbol_table.set("print", BuiltInFunction.print)
-    symbol_table.set("print_ret", BuiltInFunction.print_ret)
+    symbol_table.set("to_string", BuiltInFunction.to_string)
     symbol_table.set("input", BuiltInFunction.input)
     symbol_table.set("input_int", BuiltInFunction.input_int)
     symbol_table.set("clear", BuiltInFunction.clear)
