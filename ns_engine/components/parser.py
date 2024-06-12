@@ -8,7 +8,6 @@ from .node import (Node,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
                    VarAssignNode, VarAccessNode, VarDeleteNode)
-                   #IndexingNode)
 from .error import Error, ErrorInvalidSyntax
 from ..utils.expected import expected
 from ..utils.debug import DebugMessage
@@ -284,23 +283,6 @@ class Parser:
                 
             p_result.register_advancement()
             self.advance()
-            
-        # if self.current_token.type == TokenType.COLON:
-        #     p_result.register_advancement()
-        #     self.advance()
-            
-        #     if self.current_token.type != TokenType.NUMBER:
-        #         return p_result.failure(ErrorInvalidSyntax(
-        #             expected(TokenType.NUMBER),
-        #             self.current_token.pos_start, self.current_token.pos_end
-        #         ))
-            
-        #     index_token: Token = self.current_token
-            
-        #     p_result.register_advancement()
-        #     self.advance()
-        
-        #     return p_result.success(IndexingNode(pos_start, element_nodes, index_token))
 
         return p_result.success(ListNode(pos_start, self.current_token.pos_end.copy(), element_nodes))
 

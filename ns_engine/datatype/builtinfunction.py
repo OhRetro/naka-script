@@ -8,7 +8,7 @@ from .number import Number
 from .string import String
 from .list import List
 from ..components.error import ErrorRuntime
-from ..components.node import Node
+#from ..components.node import Node
 from ..components.runtime import RuntimeResult
 from ..components.context import Context
 
@@ -31,13 +31,13 @@ class BuiltInFunction(BaseFunction):
             details, self.pos_start, self.pos_end, context
         ))
 
-    def no_visit_method(self, node: Node, context: Context):
-        raise Exception(f"No execute_{self.name} method defined")
-
     def execute(self, args: list[Datatype]) -> DATATYPE_OR_ERROR:
         rt_result = RuntimeResult()
         context = self.generate_new_context()
 
+        if self.logic_function.__code__.co_argcount < 2:
+            raise Exception(f"The logic function '{self.logic_function.__name__}' for '{self.name}' doesn't contain at least 2 arguments")
+        
         method = MethodType(self.logic_function, self)
 
         rt_result.register(self.check_populate_args(self.arg_names or tuple(), args, context))
@@ -60,7 +60,7 @@ def _input(self: BuiltInFunction, _):
     text = input()
     return self._rt_result_success(String(text))
 
-def _input_int(self: BuiltInFunction, _):
+def _input_number(self: BuiltInFunction, _):
     text = input()
     try:
         number = float(text) if "." in text else int(text)
@@ -129,7 +129,7 @@ built_in_functions = {
     "print": BuiltInFunction("print", ("value",), _print),
     "to_string": BuiltInFunction("to_string", ("value",), _to_string),
     "input": BuiltInFunction("input", None, _input),
-    "input_int": BuiltInFunction("input_int", None, _input_int),
+    "input_number": BuiltInFunction("input_int", None, _input_number),
     "clear": BuiltInFunction("clear", None, _clear),
     "is_number": BuiltInFunction("is_number", ("value",), _is_number),
     "is_string": BuiltInFunction("is_string", ("value",), _is_string),

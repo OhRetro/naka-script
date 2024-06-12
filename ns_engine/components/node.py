@@ -76,21 +76,6 @@ class UnaryOpNode(Node):
     def __repr__(self) -> str:
         return f"UnaryOpNode({self.token}, {self.node})"
 
-
-#! UNUSED FOR NOW, JUST FOR REFERENCING
-# @dataclass(slots=True)
-# class IndexingNode(Node):
-#     token: Token = field(default=None, init=False)
-#     element_nodes: list[Node]
-#     indexing_token: Token
-#     pos_start: Position
-
-#     def __post_init__(self):
-#         self.pos_end = self.indexing_token.pos_end
-
-#     def __repr__(self) -> str:
-#         return f"IndexingNode({self.token}, {self.indexing_token})"
-
 @dataclass(slots=True)
 class IfNode(Node):
     token: Token = field(default=None, init=False)

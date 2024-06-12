@@ -5,7 +5,6 @@ from .node import (Node,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
                    VarAccessNode, VarAssignNode, VarDeleteNode)
-                   #IndexingNode)
 from .token import TokenType
 from .keyword import Keyword
 from .runtime import RuntimeResult
@@ -153,18 +152,6 @@ class Interpreter:
         
         return rt_result.success(number.set_pos(node.pos_start, node.pos_end))
 
-    # def visit_IndexingNode(self, node: IndexingNode, context: Context) -> RuntimeResult:
-    #     rt_result = RuntimeResult()
-    #     list_value: List = rt_result.register(self.visit(ListNode(node.pos_start, node.indexing_token.pos_end.copy(), node.element_nodes), context))
-    #     index_value: Number = rt_result.register(self.visit(NumberNode(node.indexing_token), context))
-        
-    #     value, error = list_value.indexing_on(index_value) # (None, None)
-        
-    #     if error:
-    #         return rt_result.failure(error)
-        
-    #     return rt_result.success(value)
-    
     def visit_IfNode(self, node: IfNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
         
