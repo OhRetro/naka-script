@@ -2,7 +2,7 @@ from typing import Any
 from .datatype import Datatype
 from .number import Number
 from .function import Function
-from .builtinfunction import BuiltInFunction
+from .builtinfunction import built_in_functions
 from .string import String
 from .list import List
 
@@ -15,23 +15,13 @@ def makeout_datatype(value: Any) -> Datatype:
         return List(value)
     else:
         raise TypeError(f"Could not convert {value} to a Datatype")
-    
+
 def set_builtin_symbols(symbol_table):
     symbol_table.set("null", Number.null)
     symbol_table.set("true", Number.true)
     symbol_table.set("false", Number.false)
-    symbol_table.set("print", BuiltInFunction.print)
-    symbol_table.set("to_string", BuiltInFunction.to_string)
-    symbol_table.set("input", BuiltInFunction.input)
-    symbol_table.set("input_int", BuiltInFunction.input_int)
-    symbol_table.set("clear", BuiltInFunction.clear)
-    symbol_table.set("cls", BuiltInFunction.clear)
-    symbol_table.set("is_num", BuiltInFunction.is_number)
-    symbol_table.set("is_str", BuiltInFunction.is_string)
-    symbol_table.set("is_list", BuiltInFunction.is_list)
-    symbol_table.set("is_fun", BuiltInFunction.is_function)
-    symbol_table.set("append", BuiltInFunction.append)
-    symbol_table.set("pop", BuiltInFunction.pop)
-    symbol_table.set("extend", BuiltInFunction.extend)
+    
+    for k, v in built_in_functions.items():
+        symbol_table.set(k, v)
     
     return symbol_table

@@ -4,8 +4,8 @@ from .node import (Node,
                    BinOpNode, UnaryOpNode,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
-                   VarAccessNode, VarAssignNode,
-                   IndexingNode)
+                   VarAccessNode, VarAssignNode, VarDeleteNode)
+                   #IndexingNode)
 from .token import TokenType
 from .keyword import Keyword
 from .runtime import RuntimeResult
@@ -69,6 +69,21 @@ class Interpreter:
         context.symbol_table.set(var_name, value)
         
         return rt_result.success(value)
+    
+    def visit_VarDeleteNode(self, node: VarDeleteNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
+        var_name: str = node.token.value
+        
+        symbol_table = context.symbol_table
+        
+        if symbol_table.exists(var_name):
+            symbol_table.remove(var_name)
+            return rt_result.success(Number.null)
+        else:
+            return rt_result.failure(ErrorRuntime(
+                f"Variable '{var_name}' is not defined.",
+                node.pos_start, node.pos_end, context
+            ))
     
     def visit_BinOpNode(self, node: BinOpNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()

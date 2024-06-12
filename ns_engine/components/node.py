@@ -49,6 +49,11 @@ class VarAssignNode(Node):
         return f"VarAssignNode({self.token}, {self.value_node})"
     
 @dataclass(slots=True)
+class VarDeleteNode(Node):
+    def __repr__(self) -> str:
+        return f"VarDeleteNode({self.token})"
+
+@dataclass(slots=True)
 class BinOpNode(Node):
     left_node: Node
     right_node: Node
@@ -73,18 +78,18 @@ class UnaryOpNode(Node):
 
 
 #! UNUSED FOR NOW, JUST FOR REFERENCING
-@dataclass(slots=True)
-class IndexingNode(Node):
-    token: Token = field(default=None, init=False)
-    element_nodes: list[Node]
-    indexing_token: Token
-    pos_start: Position
+# @dataclass(slots=True)
+# class IndexingNode(Node):
+#     token: Token = field(default=None, init=False)
+#     element_nodes: list[Node]
+#     indexing_token: Token
+#     pos_start: Position
 
-    def __post_init__(self):
-        self.pos_end = self.indexing_token.pos_end
+#     def __post_init__(self):
+#         self.pos_end = self.indexing_token.pos_end
 
-    def __repr__(self) -> str:
-        return f"IndexingNode({self.token}, {self.indexing_token})"
+#     def __repr__(self) -> str:
+#         return f"IndexingNode({self.token}, {self.indexing_token})"
 
 @dataclass(slots=True)
 class IfNode(Node):

@@ -41,15 +41,15 @@ class Lexer:
         # Advanced Tokens are tokens that require more complex handling in comparison to Simple Tokens
         ADVANCED_TOKENS = {
             # Check if it's a Mult or Power Token, the rest follow the same rules
-            "*": lambda: self.make_token_advanced(TokenType.MULT, ( {"char": "*", "token_type": TokenType.POWER}, )), 
-            "-": lambda: self.make_token_advanced(TokenType.MINUS, ( {"char": ">", "token_type": TokenType.RIGHTARROW}, )), 
+            "*": lambda: self._make_token_advanced(TokenType.MULT, ( {"char": "*", "token_type": TokenType.POWER}, )), 
+            "-": lambda: self._make_token_advanced(TokenType.MINUS, ( {"char": ">", "token_type": TokenType.RIGHTARROW}, )), 
             
-            "=": lambda: self.make_token_advanced(TokenType.EQUALS, ( {"char": "=", "token_type": TokenType.EQUALS}, )), 
-            "<": lambda: self.make_token_advanced(TokenType.LT, ( {"char": "=", "token_type": TokenType.LTE}, )), 
-            ">": lambda: self.make_token_advanced(TokenType.GT, ( {"char": "=", "token_type": TokenType.GTE}, )),
-            "!": lambda: self.make_token_advanced(None, ( {"char": "=", "token_type": TokenType.NE, "enforced": True}, )),
+            "=": lambda: self._make_token_advanced(TokenType.EQUALS, ( {"char": "=", "token_type": TokenType.EQUALS}, )), 
+            "<": lambda: self._make_token_advanced(TokenType.LT, ( {"char": "=", "token_type": TokenType.LTE}, )), 
+            ">": lambda: self._make_token_advanced(TokenType.GT, ( {"char": "=", "token_type": TokenType.GTE}, )),
+            "!": lambda: self._make_token_advanced(None, ( {"char": "=", "token_type": TokenType.NE, "enforced": True}, )),
             
-            '"': lambda: self.make_token_string()
+            '"': lambda: self._make_token_string()
         }
         
         while self.current_char != None:
@@ -57,10 +57,10 @@ class Lexer:
                 self.advance()
                 
             elif self.current_char in DIGITS:
-                tokens.append(self.make_token_number())
+                tokens.append(self._make_token_number())
                 
             elif self.current_char in LETTERS:
-                tokens.append(self.make_token_identifier())
+                tokens.append(self._make_token_identifier())
             
             elif self.current_char in ADVANCED_TOKENS:
                 token, error = ADVANCED_TOKENS[self.current_char]()
@@ -83,7 +83,7 @@ class Lexer:
         return tokens, None
     
     #! THE ORDER OF THE ITEMS IN THE CONDITIONS TUPLE MATTERS
-    def make_token_advanced(self, start_token_type: TokenType, conditions: tuple[dict]) -> Tuple[Token, None]:
+    def _make_token_advanced(self, start_token_type: TokenType, conditions: tuple[dict]) -> Tuple[Token, None]:
         full_char = self.current_char
         token_type = start_token_type
         pos_start = self.pos.copy()
@@ -114,7 +114,7 @@ class Lexer:
         
         return Token(token_type, pos_start=pos_start, pos_end=self.pos), None
     
-    def make_token_number(self) -> Token:
+    def _make_token_number(self) -> Token:
         number_string = ""
         dot_count = 0
         pos_start = self.pos.copy()
@@ -132,7 +132,7 @@ class Lexer:
         number_value = float(number_string) if dot_count else int(number_string)
         return Token(TokenType.NUMBER, number_value, pos_start, self.pos)
 
-    def make_token_string(self) -> Tuple[Optional[Token], Optional[Error]]:
+    def _make_token_string(self) -> Tuple[Optional[Token], Optional[Error]]:
         string = ""
         pos_start = self.pos.copy()
         escape_character = False
@@ -167,7 +167,7 @@ class Lexer:
         
         return Token(TokenType.STRING, string, pos_start, self.pos), None
 
-    def make_token_identifier(self) -> Token:
+    def _make_token_identifier(self) -> Token:
         identifier_string = ""
         pos_start = self.pos.copy()
         

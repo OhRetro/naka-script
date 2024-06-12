@@ -10,7 +10,7 @@ class Keyword(Enum):
     SETSCOPEDVAR = "local"
     SETFUNCTION = "func"
     SETCLASS = "class"
-    DELETEVAR = "clear"
+    DELETEVAR = "delvar"
       
     # Conditional
     AND = "and"

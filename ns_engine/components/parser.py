@@ -7,8 +7,8 @@ from .node import (Node,
                    BinOpNode, UnaryOpNode, 
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
-                   VarAssignNode, VarAccessNode,
-                   IndexingNode)
+                   VarAssignNode, VarAccessNode, VarDeleteNode)
+                   #IndexingNode)
 from .error import Error, ErrorInvalidSyntax
 from ..utils.expected import expected
 from ..utils.debug import DebugMessage
@@ -492,11 +492,27 @@ class Parser:
                 
             return p_result.success(VarAssignNode(var_name_token, expr))
         
+        elif self.current_token.is_keyword_of(Keyword.DELETEVAR):
+            p_result.register_advancement()
+            self.advance()
+            
+            if self.current_token.type != TokenType.IDENTIFIER:
+                return p_result.failure(ErrorInvalidSyntax(
+                    expected(TokenType.IDENTIFIER),
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+                
+            var_name_token = self.current_token
+            p_result.register_advancement()
+            self.advance()
+            
+            return p_result.success(VarDeleteNode(var_name_token))
+        
         node = p_result.register(self.bin_op((Keyword.AND, Keyword.OR), self.comp_expr))
         
         if p_result.error:
             return p_result.failure(ErrorInvalidSyntax(
-                expected(Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE, Keyword.NOT,
+                expected(Keyword.SETVAR, Keyword.DELETEVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE, Keyword.NOT,
                          Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
