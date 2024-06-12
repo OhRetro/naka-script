@@ -107,7 +107,7 @@ class Interpreter:
             case TokenType.MOD:
                 result, error = left.modulo_by(right)
                 
-            case TokenType.EE:
+            case TokenType.ISEQUALS:
                 result, error = left.is_equal_to(right)
             case TokenType.NE:
                 result, error = left.is_not_equal_to(right)

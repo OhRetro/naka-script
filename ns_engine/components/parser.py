@@ -226,7 +226,7 @@ class Parser:
             return p_result.success(UnaryOpNode(operation_token, node))
         
         node = p_result.register(self.bin_op(
-            (TokenType.EE, TokenType.NE,
+            (TokenType.ISEQUALS, TokenType.NE,
              TokenType.LT, TokenType.GT, 
              TokenType.LTE, TokenType.GTE), 
             self.arith_expr))

@@ -37,7 +37,7 @@ class TokenType(Enum):
     RBRACE = "}"
     
     # Conditional types
-    EE = "=="
+    ISEQUALS = "=="
     NE = "!="
     LT = "<"
     GT = ">"
