@@ -44,7 +44,7 @@ class Lexer:
             "*": lambda: self._make_token_advanced(TokenType.MULT, ( {"char": "*", "token_type": TokenType.POWER}, )), 
             "-": lambda: self._make_token_advanced(TokenType.MINUS, ( {"char": ">", "token_type": TokenType.RIGHTARROW}, )), 
             
-            "=": lambda: self._make_token_advanced(TokenType.EQUALS, ( {"char": "=", "token_type": TokenType.EQUALS}, )), 
+            "=": lambda: self._make_token_advanced(TokenType.EQUALS, ( {"char": "=", "token_type": TokenType.EE}, )), 
             "<": lambda: self._make_token_advanced(TokenType.LT, ( {"char": "=", "token_type": TokenType.LTE}, )), 
             ">": lambda: self._make_token_advanced(TokenType.GT, ( {"char": "=", "token_type": TokenType.GTE}, )),
             "!": lambda: self._make_token_advanced(None, ( {"char": "=", "token_type": TokenType.NE, "enforced": True}, )),
