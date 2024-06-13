@@ -10,7 +10,7 @@ from .keyword import Keyword
 from .runtime import RuntimeResult
 from .context import Context
 from .error import ErrorRuntime
-from ..datatype.datatypes import Datatype, Number, String, List, Function
+from ..datatype import Datatype, Number, String, List, Function
 
 class Interpreter:
     def visit(self, node: Node, context: Context) -> RuntimeResult:

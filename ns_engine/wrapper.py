@@ -1,10 +1,10 @@
-from ns_engine.components.lexer import Lexer
-from ns_engine.components.parser import Parser
-from ns_engine.components.interpreter import Interpreter
-from ns_engine.components.context import Context
-from ns_engine.components.symbol_table import SymbolTable
-from ns_engine.datatype.datatypes import set_builtin_symbols
+from .components.lexer import Lexer
+from .components.parser import Parser
+from .components.interpreter import Interpreter
+from .components.context import Context
+from .components.symbol_table import SymbolTable
 
+from .datatype.utils import set_builtin_symbols
 
 global_symbol_table = SymbolTable()
 set_builtin_symbols(global_symbol_table)
@@ -24,3 +24,9 @@ def execute(src_filename: str, src_data: str):
     result = interpreter.visit(ast.node, context)
 
     return result.value, result.error
+
+def make_executable():
+    from . import __version__ as ns_version
+    from .tools.make_executable import make_executable
+    make_executable(ns_version.split("."))
+    

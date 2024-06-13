@@ -12,7 +12,7 @@ def make_executable(version: list[int]):
     options = [
         "--standalone",
         "--onefile",
-        "--quiet",
+        #"--quiet",
         "--assume-yes-for-downloads",
         "--output-dir=build/",
         f"--output-filename=nakascript_runtime_v{version_string}"
@@ -22,5 +22,3 @@ def make_executable(version: list[int]):
     _options = " ".join(options)
     system(f"nuitka {_options} main.py")
     
-if __name__ == "__main__":
-    make_executable([1, 0, 0])

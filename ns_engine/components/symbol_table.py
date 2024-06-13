@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Self
-from ..datatype.datatypes import Datatype, makeout_datatype
+from ..datatype import Datatype, convert_to_datatype
 
 @dataclass(slots=True)
 class SymbolTable:
@@ -19,7 +19,7 @@ class SymbolTable:
     
     def set(self, name: str, value: Datatype):
         if not isinstance(value, Datatype):
-            value = makeout_datatype(value)
+            value = convert_to_datatype(value)
         
         self.symbols[name] = value
         
