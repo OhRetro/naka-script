@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Never
 from .datatype import Datatype, DATATYPE_OR_ERROR
+from .number import Number
 from ..components.error import ErrorRuntime
 from ..components.node import Node
 from ..components.runtime import RuntimeResult
@@ -57,9 +58,10 @@ class Function(BaseFunction):
     value: Never = field(default=None, init=False)
     body_node: Node
     arg_names: list[str]
+    should_return_null: bool
 
     def __post_init__(self):
-        self._values_to_copy = ("name", "body_node", "arg_names")
+        self._values_to_copy = ("name", "body_node", "arg_names", "should_return_null")
 
     def __repr__(self) -> str:
         return f"<function {self.name}>"
@@ -78,4 +80,4 @@ class Function(BaseFunction):
         value = rt_result.register(interpreter.visit(self.body_node, context))
         if rt_result.error: return rt_result
         
-        return rt_result.success(value)
+        return rt_result.success(Number.null if self.should_return_null else value)

@@ -155,21 +155,22 @@ class Interpreter:
     def visit_IfNode(self, node: IfNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
         
-        for condition, expr in node.cases:
+        for condition, expr, should_return_null in node.cases:
             condition_value = rt_result.register(self.visit(condition, context))
             if rt_result.error: return rt_result
             
             if condition_value.is_true():
                 expr_value = rt_result.register(self.visit(expr, context))
                 if rt_result.error: return rt_result
-                return rt_result.success(expr_value)
+                return rt_result.success(Number.null if should_return_null else expr_value)
             
         if node.else_case:
-            else_value = rt_result.register(self.visit(node.else_case, context))
+            expr, should_return_null = node.else_case
+            else_value = rt_result.register(self.visit(expr, context))
             if rt_result.error: return rt_result
-            return rt_result.success(else_value)
+            return rt_result.success(Number.null if should_return_null else else_value)
         
-        return rt_result.success(None)
+        return rt_result.success(Number.null)
     
     def visit_ForNode(self, node: ForNode, context: Context):
         rt_result = RuntimeResult()
@@ -202,6 +203,7 @@ class Interpreter:
             if rt_result.error: return rt_result
 
         return rt_result.success(
+            Number.null if node.should_return_null else
             List(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
 
@@ -219,6 +221,7 @@ class Interpreter:
             if rt_result.error: return rt_result
 
         return rt_result.success(
+            Number.null if node.should_return_null else
             List(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
     
@@ -228,7 +231,7 @@ class Interpreter:
         func_name: str = node.token.value if node.token else "<anon>"
         body_node = node.body_node
         arg_names: list[str] = [arg_name.value for arg_name in node.arg_name_tokens]
-        func_value = Function(func_name, body_node, arg_names).set_context(context).set_pos(node.pos_start, node.pos_end)
+        func_value = Function(func_name, body_node, arg_names, node.should_return_null).set_context(context).set_pos(node.pos_start, node.pos_end)
         
         if node.token:
             context.symbol_table.set(func_name, func_value)

@@ -1,0 +1,25 @@
+var result = if 5 == 5 then "ok" else "not ok"
+print(result)
+
+if 5 == 5 then; print("ok"); print("works"); else print("not ok")
+
+if 5 == 5 then
+    print("ok")
+    print("works")
+else 
+    print("not ok")
+end
+
+var result = 1; for i = 1 to 10 then var result = result * i
+
+var result = 1
+for i = 1 to 10 then 
+    var result = result * i
+end
+
+var result = 1; while result < 10 then var result = result + 1
+
+var result = 1
+while result < 10 then 
+    var result = result + 1
+end

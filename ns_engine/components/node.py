@@ -80,15 +80,15 @@ class UnaryOpNode(Node):
 class IfNode(Node):
     token: Token = field(default=None, init=False)
     cases: list[tuple[Node, Node]]
-    else_case: Node
+    else_case: tuple[Node, bool]
+    should_return_null: bool
     
     def __post_init__(self):
         self.pos_start = self.cases[0][0].pos_start
-        self.pos_end = (self.else_case or self.cases[-1][0]).pos_end
+        self.pos_end = (self.else_case[0] or self.cases[-1][0]).pos_end
         
     def __repr__(self) -> str:
         return f"IfNode({self.cases}, {self.else_case})"
-
 
 @dataclass(slots=True)
 class ForNode(Node):
@@ -96,6 +96,7 @@ class ForNode(Node):
     end_value_node: Node
     step_value_node: Node
     body_node: Node
+    should_return_null: bool
 
     def __post_init__(self):
         self.pos_start = self.token.pos_start
@@ -109,6 +110,7 @@ class WhileNode(Node):
     token: Token = field(default=None, init=False)
     condition_node: Node
     body_node: Node
+    should_return_null: bool
 
     def __post_init__(self):
         self.pos_start = self.condition_node.pos_start
@@ -121,6 +123,7 @@ class WhileNode(Node):
 class FuncDefNode(Node):
     arg_name_tokens: list[Token]
     body_node: Node
+    should_return_null: bool
 
     def __post_init__(self):
         if self.token:

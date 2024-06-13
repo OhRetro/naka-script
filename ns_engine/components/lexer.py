@@ -35,7 +35,8 @@ class Lexer:
             "}": TokenType.RBRACE,
             ",": TokenType.COMMA,
             ";": TokenType.SEMICOLON,
-            ":": TokenType.COLON
+            ":": TokenType.COLON,
+            "\n": TokenType.NEWLINE
         }
         
         # Advanced Tokens are tokens that require more complex handling in comparison to Simple Tokens

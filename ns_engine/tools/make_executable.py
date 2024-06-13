@@ -1,4 +1,5 @@
 from os import system
+#from subprocess import run as sp_run
 from datetime import date
 
 def make_executable(version: list[int]):
@@ -21,4 +22,5 @@ def make_executable(version: list[int]):
 
     _options = " ".join(options)
     system(f"nuitka {_options} main.py")
+    #sp_run(f"nuitka {_options} main.py", check=True)
     

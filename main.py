@@ -6,10 +6,13 @@ def shell():
     while True:
         try:
             command_text = input(">>> ")
+            if not command_text.strip(): continue
             result, error = ns_wrapper.execute("<shell>", command_text)
             
             if error: print(error.as_string())
-            elif result: print(repr(result))
+            elif result:
+                to_print = repr(result if len(result.value) > 1 else result.value[0])
+                print(to_print)
             
         except KeyboardInterrupt:
             break

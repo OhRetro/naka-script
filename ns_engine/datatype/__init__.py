@@ -17,8 +17,9 @@ def convert_to_datatype(value: Any) -> Datatype:
     else:
         raise TypeError(f"Could not convert {value} to a Datatype")
 
-def new_datatype(value: Any):
-    pass
+#! NOT A FINISHED FUNCTION
+def new_datatype(value: Any, context):
+    return convert_to_datatype(value).set_context(context), None
 
 __all__ = [
     "Datatype",

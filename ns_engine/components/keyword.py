@@ -6,7 +6,7 @@ class Keyword(Enum):
     
     # Variables and Methods/Functions
     SETVAR = "var"
-    SETIMMUTABLEVAR = "const"
+    SETIMMUTABLEVAR = "const" #! might remove this
     SETSCOPEDVAR = "local"
     SETFUNCTION = "func"
     SETCLASS = "class"
@@ -32,6 +32,7 @@ class Keyword(Enum):
     BREAK = "break"
     
     # Other
+    END = "end"
     RETURN = "return"
-    SELFREF = "self"
+    SELFREF = "inst"
     
