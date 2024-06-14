@@ -50,8 +50,8 @@ class Lexer:
             ">": lambda: self._make_token_advanced(TokenType.GT, ( {"char": "=", "token_type": TokenType.GTE}, )),
             "!": lambda: self._make_token_advanced(None, ( {"char": "=", "token_type": TokenType.NE, "enforced": True}, )),
             
-            '"': lambda: self._make_token_string()
-            # "#": lambda: self._make_token_comment()
+            '"': lambda: self._make_token_string(),
+            "#": lambda: self._make_token_comment()
         }
         
         while self.current_char != None:
@@ -68,8 +68,7 @@ class Lexer:
                 token, error = ADVANCED_TOKENS[self.current_char]()
                 
                 if error: return None, error
-                
-                tokens.append(token)
+                if token: tokens.append(token)
                 
             elif self.current_char in SIMPLE_TOKENS:
                 tokens.append(Token(SIMPLE_TOKENS[self.current_char], pos_start=self.pos))
@@ -184,5 +183,20 @@ class Lexer:
         
         return Token(token_type, token_value, pos_start, self.pos)
     
-    def _make_token_comment(self) -> Tuple[Optional[Token], Optional[Error]]:
-        pass
+    def _make_token_comment(self) -> Tuple[None, Optional[Error]]:        
+        pos_start = self.pos.copy()
+        
+        self.advance()
+        
+        if self.src_name == "<shell>":
+            return None, Error(
+                "Comments Not Allowed in Shell",
+                "Comments are not allowed in the shell",
+                pos_start, self.pos
+            )
+        
+        while self.current_char not in ("\n", None):
+            self.advance()
+        self.advance()
+        
+        return None, None

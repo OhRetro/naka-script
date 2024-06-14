@@ -49,7 +49,7 @@ class Interpreter:
     def visit_VarAccessNode(self, node: VarAccessNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
         var_name: str = node.token.value
-        var_value: Datatype = context.symbol_table.get(var_name)
+        var_value: Datatype = context.get_symbol(var_name)
         
         if not var_value:
             return rt_result.failure(ErrorRuntime(
@@ -202,7 +202,7 @@ class Interpreter:
             i += step_value_number.value
             
             value = rt_result.register(self.visit(node.body_node, context))
-            if rt_result.should_return() and not rt_result.loop_should_continue and not rt_result.loop_should_break: return rt_result
+            if rt_result.an_error_occurred(): return rt_result
             
             if rt_result.loop_should_continue:
                 continue
@@ -227,7 +227,7 @@ class Interpreter:
             if not condition.is_true(): break
 
             value = rt_result.register(self.visit(node.body_node, context))
-            if rt_result.should_return() and not rt_result.loop_should_continue and not rt_result.loop_should_break: return rt_result
+            if rt_result.an_error_occurred(): return rt_result
             
             if rt_result.loop_should_continue:
                 continue

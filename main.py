@@ -46,14 +46,6 @@ def run(filename: str):
     except KeyboardInterrupt:
         return
 
-#! JUST FOR CONCEPT
-def compile(filename: str):
-    source_code = get_filedata(filename)    
-    if source_code is None or not source_code.strip(): return
-    
-    _, error = ns_wrapper.compile(filename, source_code)
-    if error: print(error.as_string())
-
 if __name__ == "__main__":
     args_len = len(sys_argv) - 1
     is_first_arg_scriptfile = False
@@ -63,10 +55,7 @@ if __name__ == "__main__":
         is_first_arg_scriptfile = first_arg
     
     if is_first_arg_scriptfile:
-        if argument("-c", "--compile"):
-            compile(first_arg)
-        else:
-            run(first_arg)
+        run(first_arg)
     else:
         if not args_len:
             shell()

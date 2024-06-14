@@ -2,7 +2,6 @@ from typing import Tuple, Optional
 from .components.lexer import Lexer
 from .components.parser import Parser
 from .components.interpreter import Interpreter
-from .components.compiler import Compiler
 from .components.context import Context
 from .components.symbol_table import SymbolTable
 from .components.error import Error
@@ -33,20 +32,7 @@ def interpret(src_filename: str, src_data: str) -> Tuple[Optional[List], Optiona
 
     return result.value, result.error
 
-#! JUST FOR CONCEPT
-def compile(src_filename: str, src_data: str):
-    node, error = generate_ast(src_filename, src_data)
-    if error: return None, error
-    
-    compiler = Interpreter() # Compiler()
-    context = Context("__main__")
-    context.symbol_table = global_symbol_table
-    result = compiler.visit(node, context)
-
-    return result.value, result.error
-    
 __all__ = [
-    "interpret",
-    "compile",
+    "interpret"
 ]
     

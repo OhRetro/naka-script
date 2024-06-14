@@ -52,7 +52,7 @@ class BaseFunction(Datatype):
         if rt_result.should_return(): return rt_result
         self.populate_args(arg_names, args, context)
         return rt_result.success(None)
-        
+
 @dataclass(slots=True)
 class Function(BaseFunction):
     value: Never = field(default=None, init=False)
