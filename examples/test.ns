@@ -1,3 +1,9 @@
+func add(a, b) -> a + b
+
+func add(a, b)
+    a + b
+end
+
 var result = if 5 == 5 then "ok" else "not ok"
 print(result)
 

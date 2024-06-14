@@ -1,9 +1,11 @@
 from dataclasses import dataclass, field
-from typing import Self, TypeVar
+from typing import Self, TypeVar, TYPE_CHECKING
 from .error import Error
-#from ..datatype.datatypes import Datatype
 
-Datatype = TypeVar("Datatype")
+if TYPE_CHECKING:
+    from ..datatype import Datatype
+else:
+    Datatype = TypeVar("Datatype")
 
 @dataclass(slots=True)
 class RuntimeResult:

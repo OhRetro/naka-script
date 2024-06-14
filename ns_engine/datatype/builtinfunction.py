@@ -8,7 +8,6 @@ from .number import Number
 from .string import String
 from .list import List
 from ..components.error import ErrorRuntime
-#from ..components.node import Node
 from ..components.runtime import RuntimeResult
 from ..components.context import Context
 

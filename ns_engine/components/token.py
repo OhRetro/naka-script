@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 from .position import Position
-from .keyword import Keyword
 
 class TokenType(Enum):
     def __repr__(self) -> str:

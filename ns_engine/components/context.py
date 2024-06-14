@@ -1,9 +1,11 @@
 from dataclasses import dataclass, field
-from typing import Self, TypeVar
+from typing import Self, TypeVar, TYPE_CHECKING
 from .position import Position
-#from .symbol_table import SymbolTable
 
-SymbolTable = TypeVar("SymbolTable")
+if TYPE_CHECKING:
+    from .symbol_table import SymbolTable
+else:
+    SymbolTable = TypeVar("SymbolTable")
 
 @dataclass(slots=True)
 class Context:

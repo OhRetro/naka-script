@@ -19,7 +19,7 @@ class Interpreter:
         
         return method(node, context)
     
-    def no_visit_method(self, node: Node, context: Context):
+    def no_visit_method(self, node: Node, _):
         raise Exception(f"No visit method defined for {type(node).__name__}.")
     
     def visit_NumberNode(self, node: NumberNode, context: Context) -> RuntimeResult:
