@@ -49,7 +49,7 @@ class BaseFunction(Datatype):
     def check_populate_args(self, arg_names: list[str], args: list[Datatype], context: Context):
         rt_result = RuntimeResult()
         rt_result.register(self.check_args(arg_names, args))
-        if rt_result.error: return rt_result
+        if rt_result.should_return(): return rt_result
         self.populate_args(arg_names, args, context)
         return rt_result.success(None)
         
@@ -58,10 +58,10 @@ class Function(BaseFunction):
     value: Never = field(default=None, init=False)
     body_node: Node
     arg_names: list[str]
-    should_return_null: bool
+    should_auto_return: bool
 
     def __post_init__(self):
-        self._values_to_copy = ("name", "body_node", "arg_names", "should_return_null")
+        self._values_to_copy = ("name", "body_node", "arg_names", "should_auto_return")
 
     def __repr__(self) -> str:
         return f"<function {self.name}>"
@@ -75,9 +75,10 @@ class Function(BaseFunction):
         context = self.generate_new_context()
         
         rt_result.register(self.check_populate_args(self.arg_names, args, context))
-        if rt_result.error: return rt_result
+        if rt_result.should_return(): return rt_result
         
         value = rt_result.register(interpreter.visit(self.body_node, context))
-        if rt_result.error: return rt_result
+        if rt_result.should_return() and rt_result.func_return_value is None: return rt_result
         
-        return rt_result.success(Number.null if self.should_return_null else value)
+        return_value = (value if self.should_auto_return else None) or rt_result.func_return_value or Number.null
+        return rt_result.success(return_value)

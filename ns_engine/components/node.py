@@ -84,8 +84,13 @@ class IfNode(Node):
     should_return_null: bool
     
     def __post_init__(self):
+        if self.else_case:
+            case_for_pos_end = self.else_case[0]
+        else:
+            case_for_pos_end = self.cases[-1][0]
+        
         self.pos_start = self.cases[0][0].pos_start
-        self.pos_end = (self.else_case[0] or self.cases[-1][0]).pos_end
+        self.pos_end = case_for_pos_end.pos_end
         
     def __repr__(self) -> str:
         return f"IfNode({self.cases}, {self.else_case})"
@@ -123,7 +128,7 @@ class WhileNode(Node):
 class FuncDefNode(Node):
     arg_name_tokens: list[Token]
     body_node: Node
-    should_return_null: bool
+    should_auto_return: bool
 
     def __post_init__(self):
         if self.token:
@@ -155,4 +160,32 @@ class CallNode(Node):
         self.pos_end = pos_end
 
     def __repr__(self) -> str:
-        return f"CallNode()"
+        return f"CallNode({self.node_to_call}, {self.arg_nodes})"
+
+@dataclass(slots=True)
+class ReturnNode(Node):
+    token: Token = field(default=None, init=False)
+    node_to_return: Node
+    pos_start: Position
+    pos_end: Position
+
+    def __repr__(self) -> str:
+        return f"ReturnNode({self.node_to_return})"
+
+@dataclass(slots=True)
+class ContinueNode(Node):
+    token: Token = field(default=None, init=False)
+    pos_start: Position
+    pos_end: Position
+
+    def __repr__(self) -> str:
+        return f"ContinueNode()"
+
+@dataclass(slots=True)
+class BreakNode(Node):
+    token: Token = field(default=None, init=False)
+    pos_start: Position
+    pos_end: Position
+
+    def __repr__(self) -> str:
+        return f"BreakNode()"

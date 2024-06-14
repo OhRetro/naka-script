@@ -7,7 +7,8 @@ from .node import (Node,
                    BinOpNode, UnaryOpNode, 
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
-                   VarAssignNode, VarAccessNode, VarDeleteNode)
+                   VarAssignNode, VarAccessNode, VarDeleteNode,
+                   ReturnNode, ContinueNode, BreakNode)
 from .error import Error, ErrorInvalidSyntax
 from ..utils.expected import expected
 from ..utils.debug import DebugMessage
@@ -343,7 +344,7 @@ class Parser:
                         self.current_token.pos_start, self.current_token.pos_end
                     ))
             else:
-                expr = res.register(self.expr())
+                expr = res.register(self.statement())
                 if res.error: return res
                 else_case = (expr, False)
 
@@ -406,7 +407,7 @@ class Parser:
                 new_cases, else_case = all_cases
                 cases.extend(new_cases)
         else:
-            expr = res.register(self.expr())
+            expr = res.register(self.statement())
             if res.error: return res
             cases.append((condition, expr, False))
 
@@ -500,7 +501,7 @@ class Parser:
 
             return p_result.success(ForNode(var_name_token, start_value_node, end_value_node, step_value_node, body_node, True))
 
-        body_node: Node = p_result.register(self.expr())
+        body_node: Node = p_result.register(self.statement())
         if p_result.error: return p_result
 
         return p_result.success(ForNode(var_name_token, start_value_node, end_value_node, step_value_node, body_node, False))
@@ -547,7 +548,7 @@ class Parser:
 
             return p_result.success(WhileNode(condition_node, body_node, True))
 
-        body_node: Node = p_result.register(self.expr())
+        body_node: Node = p_result.register(self.statement())
         if p_result.error: return p_result
 
         return p_result.success(WhileNode(condition_node, body_node, False))
@@ -609,6 +610,50 @@ class Parser:
             ))
         
         return p_result.success(node)
+    
+    def statement(self) -> ParseResult:
+        p_result = ParseResult()
+        pos_start = self.current_token.pos_start.copy()
+        
+        if self.current_token_is_keyword_of(Keyword.RETURN):
+            p_result.register_advancement()
+            self.advance()
+            
+            expr = p_result.try_register(self.expr())
+            
+            if not expr:
+                self.reverse(p_result.to_reverse_count)
+                
+            return p_result.success(ReturnNode(
+                pos_start, self.current_token.pos_end.copy(),
+                expr
+            ))
+
+        elif self.current_token_is_keyword_of(Keyword.CONTINUE):
+            p_result.register_advancement()
+            self.advance()
+            return p_result.success(ContinueNode(
+                pos_start, self.current_token.pos_end.copy()
+            ))
+            
+        elif self.current_token_is_keyword_of(Keyword.BREAK):
+            p_result.register_advancement()
+            self.advance()
+            return p_result.success(BreakNode(
+                pos_start, self.current_token.pos_end.copy()
+            ))
+            
+        expr = p_result.register(self.expr())
+        if p_result.error:
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(Keyword.RETURN, Keyword.CONTINUE, Keyword.BREAK, Keyword.SETVAR, Keyword.DELETEVAR,
+                         Keyword.NOT, Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION,
+                         TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE
+                         ),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+            
+        return p_result.success(expr)
 
     def statements(self):
         p_result = ParseResult()
@@ -619,7 +664,7 @@ class Parser:
             p_result.register_advancement()
             self.advance()
             
-        statement: Node = p_result.register(self.expr())
+        statement: Node = p_result.register(self.statement())
         if p_result.error: return p_result
         statements.append(statement)
         
@@ -637,7 +682,7 @@ class Parser:
                 
             if not more_statements: break
             
-            statement: Node = p_result.try_register(self.expr())
+            statement: Node = p_result.try_register(self.statement())
 
             if not statement:
                 self.reverse(p_result.to_reverse_count)
@@ -731,7 +776,7 @@ class Parser:
             
             if p_result.error: return p_result
             
-            return p_result.success(FuncDefNode(var_name_token, arg_name_tokens, body_node, False))
+            return p_result.success(FuncDefNode(var_name_token, arg_name_tokens, body_node, True))
     
         if not self.current_token_is_semicolon_or_newline():
             return p_result.failure(ErrorInvalidSyntax(
@@ -755,7 +800,7 @@ class Parser:
         p_result.register_advancement()
         self.advance()
 
-        return p_result.success(FuncDefNode(var_name_token, arg_name_tokens, body_node, True))
+        return p_result.success(FuncDefNode(var_name_token, arg_name_tokens, body_node, False))
     
     #!================================================================
     

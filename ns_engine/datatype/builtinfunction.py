@@ -40,11 +40,11 @@ class BuiltInFunction(BaseFunction):
         method = MethodType(self.logic_function, self)
 
         rt_result.register(self.check_populate_args(self.arg_names or tuple(), args, context))
-        if rt_result.error:
+        if rt_result.should_return():
             return rt_result
 
         value = rt_result.register(method(context) or self._rt_result_success(Number.null))
-        if rt_result.error:
+        if rt_result.should_return():
             return rt_result
 
         return rt_result.success(value)

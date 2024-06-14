@@ -16,16 +16,55 @@ else
     print("not ok")
 end
 
-var result = 1; for i = 1 to 10 then var result = result * i
+var result = 1; var numbers = for i = 1 to 10 then var result = result * i
+print(result)
+print(numbers)
 
 var result = 1
 for i = 1 to 10 then 
     var result = result * i
 end
+print(result)
 
-var result = 1; while result < 10 then var result = result + 1
+var result = 1; var numbers = while result < 10 then var result = result + 1
+print(result)
+print(numbers)
 
 var result = 1
 while result < 10 then 
     var result = result + 1
 end
+print(result)
+
+var result = 1
+while result < 10 then 
+    var result = result + 1
+    if result == 5 then
+        continue
+    end
+end
+print(result)
+
+var result = 1
+while result < 10 then 
+    var result = result + 1
+    if result == 5 then
+        break
+    end
+end
+print(result)
+
+var testA = func() -> 5
+print(testA())
+
+func testB()
+    var foo = 5
+    return foo
+end
+print(testB())
+
+func noReturn()
+    var a = 0
+end
+
+print(noReturn())

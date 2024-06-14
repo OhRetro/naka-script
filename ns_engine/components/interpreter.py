@@ -4,7 +4,8 @@ from .node import (Node,
                    BinOpNode, UnaryOpNode,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
-                   VarAccessNode, VarAssignNode, VarDeleteNode)
+                   VarAccessNode, VarAssignNode, VarDeleteNode,
+                   ReturnNode, ContinueNode, BreakNode)
 from .token import TokenType
 from .keyword import Keyword
 from .runtime import RuntimeResult
@@ -37,8 +38,9 @@ class Interpreter:
         elements: list[Datatype] = []
         
         for element_node in node.element_nodes:
-            elements.append(rt_result.register(self.visit(element_node, context)))
-            if rt_result.error: return rt_result
+            value = rt_result.register(self.visit(element_node, context))
+            if rt_result.should_return(): return rt_result
+            elements.append(value)
             
         return rt_result.success(
             List(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
@@ -63,7 +65,7 @@ class Interpreter:
         var_name: str = node.token.value
         value = rt_result.register(self.visit(node.value_node, context))
         
-        if rt_result.error: return rt_result
+        if rt_result.should_return(): return rt_result
         
         context.symbol_table.set(var_name, value)
         
@@ -88,10 +90,10 @@ class Interpreter:
         rt_result = RuntimeResult()
         
         left: Datatype = rt_result.register(self.visit(node.left_node, context))
-        if rt_result.error: return rt_result
+        if rt_result.should_return(): return rt_result
         
         right: Datatype = rt_result.register(self.visit(node.right_node, context))
-        if rt_result.error: return rt_result
+        if rt_result.should_return(): return rt_result
         
         match node.token.type:
             case TokenType.PLUS:
@@ -138,7 +140,7 @@ class Interpreter:
         rt_result = RuntimeResult()
         
         number: Number = rt_result.register(self.visit(node.node, context))
-        if rt_result.error: return rt_result
+        if rt_result.should_return(): return rt_result
         
         error = None
         
@@ -157,17 +159,17 @@ class Interpreter:
         
         for condition, expr, should_return_null in node.cases:
             condition_value = rt_result.register(self.visit(condition, context))
-            if rt_result.error: return rt_result
+            if rt_result.should_return(): return rt_result
             
             if condition_value.is_true():
                 expr_value = rt_result.register(self.visit(expr, context))
-                if rt_result.error: return rt_result
+                if rt_result.should_return(): return rt_result
                 return rt_result.success(Number.null if should_return_null else expr_value)
             
         if node.else_case:
             expr, should_return_null = node.else_case
             else_value = rt_result.register(self.visit(expr, context))
-            if rt_result.error: return rt_result
+            if rt_result.should_return(): return rt_result
             return rt_result.success(Number.null if should_return_null else else_value)
         
         return rt_result.success(Number.null)
@@ -177,14 +179,14 @@ class Interpreter:
         elements: list[Datatype] = []
 
         start_value_number: Number = rt_result.register(self.visit(node.start_value_node, context))
-        if rt_result.error: return rt_result
+        if rt_result.should_return(): return rt_result
 
         end_value_number: Number = rt_result.register(self.visit(node.end_value_node, context))
-        if rt_result.error: return rt_result
+        if rt_result.should_return(): return rt_result
 
         if node.step_value_node:
             step_value_number: Number = rt_result.register(self.visit(node.step_value_node, context))
-            if rt_result.error: return rt_result
+            if rt_result.should_return(): return rt_result
         else:
             step_value_number = Number(1)
 
@@ -198,9 +200,16 @@ class Interpreter:
         while condition():
             context.symbol_table.set(node.token.value, Number(i))
             i += step_value_number.value
-
-            elements.append(rt_result.register(self.visit(node.body_node, context)))
-            if rt_result.error: return rt_result
+            
+            value = rt_result.register(self.visit(node.body_node, context))
+            if rt_result.should_return() and not rt_result.loop_should_continue and not rt_result.loop_should_break: return rt_result
+            
+            if rt_result.loop_should_continue:
+                continue
+            elif rt_result.loop_should_break:
+                break
+            
+            elements.append(value)
 
         return rt_result.success(
             Number.null if node.should_return_null else
@@ -213,12 +222,19 @@ class Interpreter:
 
         while True:
             condition: Datatype = rt_result.register(self.visit(node.condition_node, context))
-            if rt_result.error: return rt_result
+            if rt_result.should_return(): return rt_result
 
             if not condition.is_true(): break
 
-            elements.append(rt_result.register(self.visit(node.body_node, context)))
-            if rt_result.error: return rt_result
+            value = rt_result.register(self.visit(node.body_node, context))
+            if rt_result.should_return() and not rt_result.loop_should_continue and not rt_result.loop_should_break: return rt_result
+            
+            if rt_result.loop_should_continue:
+                continue
+            elif rt_result.loop_should_break:
+                break
+            
+            elements.append(value)
 
         return rt_result.success(
             Number.null if node.should_return_null else
@@ -231,7 +247,7 @@ class Interpreter:
         func_name: str = node.token.value if node.token else "<anon>"
         body_node = node.body_node
         arg_names: list[str] = [arg_name.value for arg_name in node.arg_name_tokens]
-        func_value = Function(func_name, body_node, arg_names, node.should_return_null).set_context(context).set_pos(node.pos_start, node.pos_end)
+        func_value = Function(func_name, body_node, arg_names, node.should_auto_return).set_context(context).set_pos(node.pos_start, node.pos_end)
         
         if node.token:
             context.symbol_table.set(func_name, func_value)
@@ -243,17 +259,35 @@ class Interpreter:
         args: list[Datatype] = []
         
         value_to_call = rt_result.register(self.visit(node.node_to_call, context))
-        if rt_result.error: return rt_result
+        if rt_result.should_return(): return rt_result
         
         value_to_call = value_to_call.copy().set_pos(node.pos_start, node.pos_end)
         
         for arg_node in node.arg_nodes:
             args.append(rt_result.register(self.visit(arg_node, context)))
-            if rt_result.error: return rt_result
+            if rt_result.should_return(): return rt_result
             
         return_value: Datatype = rt_result.register(value_to_call.execute(args))
-        if rt_result.error: return rt_result
+        if rt_result.should_return(): return rt_result
         
         return_value = return_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
         return rt_result.success(return_value)
+
+    def visit_ReturnNode(self, node: ReturnNode, context: Context):
+        rt_result = RuntimeResult()
+        
+        value = Number.null
+        if node.node_to_return:
+            value = rt_result.register(self.visit(node.node_to_return, context))
+            
+            if rt_result.should_return(): return rt_result
+
+        # Fun Fact: I forgot to return the runtime result in a function about returning, ironic
+        return rt_result.success_return(value)
+
+    def visit_ContinueNode(self, _, __):
+        return RuntimeResult().success_continue()
+
+    def visit_BreakNode(self, _, __):
+        return RuntimeResult().success_break()
     

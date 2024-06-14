@@ -51,6 +51,7 @@ class Lexer:
             "!": lambda: self._make_token_advanced(None, ( {"char": "=", "token_type": TokenType.NE, "enforced": True}, )),
             
             '"': lambda: self._make_token_string()
+            # "#": lambda: self._make_token_comment()
         }
         
         while self.current_char != None:
@@ -183,3 +184,5 @@ class Lexer:
         
         return Token(token_type, token_value, pos_start, self.pos)
     
+    def _make_token_comment(self) -> Tuple[Optional[Token], Optional[Error]]:
+        pass
