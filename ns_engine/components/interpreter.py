@@ -1,17 +1,17 @@
-from typing import Callable
+from typing import Callable, Union
 from .node import (Node, 
                    NumberNode, StringNode, ListNode,
                    BinOpNode, UnaryOpNode,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
                    VarAccessNode, VarAssignNode, VarDeleteNode,
-                   ReturnNode, ContinueNode, BreakNode)
+                   ReturnNode, IndexNode)
 from .token import TokenType
 from .keyword import Keyword
 from .runtime import RuntimeResult
 from .context import Context
 from .error import ErrorRuntime
-from ..datatype import Datatype, Number, String, List, Function
+from ..datatype import Datatype, Number, String, List, BaseFunction, Function
 
 class Interpreter:
     def visit(self, node: Node, context: Context) -> RuntimeResult:
@@ -121,9 +121,6 @@ class Interpreter:
                 result, error = left.is_less_equal_than(right)
             case TokenType.GTE:
                 result, error = left.is_greater_equal_than(right)
-
-            case TokenType.COLON:
-                result, error = left.indexing_on(right)
                     
             case TokenType.KEYWORD:
                 if node.token.is_keyword_of(Keyword.AND):
@@ -243,7 +240,6 @@ class Interpreter:
     
     def visit_FuncDefNode(self, node: FuncDefNode, context: Context):
         rt_result = RuntimeResult()
-        
         func_name: str = node.token.value if node.token else "<anon>"
         body_node = node.body_node
         arg_names: list[str] = [arg_name.value for arg_name in node.arg_name_tokens]
@@ -267,12 +263,42 @@ class Interpreter:
             args.append(rt_result.register(self.visit(arg_node, context)))
             if rt_result.should_return(): return rt_result
             
+        if not isinstance(value_to_call, BaseFunction):
+            return rt_result.failure(ErrorRuntime(
+                f"'{value_to_call.__class__.__name__}' datatypes are not callable.",
+                node.pos_start, node.pos_end, context
+            ))
+            
         return_value: Datatype = rt_result.register(value_to_call.execute(args))
         if rt_result.should_return(): return rt_result
         
         return_value = return_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
         return rt_result.success(return_value)
 
+    def visit_IndexNode(self, node: IndexNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
+        
+        value_to_index: Union[List, String] = rt_result.register(self.visit(node.node_to_index, context))
+        if rt_result.should_return(): return rt_result
+        value_to_index = value_to_index.copy().set_pos(node.pos_start, node.pos_end)
+        
+        index_value: Union[Number, String] = rt_result.register(self.visit(node.index_node, context))
+        if rt_result.should_return(): return rt_result
+        index_value = index_value.copy().set_pos(node.pos_start, node.pos_end)
+
+        if not isinstance(value_to_index, (List, String)):
+            return rt_result.failure(ErrorRuntime(
+                f"'{value_to_index.__class__.__name__}' datatypes are not indexable.",
+                node.pos_start, node.pos_end, context
+            ))
+            
+        indexed_value, error = value_to_index.index_at(index_value)
+        if error: 
+            return rt_result.failure(error)
+        
+        indexed_value = indexed_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
+        return rt_result.success(indexed_value)
+    
     def visit_ReturnNode(self, node: ReturnNode, context: Context):
         rt_result = RuntimeResult()
         
@@ -282,7 +308,7 @@ class Interpreter:
             
             if rt_result.should_return(): return rt_result
 
-        # Fun Fact: I forgot to return the runtime result in a function about returning, ironic
+        # Fun Fact: While making it I forgot to return the runtime result in a function about returning, ironic
         return rt_result.success_return(value)
 
     def visit_ContinueNode(self, _, __):
@@ -290,4 +316,3 @@ class Interpreter:
 
     def visit_BreakNode(self, _, __):
         return RuntimeResult().success_break()
-    

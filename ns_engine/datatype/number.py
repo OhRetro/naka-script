@@ -11,7 +11,7 @@ class Number(Datatype):
         return str(self.value)
     
     def _number_bool(self, value: bool) -> DATATYPE_OR_ERROR:
-        return self._new(int(value))
+        return self.new(int(value))
 
     def _clone(self, other: Datatype, operation: str) -> DATATYPE_OR_ERROR:
         OPERATIONS = {
@@ -26,7 +26,7 @@ class Number(Datatype):
         if isinstance(other, Number):
             try:
                 result = OPERATIONS[operation](self.value, other.value)
-                return self._new(result)
+                return self.new(result)
             except ZeroDivisionError:
                 return None, ErrorRuntime(
                     DIVISION_BY_ZERO_ERROR,
@@ -78,7 +78,7 @@ class Number(Datatype):
         return self._number_bool(self.value or other.value)
     
     def notted(self) -> DATATYPE_OR_ERROR:
-        return self._new(1 if self.value == 0 else 0)
+        return self.new(1 if self.value == 0 else 0)
 
     def is_true(self) -> bool:
         return self.value != 0

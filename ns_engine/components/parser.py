@@ -8,7 +8,7 @@ from .node import (Node,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
                    VarAssignNode, VarAccessNode, VarDeleteNode,
-                   ReturnNode, ContinueNode, BreakNode)
+                   ReturnNode, ContinueNode, BreakNode, IndexNode)
 from .error import Error, ErrorInvalidSyntax
 from ..utils.expected import expected
 from ..utils.debug import DebugMessage
@@ -206,14 +206,29 @@ class Parser:
                 self.advance()
                 
             return p_result.success(CallNode(atom, arg_nodes))
+
+        elif self.current_token.type == TokenType.LSQUARE:
+            p_result.register_advancement()
+            self.advance()
+            
+            index_node: Node = p_result.register(self.atom())
+            if p_result.error: return p_result
+            
+            if self.current_token.type != TokenType.RSQUARE:
+                return p_result.failure(ErrorInvalidSyntax(
+                    expected(TokenType.RSQUARE),
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+            
+            p_result.register_advancement()
+            self.advance()
+            
+            return p_result.success(IndexNode(atom, index_node))
         
         return p_result.success(atom)
 
-    def reference(self) -> ParseResult:
-        return self.bin_op((TokenType.COLON, ), self.call, self.power)
-
     def power(self) -> ParseResult:
-        return self.bin_op((TokenType.POWER, ), self.reference, self.factor)
+        return self.bin_op((TokenType.POWER, ), self.call, self.factor)
     
     def factor(self) -> ParseResult:
         p_result = ParseResult()
@@ -776,7 +791,7 @@ class Parser:
             
             if p_result.error: return p_result
             
-            return p_result.success(FuncDefNode(var_name_token, arg_name_tokens, body_node, True))
+            return p_result.success(FuncDefNode(var_name_token, tuple(arg_name_tokens), body_node, True))
     
         if not self.current_token_is_semicolon_or_newline():
             return p_result.failure(ErrorInvalidSyntax(
@@ -800,7 +815,7 @@ class Parser:
         p_result.register_advancement()
         self.advance()
 
-        return p_result.success(FuncDefNode(var_name_token, arg_name_tokens, body_node, False))
+        return p_result.success(FuncDefNode(var_name_token, tuple(arg_name_tokens), body_node, False))
     
     #!================================================================
     

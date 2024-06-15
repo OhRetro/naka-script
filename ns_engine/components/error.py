@@ -14,7 +14,7 @@ class Error:
         return f"Error({self.name}, {self.details})"
     
     def as_string(self) -> str:
-        message = f"File {self.pos_start.filename}, line {self.pos_start.line + 1}\n"
+        message = f"File \"{self.pos_start.filename}\", line {self.pos_start.line + 1}\n"
         message += f"{self.name}: {self.details}\n"
         message += f"\n{string_with_arrows(self.pos_start.filedata, self.pos_start, self.pos_end)}"
         return message

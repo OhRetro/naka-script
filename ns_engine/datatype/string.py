@@ -22,18 +22,34 @@ class String(Datatype):
     def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, String):
             result = self.value + other.value
-            return self._new(result)
+            return self.new(result)
         else:
             return self._illegal_operation(other)
 
     def multiplied_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, Number):
             result = self.value * other.value
-            return self._new(result)
+            return self.new(result)
         else:
             return self._illegal_operation(other)
       
-
+    def divided_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        if isinstance(other, Number):
+            try:
+                return self.new(self.value[other.value])
+            except IndexError:
+                return None, ErrorRuntime(
+                    "Element at index doesn't exist, Out of bounds",
+                    other.pos_start, other.pos_end, self.context
+                )
+            except TypeError:
+                return None, ErrorRuntime(
+                    "'String' datatype can be only indexed by 'Number: int'",
+                    other.pos_start, other.pos_end, self.context
+                )
+        else:
+            return self._illegal_operation(other)
+        
     def is_equal_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
         return self._number_bool(self.value == other.value)
     
@@ -49,13 +65,18 @@ class String(Datatype):
     def notted(self) -> DATATYPE_OR_ERROR:
         return self._number(1 if self.value == "" else 0)
 
-    def indexing_on(self, other: Datatype) -> DATATYPE_OR_ERROR:
+    def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, Number):
             try:
-                return self._new(self.value[other.value])
+                return self.new(self.value[other.value])
             except IndexError:
                 return None, ErrorRuntime(
                     "Element at index doesn't exist, Out of bounds",
+                    other.pos_start, other.pos_end, self.context
+                )
+            except TypeError:
+                return None, ErrorRuntime(
+                    "'String' datatype can be only indexed by 'Number: int'",
                     other.pos_start, other.pos_end, self.context
                 )
         else:

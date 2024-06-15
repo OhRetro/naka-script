@@ -28,7 +28,7 @@ class List(Datatype):
     def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
         result: list = self._value_copy()
         result.append(other)
-        return self._new(result)
+        return self.new(result)
     
     def subtracted_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, Number):
@@ -36,7 +36,7 @@ class List(Datatype):
             
             try:
                 result.pop(other.value)
-                return self._new(result)
+                return self.new(result)
             except IndexError:
                 None, ErrorRuntime(
                     "Element at index doesn't exist, Out of bounds",
@@ -49,7 +49,7 @@ class List(Datatype):
         if isinstance(other, List):
             result: list = self._value_copy()
             result.extend(other.value)
-            return self._new(result)
+            return self.new(result)
         else:
             return self._illegal_operation(other)
     
@@ -60,6 +60,11 @@ class List(Datatype):
             except IndexError:
                 return None, ErrorRuntime(
                     "Element at index doesn't exist, Out of bounds",
+                    other.pos_start, other.pos_end, self.context
+                )
+            except TypeError:
+                return None, ErrorRuntime(
+                    "'List' datatype can be only indexed by 'Number: int'",
                     other.pos_start, other.pos_end, self.context
                 )
         else:
@@ -80,13 +85,18 @@ class List(Datatype):
     def notted(self) -> DATATYPE_OR_ERROR:
         return self._number(1 if self.value == [] else 0)
 
-    def indexing_on(self, other: Datatype) -> DATATYPE_OR_ERROR:
+    def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, Number):
             try:
                 return self.value[other.value], None
             except IndexError:
                 return None, ErrorRuntime(
                     "Element at index doesn't exist, Out of bounds",
+                    other.pos_start, other.pos_end, self.context
+                )
+            except TypeError:
+                return None, ErrorRuntime(
+                    "'List' datatype can be only indexed by 'Number: int'",
                     other.pos_start, other.pos_end, self.context
                 )
         else:

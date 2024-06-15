@@ -1,7 +1,7 @@
 from typing import Any
 from .datatype import Datatype
 from .number import Number
-from .function import Function
+from .function import Function, BaseFunction
 from .string import String
 from .list import List
 
@@ -24,7 +24,7 @@ def new_datatype(value: Any, context):
 __all__ = [
     "Datatype",
     "Number",
-    "Function",
+    "Function", "BaseFunction",
     "String",
     "List",
     

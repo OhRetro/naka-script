@@ -15,9 +15,6 @@ class Datatype:
     
     _values_to_copy: Tuple[str] = field(default=None, init=False)
     
-    def _new(self, value: Any) -> Tuple[Self, None]:
-        return type(self)(value).set_context(self.context), None
-    
     def _value_copy(self) -> Any:
         return deepcopy(self.value)
         
@@ -29,6 +26,9 @@ class Datatype:
             self.pos_start, other.pos_end, self.context
             )
         
+    def new(self, value: Any) -> Tuple[Self, None]:
+        return type(self)(value).set_context(self.context), None
+    
     def set_pos(self, pos_start: Position = None, pos_end: Position = None) -> Self:
         self.pos_start = pos_start
         self.pos_end = pos_end
@@ -106,7 +106,7 @@ class Datatype:
     def execute(self) -> Tuple[Optional[Self], Optional[Error]]:
         return self._illegal_operation()
     
-    def indexing_on(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
+    def index_at(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
         return self._illegal_operation(other)
 
     def is_true(self) -> bool:

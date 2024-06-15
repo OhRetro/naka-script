@@ -148,7 +148,7 @@ def _run(self: BuiltInFunction, context: Context):
         
     except FileNotFoundError as e:
         return rt_result.failure(ErrorRuntime(
-            f"Failed to load script '{filename}': {e}",
+            f"Failed to load script \"{filename}\": {e}",
             self.pos_start, self.pos_end, context
         ))
     
@@ -156,7 +156,7 @@ def _run(self: BuiltInFunction, context: Context):
     
     if error:
         return rt_result.failure(ErrorRuntime(
-            f"Failed to finish script '{filename}':\n{error.as_string()}",
+            f"Failed to finish script \"{filename}\":\n{error.as_string()}",
             self.pos_start, self.pos_end, context
         ))
 

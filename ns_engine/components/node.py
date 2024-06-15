@@ -142,7 +142,10 @@ class FuncDefNode(Node):
         self.pos_end = self.body_node.pos_end
 
     def __repr__(self) -> str:
-        return f"FuncDefNode({self.token.value}, {self.arg_name_tokens}, {self.body_node})"
+        if self.token:
+            return f"FuncDefNode({self.token.value}, {self.arg_name_tokens}, {self.body_node})"
+        else:
+            return f"FuncDefNode({self.arg_name_tokens}, {self.body_node})"
 
 @dataclass(slots=True)
 class CallNode(Node):
@@ -161,6 +164,19 @@ class CallNode(Node):
 
     def __repr__(self) -> str:
         return f"CallNode({self.node_to_call}, {self.arg_nodes})"
+
+@dataclass(slots=True)
+class IndexNode(Node):
+    token: Token = field(default=None, init=False)
+    node_to_index: Node
+    index_node: Node
+
+    def __post_init__(self):
+        self.pos_start = self.node_to_index.pos_start
+        self.pos_end = self.index_node.pos_end
+
+    def __repr__(self) -> str:
+        return f"IndexNode({self.node_to_index}, {self.index_node})"
 
 @dataclass(slots=True)
 class ReturnNode(Node):

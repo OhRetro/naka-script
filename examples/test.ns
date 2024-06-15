@@ -79,4 +79,8 @@ func runFunction(function) -> function()
 
 runFunction(hello)
 
+var helloworld = "hello world"
+print(helloworld / 2)
+print(helloworld[2])
+
 # Test
