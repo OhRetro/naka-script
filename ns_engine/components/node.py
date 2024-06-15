@@ -33,6 +33,21 @@ class ListNode(Node):
         return f"ListNode({self.element_nodes})"
 
 @dataclass(slots=True)
+class DictNode(Node):
+    token: Token = field(default=None, init=False)
+    key_tokens: list[Token]
+    value_nodes: list[Node]
+    pos_start: Position
+    pos_end: Position
+        
+    def __repr__(self) -> str:
+        display = ""
+        for i, key_token in enumerate(self.key_tokens):
+            display += f"{key_token}={self.value_nodes[i]}"
+        
+        return f"DictNode({display})"
+    
+@dataclass(slots=True)
 class VarAccessNode(Node):
     def __repr__(self) -> str:
         return f"VarAccessNode({self.token})"
@@ -47,6 +62,17 @@ class VarAssignNode(Node):
 
     def __repr__(self) -> str:
         return f"VarAssignNode({self.token}, {self.value_node})"
+
+@dataclass(slots=True)
+class VarUpdateNode(Node):
+    value_node: Node
+
+    def __post_init__(self):
+        self.pos_start = self.token.pos_start
+        self.pos_end = self.value_node.pos_end
+
+    def __repr__(self) -> str:
+        return f"VarUpdateNode({self.token}, {self.value_node})"
     
 @dataclass(slots=True)
 class VarDeleteNode(Node):

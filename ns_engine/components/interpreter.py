@@ -1,10 +1,10 @@
 from typing import Callable, Union
 from .node import (Node, 
-                   NumberNode, StringNode, ListNode,
+                   NumberNode, StringNode, ListNode, DictNode,
                    BinOpNode, UnaryOpNode,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
-                   VarAccessNode, VarAssignNode, VarDeleteNode,
+                   VarAccessNode, VarAssignNode, VarDeleteNode, VarUpdateNode,
                    ReturnNode, IndexNode)
 from .token import TokenType
 from .keyword import Keyword
@@ -70,6 +70,24 @@ class Interpreter:
         context.symbol_table.set(var_name, value)
         
         return rt_result.success(value)
+
+    def visit_VarUpdateNode(self, node: VarUpdateNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
+        var_name: str = node.token.value
+        value = rt_result.register(self.visit(node.value_node, context))
+        
+        if rt_result.should_return(): return rt_result
+        
+        symbol_table = context.symbol_table
+        
+        if symbol_table.exists(var_name):
+            symbol_table.set(var_name, value)
+            return rt_result.success(value)
+        else:
+            return rt_result.failure(ErrorRuntime(
+                f"Variable '{var_name}' was not defined.",
+                node.pos_start, node.pos_end, context
+            ))
     
     def visit_VarDeleteNode(self, node: VarDeleteNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
@@ -141,7 +159,7 @@ class Interpreter:
         
         error = None
         
-        if node.token.type == TokenType.MINUS:
+        if node.token.is_type_of(TokenType.MINUS):
             number, error = number.multiplied_by(Number(-1))
         elif node.token.is_keyword_of(Keyword.NOT):
             number, error = number.notted()

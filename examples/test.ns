@@ -76,11 +76,22 @@ func hello()
 end
 
 func runFunction(function) -> function()
+func returnFunction(function) -> function
 
 runFunction(hello)
+
+(returnFunction(hello))()
+# I'll try to work like this: returnFunction(hello)()
+
 
 var helloworld = "hello world"
 print(helloworld / 2)
 print(helloworld[2])
+
+func range(end_point)
+    return for i = 0 to end_point then i
+end
+
+print(range(10))
 
 # Test
