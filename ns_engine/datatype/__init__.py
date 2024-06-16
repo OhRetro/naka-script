@@ -1,4 +1,5 @@
 from typing import Any, Tuple, TypeVar, TYPE_CHECKING, List as type_List, Dict as type_Dict
+from types import NoneType
 from .datatype import Datatype
 from .number import Number
 from .function import Function, BaseFunction
@@ -16,6 +17,8 @@ def convert_to_datatype(value: Any) -> Datatype:
         return Number(value)
     elif isinstance(value, bool):
         return Number.true if value else Number.false
+    elif isinstance(value, NoneType):
+        return Number.null
     elif isinstance(value, str):
         return String(value)
     elif isinstance(value, type_List):

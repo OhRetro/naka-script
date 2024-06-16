@@ -6,9 +6,9 @@ from .components.context import Context
 from .components.error import Error
 from .components.node import Node
 from .datatype import List
-from .datatype.utils import setup_global_symbols_symbols
+from .datatype.utils import setup_global_symbols
 
-global_symbol_table = setup_global_symbols_symbols()
+global_symbol_table = setup_global_symbols()
 
 def generate_ast(src_filename: str, src_data: str)-> Tuple[Optional[Node], Optional[Error]]:
     lexer = Lexer(src_filename, src_data)

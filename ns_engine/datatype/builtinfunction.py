@@ -87,44 +87,6 @@ def _is_function(self: BuiltInFunction, context: Context):
     is_function = isinstance(context.get_symbol("value"), BaseFunction)
     return self._rt_result_success(Number.true if is_function else Number.false)
 
-def _append(self: BuiltInFunction, context: Context):
-    list_ = context.get_symbol("list")
-    value = context.get_symbol("value")
-
-    if not isinstance(list_, List):
-        return self._rt_result_failure("First argument must be list", context)
-
-    list_.value.append(value)
-
-def _pop(self: BuiltInFunction, context: Context):
-    list_ = context.get_symbol("list")
-    index = context.get_symbol("index")
-
-    if not isinstance(list_, List):
-        return self._rt_result_failure("First argument must be list", context)
-
-    if not isinstance(index, Number):
-        return self._rt_result_failure("Second argument must be number", context)
-
-    try:
-        element = list_.value.pop(int(index.value))
-    except IndexError:
-        return self._rt_result_failure("Element at index doesn't exist, Out of bounds", context)
-
-    return self._rt_result_success(element)
-
-def _extend(self: BuiltInFunction, context: Context):
-    listA = context.get_symbol("listA")
-    listB = context.get_symbol("listB")
-
-    if not isinstance(listA, List):
-        return self._rt_result_failure("First argument must be list", context)
-
-    if not isinstance(listB, List):
-        return self._rt_result_failure("Second argument must be list", context)
-
-    listA.value.extend(listB.value)
-
 def _run(self: BuiltInFunction, context: Context):
     from ..wrapper import interpret 
     
@@ -174,8 +136,4 @@ built_in_functions = {
     "is_string": BuiltInFunction("is_string", ("value",), _is_string),
     "is_list": BuiltInFunction("is_list", ("value",), _is_list),
     "is_function": BuiltInFunction("is_function", ("value",), _is_function),
-    
-    "append": BuiltInFunction("append", ("list", "value"), _append),
-    "pop": BuiltInFunction("pop", ("list", "index"), _pop),
-    "extend": BuiltInFunction("extend", ("listA", "listB"), _extend),
 }
