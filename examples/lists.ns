@@ -1,0 +1,19 @@
+var hw = ["hello", "world"]
+
+var alphabet = [
+    "a", 
+    "b"
+]
+
+print(hw)
+print(hw / 0 + " " + hw[1])
+
+print(alphabet)
+alphabet * ["c", "d"]
+print(alphabet)
+
+alphabet + "e"
+print(alphabet)
+
+alphabet - 3
+print(alphabet)

@@ -100,6 +100,24 @@ class Parser:
     #     except IndexError:
     #         return False
     
+    def advance_if_token_is_semicolon_or_newline(self, parse_result: ParseResult) -> int:
+        semicolon_newline_count = 0
+        while self.current_token_is_semicolon_or_newline():
+            parse_result.register_advancement()
+            self.advance()
+            semicolon_newline_count += 1
+            
+        return semicolon_newline_count
+    
+    def advance_register_advancement(self, parse_result: ParseResult, skip_semicolon_newline: bool):
+        parse_result.register_advancement()
+        self.advance()
+        advance_count = 1
+        if skip_semicolon_newline: 
+            advance_count += self.advance_if_token_is_semicolon_or_newline(parse_result)
+            
+        return advance_count
+
     #!================================================================
 
     def atom(self) -> ParseResult:
@@ -107,24 +125,21 @@ class Parser:
         token = self.current_token
 
         if token.is_type_of(TokenType.NUMBER):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             return p_result.success(NumberNode(token))
  
         elif token.is_type_of(TokenType.STRING):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             return p_result.success(StringNode(token))
                
         elif token.is_type_of(TokenType.IDENTIFIER):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             if self.current_token_is_type_of(TokenType.EQUALS):
                 var_name_token = token
             
-                p_result.register_advancement()
-                self.advance()
+                self.advance_register_advancement(p_result, False)
+                
                 expr = p_result.register(self.expr())
                 
                 if p_result.error: return p_result
@@ -134,16 +149,14 @@ class Parser:
                 return p_result.success(VarAccessNode(token))
         
         elif token.is_type_of(TokenType.LPAREN):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             expr = p_result.register(self.expr())
             
             if p_result.error: return p_result
             
             if self.current_token_is_type_of(TokenType.RPAREN):
-                p_result.register_advancement()
-                self.advance()
+                self.advance_register_advancement(p_result, False)
                 
                 return p_result.success(expr)
             else:
@@ -157,10 +170,10 @@ class Parser:
             if p_result.error: return p_result
             return p_result.success(list_expr)
 
-        # elif token.is_type_of(TokenType.LBRACE):
-        #     dict_expr = p_result.register(self.dict_expr())
-        #     if p_result.error: return p_result
-        #     return p_result.success(dict_expr)
+        elif token.is_type_of(TokenType.LBRACE):
+            dict_expr = p_result.register(self.dict_expr())
+            if p_result.error: return p_result
+            return p_result.success(dict_expr)
                               
         elif token.is_keyword_of(Keyword.IF):
             if_expr = p_result.register(self.if_expr())
@@ -195,31 +208,31 @@ class Parser:
         if p_result.error: return p_result
         
         if self.current_token_is_type_of(TokenType.LPAREN):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, True)
             
             arg_nodes: list[Node] = []
             
             if self.current_token_is_type_of(TokenType.RPAREN):
-                p_result.register_advancement()
-                self.advance()
+                self.advance_register_advancement(p_result, False)
             
             else:
-                arg_nodes.append(p_result.register(self.expr()))
-                
-                if p_result.error: 
-                    return p_result.failure(ErrorInvalidSyntax(
-                        expected(TokenType.RPAREN, Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE,
-                                 Keyword.NOT),
-                        self.current_token.pos_start, self.current_token.pos_end
-                    ))
-                    
-                while self.current_token_is_type_of(TokenType.COMMA):
-                    p_result.register_advancement()
-                    self.advance()
-                    
+                def get_arguments():
                     arg_nodes.append(p_result.register(self.expr()))
-                    if p_result.error: return p_result
+                    
+                    if p_result.error: 
+                        return p_result.failure(ErrorInvalidSyntax(
+                            expected(TokenType.RPAREN, Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
+                                     TokenType.LPAREN, TokenType.LSQUARE,
+                                     Keyword.NOT),
+                            self.current_token.pos_start, self.current_token.pos_end
+                        ))
+                    
+                    self.advance_if_token_is_semicolon_or_newline(p_result)
+                
+                if get_arguments(): return p_result
+                while self.current_token_is_type_of(TokenType.COMMA):
+                    self.advance_register_advancement(p_result, True)
+                    if get_arguments(): return p_result
                     
                 if not self.current_token_is_type_of(TokenType.RPAREN):
                     return p_result.failure(ErrorInvalidSyntax(
@@ -233,8 +246,7 @@ class Parser:
             return p_result.success(CallNode(atom, arg_nodes))
 
         elif self.current_token_is_type_of(TokenType.LSQUARE):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             index_node: Node = p_result.register(self.atom())
             if p_result.error: return p_result
@@ -245,8 +257,7 @@ class Parser:
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
             
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             return p_result.success(IndexNode(atom, index_node))
         
@@ -260,8 +271,7 @@ class Parser:
         token = self.current_token
         
         if token.type in (TokenType.PLUS, TokenType.MINUS):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             factor = p_result.register(self.factor())
             
             if p_result.error: return p_result
@@ -281,8 +291,7 @@ class Parser:
         
         if self.current_token_is_keyword_of(Keyword.NOT):
             operation_token = self.current_token
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             node = p_result.register(self.comp_expr())
             if p_result.error: return p_result
@@ -314,29 +323,30 @@ class Parser:
                 self.current_token.pos_start, self.current_token.pos_end
             ))
 
-        p_result.register_advancement()
-        self.advance()
-
+        self.advance_register_advancement(p_result, True)
+        
         if self.current_token_is_type_of(TokenType.RSQUARE):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
         else:
-            element_nodes.append(p_result.register(self.expr()))
-            
-            if p_result.error: 
-                return p_result.failure(ErrorInvalidSyntax(
-                    expected(TokenType.RSQUARE, Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN,
-                             Keyword.NOT),
-                    self.current_token.pos_start, self.current_token.pos_end
-                ))
-                
-            while self.current_token_is_type_of(TokenType.COMMA):
-                p_result.register_advancement()
-                self.advance()
-                
+            def get_elements():
                 element_nodes.append(p_result.register(self.expr()))
-                if p_result.error: return p_result
+                
+                if p_result.error: 
+                    return p_result.failure(ErrorInvalidSyntax(
+                        expected(TokenType.RSQUARE, Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
+                                 TokenType.LPAREN, TokenType.LSQUARE,
+                                Keyword.SETVAR, Keyword.NOT, Keyword.IF,
+                                Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
+                        self.current_token.pos_start, self.current_token.pos_end
+                    ))
+                
+                self.advance_if_token_is_semicolon_or_newline(p_result)
+            
+            if get_elements(): return p_result
+            while self.current_token_is_type_of(TokenType.COMMA):
+                self.advance_register_advancement(p_result, True)
+                if get_elements(): return p_result
                 
             if not self.current_token_is_type_of(TokenType.RSQUARE):
                 return p_result.failure(ErrorInvalidSyntax(
@@ -344,165 +354,176 @@ class Parser:
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
                 
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
 
         return p_result.success(ListNode(pos_start, self.current_token.pos_end.copy(), element_nodes))
     
     def dict_expr(self) -> ParseResult:
         p_result = ParseResult()
-        element_nodes: list[Node] = []
+        key_tokens: list[Token] = []
+        value_nodes: list[Node] = []
         pos_start = self.current_token.pos_start.copy()
         
-        if not self.current_token_is_type_of(TokenType.LSQUARE):
+        if not self.current_token_is_type_of(TokenType.LBRACE):
             return p_result.failure(ErrorInvalidSyntax(
-                expected(TokenType.LSQUARE),
+                expected(TokenType.LBRACE),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
 
-        p_result.register_advancement()
-        self.advance()
-
-        if self.current_token_is_type_of(TokenType.RSQUARE):
-            p_result.register_advancement()
-            self.advance()
+        self.advance_register_advancement(p_result, True)
+        
+        if self.current_token_is_type_of(TokenType.RBRACE):
+            self.advance_register_advancement(p_result, False)
             
         else:
-            element_nodes.append(p_result.register(self.expr()))
-            
-            if p_result.error: 
-                return p_result.failure(ErrorInvalidSyntax(
-                    expected(TokenType.RSQUARE, Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN,
-                             Keyword.NOT),
-                    self.current_token.pos_start, self.current_token.pos_end
-                ))
+            def get_key_value():
+                if not self.current_token_is_type_of(TokenType.IDENTIFIER):
+                    return p_result.failure(ErrorInvalidSyntax(
+                        expected(TokenType.IDENTIFIER),
+                        self.current_token.pos_start, self.current_token.pos_end
+                    ))
                 
-            while self.current_token_is_type_of(TokenType.COMMA):
-                p_result.register_advancement()
-                self.advance()
+                key_tokens.append(self.current_token)
                 
-                element_nodes.append(p_result.register(self.expr()))
-                if p_result.error: return p_result
+                self.advance_register_advancement(p_result, True)
                 
-            if not self.current_token_is_type_of(TokenType.RSQUARE):
-                return p_result.failure(ErrorInvalidSyntax(
-                    expected(TokenType.COMMA, TokenType.RSQUARE),
-                    self.current_token.pos_start, self.current_token.pos_end
-                ))
-                
-            p_result.register_advancement()
-            self.advance()
+                if not self.current_token_is_type_of(TokenType.COLON):
+                    return p_result.failure(ErrorInvalidSyntax(
+                        expected(TokenType.COLON),
+                        self.current_token.pos_start, self.current_token.pos_end
+                    ))
 
-        return p_result.success(ListNode(pos_start, self.current_token.pos_end.copy(), element_nodes))
+                self.advance_register_advancement(p_result, True)
+                
+                value_nodes.append(p_result.register(self.expr()))
+                
+                if p_result.error: 
+                    return p_result.failure(ErrorInvalidSyntax(
+                        expected(TokenType.RBRACE, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER,
+                                TokenType.LBRACE, TokenType.LPAREN,
+                                Keyword.SETVAR, Keyword.NOT, Keyword.IF,
+                                Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
+                        self.current_token.pos_start, self.current_token.pos_end
+                    ))
+                
+                self.advance_if_token_is_semicolon_or_newline(p_result)
+                
+            if get_key_value(): return p_result
+            while self.current_token_is_type_of(TokenType.COMMA):
+                self.advance_register_advancement(p_result, True)
+                if get_key_value(): return p_result
+            
+            if not self.current_token_is_type_of(TokenType.RBRACE):
+                return p_result.failure(ErrorInvalidSyntax(
+                    expected(TokenType.COMMA, TokenType.RBRACE),
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+                
+            self.advance_register_advancement(p_result, False)
+
+        return p_result.success(DictNode(pos_start, self.current_token.pos_end.copy(), key_tokens, value_nodes))
 
     def if_expr(self) -> ParseResult:
-        res = ParseResult()
-        all_cases = res.register(self.if_expr_cases(Keyword.IF))
-        if res.error: return res
+        p_result = ParseResult()
+        all_cases = p_result.register(self.if_expr_cases(Keyword.IF))
+        if p_result.error: return p_result
         cases, else_case = all_cases
-        return res.success(IfNode(cases, else_case, True))
+        return p_result.success(IfNode(cases, else_case, True))
 
     def if_expr_elseif(self) -> ParseResult:
         return self.if_expr_cases(Keyword.ELSEIF)
         
     def if_expr_else(self) -> ParseResult:
-        res = ParseResult()
+        p_result = ParseResult()
         else_case = None
 
         if self.current_token_is_keyword_of(Keyword.ELSE):
-            res.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
 
             if self.current_token_is_semicolon_or_newline():
-                res.register_advancement()
-                self.advance()
+                self.advance_register_advancement(p_result, False)
 
-                statements = res.register(self.statements())
-                if res.error: return res
+                statements = p_result.register(self.statements())
+                if p_result.error: return p_result
                 else_case = (statements, True)
 
                 if self.current_token_is_keyword_of(Keyword.END):
-                    res.register_advancement()
-                    self.advance()
+                    self.advance_register_advancement(p_result, False)
                 else:
-                    return res.failure(ErrorInvalidSyntax(
+                    return p_result.failure(ErrorInvalidSyntax(
                         expected(Keyword.END),
                         self.current_token.pos_start, self.current_token.pos_end
                     ))
             else:
-                expr = res.register(self.statement())
-                if res.error: return res
+                expr = p_result.register(self.statement())
+                if p_result.error: return p_result
                 else_case = (expr, False)
 
-        return res.success(else_case)
+        return p_result.success(else_case)
 
     def if_expr_elseif_or_else(self) -> ParseResult:
-        res = ParseResult()
+        p_result = ParseResult()
         cases, else_case = [], None
 
         if self.current_token_is_keyword_of(Keyword.ELSEIF):
-            all_cases = res.register(self.if_expr_elseif())
-            if res.error: return res
+            all_cases = p_result.register(self.if_expr_elseif())
+            if p_result.error: return p_result
             cases, else_case = all_cases
         else:
-            else_case = res.register(self.if_expr_else())
-            if res.error: return res
+            else_case = p_result.register(self.if_expr_else())
+            if p_result.error: return p_result
         
-        return res.success((cases, else_case))
+        return p_result.success((cases, else_case))
 
     def if_expr_cases(self, case_keyword: Keyword) -> ParseResult:
-        res = ParseResult()
+        p_result = ParseResult()
         cases = []
         else_case = None
 
         if not self.current_token_is_keyword_of(case_keyword):
-            return res.failure(ErrorInvalidSyntax(
+            return p_result.failure(ErrorInvalidSyntax(
                 expected(case_keyword),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
 
-        res.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
 
-        condition = res.register(self.expr())
-        if res.error: return res
+        condition = p_result.register(self.expr())
+        if p_result.error: return p_result
 
         if not self.current_token_is_keyword_of(Keyword.THEN):
-            return res.failure(ErrorInvalidSyntax(
+            return p_result.failure(ErrorInvalidSyntax(
                 expected(Keyword.THEN),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
 
-        res.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
 
         if self.current_token_is_semicolon_or_newline():
-            res.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
 
-            statements = res.register(self.statements())
-            if res.error: return res
+            statements = p_result.register(self.statements())
+            if p_result.error: return p_result
             cases.append((condition, statements, True))
 
             if self.current_token_is_keyword_of(Keyword.END):
-                res.register_advancement()
-                self.advance()
+                self.advance_register_advancement(p_result, False)
             else:
-                all_cases = res.register(self.if_expr_elseif_or_else())
-                if res.error: return res
+                all_cases = p_result.register(self.if_expr_elseif_or_else())
+                if p_result.error: return p_result
                 new_cases, else_case = all_cases
                 cases.extend(new_cases)
         else:
-            expr = res.register(self.statement())
-            if res.error: return res
+            expr = p_result.register(self.statement())
+            if p_result.error: return p_result
             cases.append((condition, expr, False))
 
-            all_cases = res.register(self.if_expr_elseif_or_else())
-            if res.error: return res
+            all_cases = p_result.register(self.if_expr_elseif_or_else())
+            if p_result.error: return p_result
             new_cases, else_case = all_cases
             cases.extend(new_cases)
 
-        return res.success((cases, else_case))
+        return p_result.success((cases, else_case))
 
     def for_expr(self) -> ParseResult:
         p_result = ParseResult()
@@ -513,8 +534,7 @@ class Parser:
                 self.current_token.pos_start, self.current_token.pos_end
             ))
 
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
 
         if not self.current_token_is_type_of(TokenType.IDENTIFIER):
             return p_result.failure(ErrorInvalidSyntax(
@@ -523,8 +543,7 @@ class Parser:
             ))
 
         var_name_token = self.current_token
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
 
         if not self.current_token_is_type_of(TokenType.EQUALS):
             return p_result.failure(ErrorInvalidSyntax(
@@ -532,8 +551,7 @@ class Parser:
                 self.current_token.pos_start, self.current_token.pos_end
             ))
         
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
 
         start_value_node: Node = p_result.register(self.expr())
         if p_result.error: return p_result
@@ -544,15 +562,13 @@ class Parser:
                 self.current_token.pos_start, self.current_token.pos_end
             ))
         
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
 
         end_value_node: Node = p_result.register(self.expr())
         if p_result.error: return p_result
 
         if self.current_token_is_keyword_of(Keyword.STEP):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
 
             step_value_node: Node = p_result.register(self.expr())
             if p_result.error: return p_result
@@ -565,12 +581,10 @@ class Parser:
                 self.current_token.pos_start, self.current_token.pos_end
             ))
 
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
         
         if self.current_token_is_semicolon_or_newline():
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
 
             body_node = p_result.register(self.statements())
             if p_result.error:
@@ -582,8 +596,7 @@ class Parser:
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
 
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
 
             return p_result.success(ForNode(var_name_token, start_value_node, end_value_node, step_value_node, body_node, True))
 
@@ -601,8 +614,7 @@ class Parser:
                 self.current_token.pos_start, self.current_token.pos_end
             ))
 
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
 
         condition_node: Node = p_result.register(self.expr())
         if p_result.error: return p_result
@@ -613,12 +625,10 @@ class Parser:
                 self.current_token.pos_start, self.current_token.pos_end
             ))
 
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
 
         if self.current_token_is_semicolon_or_newline():
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
 
             body_node = p_result.register(self.statements())
             if p_result.error: return p_result
@@ -629,8 +639,7 @@ class Parser:
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
 
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
 
             return p_result.success(WhileNode(condition_node, body_node, True))
 
@@ -643,8 +652,7 @@ class Parser:
         p_result = ParseResult()
         
         if self.current_token_is_keyword_of(Keyword.SETVAR):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             if not self.current_token_is_type_of(TokenType.IDENTIFIER):
                 return p_result.failure(ErrorInvalidSyntax(
@@ -653,8 +661,7 @@ class Parser:
                 ))
                 
             var_name_token = self.current_token
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
 
             if not self.current_token_is_type_of(TokenType.EQUALS):
                 return p_result.failure(ErrorInvalidSyntax(
@@ -662,8 +669,7 @@ class Parser:
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
                 
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             expr = p_result.register(self.expr())
             
             if p_result.error: return p_result
@@ -671,8 +677,7 @@ class Parser:
             return p_result.success(VarAssignNode(var_name_token, expr))
         
         elif self.current_token_is_keyword_of(Keyword.DELETEVAR):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             if not self.current_token_is_type_of(TokenType.IDENTIFIER):
                 return p_result.failure(ErrorInvalidSyntax(
@@ -681,8 +686,7 @@ class Parser:
                 ))
                 
             var_name_token = self.current_token
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             return p_result.success(VarDeleteNode(var_name_token))
         
@@ -702,8 +706,7 @@ class Parser:
         pos_start = self.current_token.pos_start.copy()
         
         if self.current_token_is_keyword_of(Keyword.RETURN):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             expr = p_result.try_register(self.expr())
             
@@ -716,15 +719,13 @@ class Parser:
             ))
 
         elif self.current_token_is_keyword_of(Keyword.CONTINUE):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             return p_result.success(ContinueNode(
                 pos_start, self.current_token.pos_end.copy()
             ))
             
         elif self.current_token_is_keyword_of(Keyword.BREAK):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             return p_result.success(BreakNode(
                 pos_start, self.current_token.pos_end.copy()
             ))
@@ -746,9 +747,7 @@ class Parser:
         statements: list[Node] = []
         pos_start = self.current_token.pos_start.copy()
         
-        while self.current_token_is_semicolon_or_newline():
-            p_result.register_advancement()
-            self.advance()
+        self.advance_if_token_is_semicolon_or_newline(p_result)
             
         statement: Node = p_result.register(self.statement())
         if p_result.error: return p_result
@@ -757,11 +756,7 @@ class Parser:
         more_statements = True
         
         while True:
-            newline_count = 0
-            while self.current_token_is_semicolon_or_newline():
-                p_result.register_advancement()
-                self.advance()
-                newline_count += 1
+            newline_count = self.advance_if_token_is_semicolon_or_newline(p_result)
                 
             if not newline_count:
                 more_statements = False
@@ -791,14 +786,12 @@ class Parser:
                 self.current_token.pos_start, self.current_token.pos_end
             ))
 
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
         
         if self.current_token_is_type_of(TokenType.IDENTIFIER):
             var_name_token = self.current_token
             
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             if not self.current_token_is_type_of(TokenType.LPAREN):
                 return p_result.failure(ErrorInvalidSyntax(
@@ -813,20 +806,17 @@ class Parser:
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
         
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
         
         arg_name_tokens: list[Token] = []
         
         if self.current_token_is_type_of(TokenType.IDENTIFIER):
             arg_name_tokens.append(self.current_token)
             
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             while self.current_token_is_type_of(TokenType.COMMA):
-                p_result.register_advancement()
-                self.advance()
+                self.advance_register_advancement(p_result, False)
                 
                 if not self.current_token_is_type_of(TokenType.IDENTIFIER):
                     return p_result.failure(ErrorInvalidSyntax(
@@ -836,8 +826,7 @@ class Parser:
                     
                 arg_name_tokens.append(self.current_token)
                 
-                p_result.register_advancement()
-                self.advance()
+                self.advance_register_advancement(p_result, False)
                 
             if not self.current_token_is_type_of(TokenType.RPAREN):
                 return p_result.failure(ErrorInvalidSyntax(
@@ -851,12 +840,10 @@ class Parser:
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
         
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
         
         if self.current_token_is_type_of(TokenType.RIGHTARROW):
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             
             body_node: Node = p_result.register(self.expr())
             
@@ -870,8 +857,7 @@ class Parser:
                 self.current_token.pos_start, self.current_token.pos_end,
             ))
 
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
 
         body_node = p_result.register(self.statements())
         if p_result.error:
@@ -883,8 +869,7 @@ class Parser:
                 self.current_token.pos_start, self.current_token.pos_end
             ))
 
-        p_result.register_advancement()
-        self.advance()
+        self.advance_register_advancement(p_result, False)
 
         return p_result.success(FuncDefNode(var_name_token, tuple(arg_name_tokens), body_node, False))
     
@@ -900,8 +885,7 @@ class Parser:
 
         while self.current_token.type in operations or (self.current_token_is_type_of(TokenType.KEYWORD) and self.current_token.value in operations):
             operation_token = self.current_token
-            p_result.register_advancement()
-            self.advance()
+            self.advance_register_advancement(p_result, False)
             right = p_result.register(function_b())
             if p_result.error: return p_result
             left = BinOpNode(operation_token, left, right)

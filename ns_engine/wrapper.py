@@ -3,14 +3,12 @@ from .components.lexer import Lexer
 from .components.parser import Parser
 from .components.interpreter import Interpreter
 from .components.context import Context
-from .components.symbol_table import SymbolTable
 from .components.error import Error
 from .components.node import Node
 from .datatype import List
-from .datatype.utils import set_builtin_symbols
+from .datatype.utils import setup_global_symbols_symbols
 
-global_symbol_table = SymbolTable()
-set_builtin_symbols(global_symbol_table)
+global_symbol_table = setup_global_symbols_symbols()
 
 def generate_ast(src_filename: str, src_data: str)-> Tuple[Optional[Node], Optional[Error]]:
     lexer = Lexer(src_filename, src_data)

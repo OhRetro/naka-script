@@ -1,17 +1,23 @@
 from dataclasses import dataclass
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .number import Number
+from .string import String
 from ..components.error import ErrorRuntime
 
 @dataclass(slots=True)
-class String(Datatype):
-    value: str
-    
-    def __str__(self) -> str:
-        return self.value
-    
+class Dict(Datatype):
+    value: dict[str, Datatype]
+
+    def __post_init__(self):
+        self._values_to_copy = ("value", )
+
     def __repr__(self) -> str:
-        return f'"{self.value}"'
+        display = ""
+
+        for index, (k, v) in enumerate(self.value.items()):
+            display += f"{k}: {repr(v)}" + (", " if index < len(self.value) - 1 and len(self.value) > 1 else "")
+        
+        return f"{{{display}}}"
     
     def _number(self, value: int | float) -> DATATYPE_OR_ERROR:
         return Number(value).set_context(self.context), None
@@ -19,35 +25,46 @@ class String(Datatype):
     def _number_bool(self, value: bool) -> DATATYPE_OR_ERROR:
         return self._number(int(value))
 
-    def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
+    # def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
+    #     result: list = self._value_copy()
+    #     result.append(other)
+    #     return self.new(result)
+    
+    def subtracted_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, String):
-            result = self.value + other.value
-            return self.new(result)
-        else:
-            return self._illegal_operation(other)
-
-    def multiplied_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, Number):
-            result = self.value * other.value
-            return self.new(result)
-        else:
-            return self._illegal_operation(other)
-      
-    def divided_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, Number):
             try:
-                return self.new(self.value[other.value])
-            except IndexError:
+                del self.value[other.value]
+                return None, None
+            except KeyError:
+                None, ErrorRuntime(
+                    f"Key '{other.value}' doesn't exist",
+                    other.pos_start, other.pos_end, self.context
+                )
+        else:
+            return self._illegal_operation(other)
+    
+    def multiplied_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        if isinstance(other, Dict):
+            self.value.update(other.value)
+            return None, None
+        else:
+            return self._illegal_operation(other)
+    
+    def divided_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        if isinstance(other, String):
+            try:
+                return self.value[other.value], None
+            except KeyError:
                 return None, ErrorRuntime(
-                    "Element at index doesn't exist, Out of bounds",
+                    f"Key '{other.value}' doesn't exist",
                     other.pos_start, other.pos_end, self.context
                 )
         else:
             return None, ErrorRuntime(
-                "'String' datatype can be only indexed by 'Number: int'",
+                "'Dict' datatype can be only indexed by 'String'",
                 other.pos_start, other.pos_end, self.context
             )
-        
+
     def is_equal_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
         return self._number_bool(self.value == other.value)
     
@@ -61,23 +78,23 @@ class String(Datatype):
         return self._number_bool(self.value or other.value)
     
     def notted(self) -> DATATYPE_OR_ERROR:
-        return self._number(1 if self.value == "" else 0)
+        return self._number(1 if self.value == {} else 0)
 
     def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, Number):
+        if isinstance(other, String):
             try:
-                return self.new(self.value[other.value])
-            except IndexError:
+                return self.value[other.value], None
+            except KeyError:
                 return None, ErrorRuntime(
-                    "Element at index doesn't exist, Out of bounds",
+                    f"Key '{other.value}' doesn't exist",
                     other.pos_start, other.pos_end, self.context
                 )
         else:
             return None, ErrorRuntime(
-                "'String' datatype can be only indexed by 'Number: int'",
+                "'Dict' datatype can be only indexed by 'String'",
                 other.pos_start, other.pos_end, self.context
             )
-        
+            
     def is_true(self) -> bool:
-        return self.value != ""
+        return self.value != {}
     

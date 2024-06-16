@@ -94,4 +94,38 @@ end
 
 print(range(10))
 
+var name = "None"
+name = "Joe"
+
+print(name)
+
+# Testing syntaxes like this
+var alphabet = {
+    a
+    : 
+    0
+    ,
+
+    b
+    
+    :
+    
+    1
+
+    ,
+    c: 2
+
+}
+
+if 5 == 5 then
+    print(
+        "ok"
+    )
+    print(
+        range(
+            10
+        )
+    )
+end
+
 # Test

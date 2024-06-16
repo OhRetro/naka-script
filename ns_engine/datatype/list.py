@@ -10,14 +10,17 @@ class List(Datatype):
     def __post_init__(self):
         self._values_to_copy = ("value", )
 
-    def __str__(self) -> str:
-        return self._elements_string()
+    # def __str__(self) -> str:
+    #     return self._elements_str()
 
     def __repr__(self) -> str:
-        return f"[{self._elements_string()}]"
+        return f"[{self._elements_repr()}]"
     
-    def _elements_string(self):
-        return ", ".join([str(x) for x in self.value])
+    # def _elements_str(self):
+    #     return ", ".join([str(x) for x in self.value])
+
+    def _elements_repr(self):
+        return ", ".join([repr(x) for x in self.value])
     
     def _number(self, value: int | float) -> DATATYPE_OR_ERROR:
         return Number(value).set_context(self.context), None
@@ -26,17 +29,14 @@ class List(Datatype):
         return self._number(int(value))
 
     def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        result: list = self._value_copy()
-        result.append(other)
-        return self.new(result)
+        self.value.append(other)
+        return None, None
     
     def subtracted_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, Number):
-            result: list = self._value_copy()
-            
             try:
-                result.pop(other.value)
-                return self.new(result)
+                self.value.pop(other.value)
+                return None, None
             except IndexError:
                 None, ErrorRuntime(
                     "Element at index doesn't exist, Out of bounds",
@@ -47,9 +47,8 @@ class List(Datatype):
     
     def multiplied_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, List):
-            result: list = self._value_copy()
-            result.extend(other.value)
-            return self.new(result)
+            self.value.extend(other.value)
+            return None, None
         else:
             return self._illegal_operation(other)
     
@@ -62,13 +61,11 @@ class List(Datatype):
                     "Element at index doesn't exist, Out of bounds",
                     other.pos_start, other.pos_end, self.context
                 )
-            except TypeError:
-                return None, ErrorRuntime(
-                    "'List' datatype can be only indexed by 'Number: int'",
-                    other.pos_start, other.pos_end, self.context
-                )
         else:
-            return self._illegal_operation(other)
+            return None, ErrorRuntime(
+                "'List' datatype can be only indexed by 'Number: int'",
+                other.pos_start, other.pos_end, self.context
+            )
 
     def is_equal_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
         return self._number_bool(self.value == other.value)
@@ -94,13 +91,11 @@ class List(Datatype):
                     "Element at index doesn't exist, Out of bounds",
                     other.pos_start, other.pos_end, self.context
                 )
-            except TypeError:
-                return None, ErrorRuntime(
-                    "'List' datatype can be only indexed by 'Number: int'",
-                    other.pos_start, other.pos_end, self.context
-                )
         else:
-            return self._illegal_operation(other)
+            return None, ErrorRuntime(
+                "'List' datatype can be only indexed by 'Number: int'",
+                other.pos_start, other.pos_end, self.context
+            )
         
     def is_true(self) -> bool:
         return self.value != []

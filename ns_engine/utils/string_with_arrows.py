@@ -1,7 +1,4 @@
-from typing import TypeVar
 from ..components.position import Position
-
-# Position = TypeVar("Position")
 
 def string_with_arrows(text: str, pos_start: Position, pos_end: Position):
     result = ""

@@ -11,7 +11,7 @@ from .keyword import Keyword
 from .runtime import RuntimeResult
 from .context import Context
 from .error import ErrorRuntime
-from ..datatype import Datatype, Number, String, List, BaseFunction, Function
+from ..datatype import Datatype, Number, String, List, Dict, BaseFunction, Function
 
 class Interpreter:
     def visit(self, node: Node, context: Context) -> RuntimeResult:
@@ -45,7 +45,24 @@ class Interpreter:
         return rt_result.success(
             List(elements).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
-           
+
+    def visit_DictNode(self, node: DictNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
+        values: dict[str, Datatype] = {}
+        
+        key_tokens = node.key_tokens
+        value_nodes = node.value_nodes
+        
+        for i, key_tokens in enumerate(key_tokens):
+            value = rt_result.register(self.visit(value_nodes[i], context))
+            if rt_result.should_return(): return rt_result
+            
+            values[str(key_tokens.value)] = value
+            
+        return rt_result.success(
+            Dict(values).set_context(context).set_pos(node.pos_start, node.pos_end)
+        )
+        
     def visit_VarAccessNode(self, node: VarAccessNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
         var_name: str = node.token.value
@@ -148,8 +165,10 @@ class Interpreter:
 
         if error:
             return rt_result.failure(error)
-            
-        return rt_result.success(result.set_pos(node.pos_start, node.pos_end))
+        
+        result = result or Number.null
+        
+        return rt_result.success(result.set_context(context).set_pos(node.pos_start, node.pos_end))
             
     def visit_UnaryOpNode(self, node: UnaryOpNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
@@ -296,7 +315,7 @@ class Interpreter:
     def visit_IndexNode(self, node: IndexNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
         
-        value_to_index: Union[List, String] = rt_result.register(self.visit(node.node_to_index, context))
+        value_to_index: Union[String, List, Dict] = rt_result.register(self.visit(node.node_to_index, context))
         if rt_result.should_return(): return rt_result
         value_to_index = value_to_index.copy().set_pos(node.pos_start, node.pos_end)
         
@@ -304,7 +323,7 @@ class Interpreter:
         if rt_result.should_return(): return rt_result
         index_value = index_value.copy().set_pos(node.pos_start, node.pos_end)
 
-        if not isinstance(value_to_index, (List, String)):
+        if not isinstance(value_to_index, (String, List, Dict)):
             return rt_result.failure(ErrorRuntime(
                 f"'{value_to_index.__class__.__name__}' datatypes are not indexable.",
                 node.pos_start, node.pos_end, context

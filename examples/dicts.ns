@@ -1,0 +1,23 @@
+var hw = {
+    hello: "hello",
+    world: "world"
+}
+
+var alphabet = {
+    a: 0,
+    b: 1
+}
+
+print(hw)
+print(hw / "hello" + " " + hw["world"])
+
+print(alphabet)
+alphabet * {c: 2, d: 3}
+print(alphabet)
+
+# Thinking about how to execute this idea
+# alphabet + "e", 4 -> {a: 0, b: 1, c: 2, d: 3, e: 4}
+# print(alphabet)
+
+alphabet - "d"
+print(alphabet)

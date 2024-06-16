@@ -145,7 +145,7 @@ class Lexer:
         }
         
         self.advance()
-        while self.current_char != None and (self.current_char != '"' or escape_character):
+        while self.current_char not in (None, "\n") and (self.current_char != '"' or escape_character):
             if escape_character:
                 string += escape_characters.get(self.current_char, self.current_char)
                 escape_character = False

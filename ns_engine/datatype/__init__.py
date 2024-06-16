@@ -1,9 +1,15 @@
-from typing import Any
+from typing import Any, Tuple, TypeVar, TYPE_CHECKING, List as type_List, Dict as type_Dict
 from .datatype import Datatype
 from .number import Number
 from .function import Function, BaseFunction
 from .string import String
 from .list import List
+from .dict import Dict
+
+if TYPE_CHECKING:
+    from ..components.context import Context
+else:
+    Context = TypeVar("Context")
 
 def convert_to_datatype(value: Any) -> Datatype:
     if isinstance(value, (int, float)):
@@ -12,13 +18,25 @@ def convert_to_datatype(value: Any) -> Datatype:
         return Number.true if value else Number.false
     elif isinstance(value, str):
         return String(value)
-    elif isinstance(value, list):
-        return List(value)
+    elif isinstance(value, type_List):
+        new_value: list[Datatype] = []
+
+        for v in value:
+            new_value.append(convert_to_datatype(v) if not isinstance(v, Datatype) else v)
+            
+        return List(new_value)
+    elif isinstance(value, type_Dict):
+        new_value: dict[str, Datatype] = {}
+        
+        for k, v in value.items():
+            new_value[str(k)] = convert_to_datatype(v) if not isinstance(v, Datatype) else v
+        
+        return Dict(new_value)
     else:
-        raise TypeError(f"Could not convert {value} to a Datatype")
+        raise TypeError(f"Could not convert '{value}' to a Datatype")
 
 #! NOT A FINISHED FUNCTION
-def new_datatype(value: Any, context):
+def new_datatype(value: Any, context: Context) -> Tuple[Datatype, None]:
     return convert_to_datatype(value).set_context(context), None
 
 __all__ = [
@@ -27,6 +45,7 @@ __all__ = [
     "Function", "BaseFunction",
     "String",
     "List",
+    "Dict",
     
     "convert_to_datatype"
 ]
