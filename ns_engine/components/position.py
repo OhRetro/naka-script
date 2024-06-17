@@ -11,7 +11,7 @@ class Position:
     filedata: str
     
     def __repr__(self) -> str:
-        return f"Position({self.index}, {self.line}, {self.column}, {self.filename})"
+        return f"Pos(L{self.line}, C{self.column})"
     
     def __int__(self) -> int:
         return self.index

@@ -1,13 +1,15 @@
 # Test
 
+var test_ = null
+
 func add(a, b) -> a + b
 
 func add(a, b)
     a + b
 end
 
-var result = if 5 == 5 then "ok" else "not ok"
-print(result)
+test_ = if 5 == 5 then "ok" else "not ok"
+print(test_)
 
 if 5 == 5 then; print("ok"); print("works"); else print("not ok")
 
@@ -18,43 +20,45 @@ else
     print("not ok")
 end
 
-var result = 1; var numbers = for i = 1 to 10 then var result = result * i
-print(result)
+var numbers = null
+
+test_ = 1; numbers = for i = 1 to 10 then test_ = test_ * i
+print(test_)
 print(numbers)
 
-var result = 1
+test_ = 1
 for i = 1 to 10 then 
-    var result = result * i
+    test_ = test_ * i
 end
-print(result)
+print(test_)
 
-var result = 1; var numbers = while result < 10 then var result = result + 1
-print(result)
+test_ = 1; numbers = while test_ < 10 then test_ = test_ + 1
+print(test_)
 print(numbers)
 
-var result = 1
-while result < 10 then 
-    var result = result + 1
+test_ = 1
+while test_ < 10 then 
+    test_ = test_ + 1
 end
-print(result)
+print(test_)
 
-var result = 1
-while result < 10 then 
-    var result = result + 1
-    if result == 5 then
+test_ = 1
+while test_ < 10 then 
+    test_ = test_ + 1
+    if test_ == 5 then
         continue
     end
 end
-print(result)
+print(test_)
 
-var result = 1
-while result < 10 then 
-    var result = result + 1
-    if result == 5 then
+test_ = 1
+while test_ < 10 then 
+    test_ = test_ + 1
+    if test_ == 5 then
         break
     end
 end
-print(result)
+print(test_)
 
 var testA = func() -> 5
 print(testA())
@@ -81,7 +85,7 @@ func returnFunction(function) -> function
 runFunction(hello)
 
 (returnFunction(hello))()
-# I'll try to work like this: returnFunction(hello)()
+returnFunction(hello)()
 
 var helloworld = "hello world"
 print(helloworld / 2)
@@ -113,8 +117,20 @@ var alphabet = {
 
     ,
     c: 2
-
+    
 }
+print(alphabet)
+
+var randomList = [
+    1
+    ,
+
+    "test"
+
+    ,
+    [1]
+]
+print(randomList)
 
 if 5 == 5 then
     print(
@@ -127,7 +143,9 @@ if 5 == 5 then
     )
 end
 
-run("./examples/importing.ns")
-var test = import("./examples/importing.ns")
+run("importing.ns")
+print(fibonacci)
+# need to prevent the run function from importing the symbols
+# test_ = import("importing.ns")
 
 # Test

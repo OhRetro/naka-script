@@ -24,6 +24,14 @@ class ParseResult:
     advance_count: int = field(default=0, init=False)
     to_reverse_count: int = field(default=0, init=False)
     
+    def __repr__(self) -> str:
+        if self.error:
+            return f"ParseResult({self.error})"
+        elif self.node:
+            return f"ParseResult({self.node})"
+        else:
+            return f"ParseResult()"
+    
     def register_advancement(self):
         self.last_registered_advance_count = 1
         self.advance_count += 1
@@ -73,17 +81,17 @@ class Parser:
             self.current_token = self.tokens[self.token_index]
                
     def parse(self) -> ParseResult:
-        response = self.statements()
+        p_result = self.statements()
         
-        if not response.error and not self.current_token.is_type_of(TokenType.EOF):
-            return response.failure(ErrorInvalidSyntax(
+        if not p_result.error and not self.current_token.is_type_of(TokenType.EOF):
+            return p_result.failure(ErrorInvalidSyntax(
                 expected(TokenType.PLUS, TokenType.MINUS, TokenType.MULT, TokenType.DIV, TokenType.POWER, TokenType.MOD,
                          TokenType.ISEQUALS, TokenType.NE, TokenType.LT, TokenType.GT, TokenType.LTE, TokenType.GTE,
                          Keyword.AND, Keyword.OR),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
         
-        return response
+        return p_result
     
     def current_token_is_semicolon_or_newline(self) -> bool:
         return self.current_token.is_type_of(TokenType.SEMICOLON, TokenType.NEWLINE)
@@ -199,63 +207,72 @@ class Parser:
 
     def call(self) -> ParseResult:
         p_result = ParseResult()
+        
         atom: Node = p_result.register(self.atom())
         if p_result.error: return p_result
-        
-        if self.current_token.is_type_of(TokenType.LPAREN):
-            self.advance_register_advancement(p_result, True)
-            
-            arg_nodes: list[Node] = []
-            
-            if self.current_token.is_type_of(TokenType.RPAREN):
-                self.advance_register_advancement(p_result, False)
-            
-            else:
-                def get_arguments():
-                    arg_nodes.append(p_result.register(self.expr()))
-                    
-                    if p_result.error: 
-                        return p_result.failure(ErrorInvalidSyntax(
-                            expected(TokenType.RPAREN, Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
-                                     TokenType.LPAREN, TokenType.LSQUARE,
-                                     Keyword.NOT),
-                            self.current_token.pos_start, self.current_token.pos_end
-                        ))
-                    
-                    self.advance_if_token_is_semicolon_or_newline(p_result)
-                
-                if get_arguments(): return p_result
-                while self.current_token.is_type_of(TokenType.COMMA):
-                    self.advance_register_advancement(p_result, True)
-                    if get_arguments(): return p_result
-                    
-                if not self.current_token.is_type_of(TokenType.RPAREN):
-                    return p_result.failure(ErrorInvalidSyntax(
-                        expected(TokenType.COMMA, TokenType.RPAREN),
-                        self.current_token.pos_start, self.current_token.pos_end
-                    ))
-                    
-                p_result.register_advancement()
-                self.advance()
-                
-            return p_result.success(CallNode(atom, arg_nodes))
 
-        elif self.current_token.is_type_of(TokenType.LSQUARE):
-            self.advance_register_advancement(p_result, False)
-            
-            index_node: Node = p_result.register(self.atom())
-            if p_result.error: return p_result
-            
-            if not self.current_token.is_type_of(TokenType.RSQUARE):
-                return p_result.failure(ErrorInvalidSyntax(
-                    expected(TokenType.RSQUARE),
-                    self.current_token.pos_start, self.current_token.pos_end
-                ))
-            
-            self.advance_register_advancement(p_result, False)
-            
-            return p_result.success(IndexNode(atom, index_node))
-        
+        while True:
+            if self.current_token.is_type_of(TokenType.LPAREN):
+                self.advance_register_advancement(p_result, True)
+                
+                arg_nodes: list[Node] = []
+
+                if self.current_token.is_type_of(TokenType.RPAREN):
+                    self.advance_register_advancement(p_result, False)
+                    
+                else:
+                    def get_arguments():
+                        arg_nodes.append(p_result.register(self.expr()))
+                        if p_result.error:
+                            return p_result.failure(
+                                ErrorInvalidSyntax(
+                                    expected(TokenType.RPAREN, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
+                                             TokenType.LPAREN, TokenType.LSQUARE,
+                                             Keyword.SETVAR, Keyword.NOT, Keyword.IF,
+                                             Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
+                                    self.current_token.pos_start, self.current_token.pos_end
+                                )
+                            )
+                            
+                        self.advance_if_token_is_semicolon_or_newline(p_result)
+                    
+                    if get_arguments(): return p_result
+                    while self.current_token.is_type_of(TokenType.COMMA):
+                        self.advance_register_advancement(p_result, True)
+                        if get_arguments(): return p_result
+
+                    if not self.current_token.is_type_of(TokenType.RPAREN):
+                        return p_result.failure(
+                            ErrorInvalidSyntax(
+                                expected(TokenType.COMMA, TokenType.RPAREN),
+                                self.current_token.pos_start, self.current_token.pos_end
+                            )
+                        )
+
+                    self.advance_register_advancement(p_result, False)
+
+                atom = CallNode(atom, arg_nodes)
+
+            elif self.current_token.is_type_of(TokenType.LSQUARE):
+                self.advance_register_advancement(p_result, False)
+                
+                index_node: Node = p_result.register(self.expr())
+                if p_result.error: return p_result
+
+                if not self.current_token.is_type_of(TokenType.RSQUARE):
+                    return p_result.failure(
+                        ErrorInvalidSyntax(
+                            expected(TokenType.RSQUARE),
+                            self.current_token.pos_start, self.current_token.pos_end
+                        )
+                    )
+
+                self.advance_register_advancement(p_result, False)
+                atom = IndexNode(atom, index_node)
+
+            else:
+                break
+
         return p_result.success(atom)
 
     def power(self) -> ParseResult:
@@ -297,14 +314,14 @@ class Parser:
              TokenType.LT, TokenType.GT, 
              TokenType.LTE, TokenType.GTE), 
             self.arith_expr))
-        
+
         if p_result.error:
             return p_result.failure(ErrorInvalidSyntax(
                 expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE,
                          Keyword.NOT),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
-            
+        
         return p_result.success(node)
 
     def list_expr(self) -> ParseResult:
@@ -322,34 +339,34 @@ class Parser:
         
         if self.current_token.is_type_of(TokenType.RSQUARE):
             self.advance_register_advancement(p_result, False)
+            return p_result.success(ListNode(pos_start, self.current_token.pos_end.copy(), element_nodes))
+        
+        def get_elements():
+            element_nodes.append(p_result.register(self.expr()))
             
-        else:
-            def get_elements():
-                element_nodes.append(p_result.register(self.expr()))
-                
-                if p_result.error: 
-                    return p_result.failure(ErrorInvalidSyntax(
-                        expected(TokenType.RSQUARE, Keyword.SETVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
-                                 TokenType.LPAREN, TokenType.LSQUARE,
-                                Keyword.SETVAR, Keyword.NOT, Keyword.IF,
-                                Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
-                        self.current_token.pos_start, self.current_token.pos_end
-                    ))
-                
-                self.advance_if_token_is_semicolon_or_newline(p_result)
-            
-            if get_elements(): return p_result
-            while self.current_token.is_type_of(TokenType.COMMA):
-                self.advance_register_advancement(p_result, True)
-                if get_elements(): return p_result
-                
-            if not self.current_token.is_type_of(TokenType.RSQUARE):
+            if p_result.error:
                 return p_result.failure(ErrorInvalidSyntax(
-                    expected(TokenType.COMMA, TokenType.RSQUARE),
+                    expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
+                                TokenType.LPAREN, TokenType.LSQUARE,
+                            Keyword.SETVAR, Keyword.NOT, Keyword.IF,
+                            Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
-                
-            self.advance_register_advancement(p_result, False)
+            
+            self.advance_if_token_is_semicolon_or_newline(p_result)
+        
+        if get_elements(): return p_result
+        while self.current_token.is_type_of(TokenType.COMMA):
+            self.advance_register_advancement(p_result, True)
+            if get_elements(): return p_result
+            
+        if not self.current_token.is_type_of(TokenType.RSQUARE):
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(TokenType.COMMA, TokenType.RSQUARE),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+            
+        self.advance_register_advancement(p_result, False)
 
         return p_result.success(ListNode(pos_start, self.current_token.pos_end.copy(), element_nodes))
     
@@ -369,52 +386,52 @@ class Parser:
         
         if self.current_token.is_type_of(TokenType.RBRACE):
             self.advance_register_advancement(p_result, False)
-            
-        else:
-            def get_key_value():
-                if not self.current_token.is_type_of(TokenType.IDENTIFIER):
-                    return p_result.failure(ErrorInvalidSyntax(
-                        expected(TokenType.IDENTIFIER),
-                        self.current_token.pos_start, self.current_token.pos_end
-                    ))
-                
-                key_tokens.append(self.current_token)
-                
-                self.advance_register_advancement(p_result, True)
-                
-                if not self.current_token.is_type_of(TokenType.COLON):
-                    return p_result.failure(ErrorInvalidSyntax(
-                        expected(TokenType.COLON),
-                        self.current_token.pos_start, self.current_token.pos_end
-                    ))
-
-                self.advance_register_advancement(p_result, True)
-                
-                value_nodes.append(p_result.register(self.expr()))
-                
-                if p_result.error: 
-                    return p_result.failure(ErrorInvalidSyntax(
-                        expected(TokenType.RBRACE, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER,
-                                TokenType.LBRACE, TokenType.LPAREN,
-                                Keyword.SETVAR, Keyword.NOT, Keyword.IF,
-                                Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
-                        self.current_token.pos_start, self.current_token.pos_end
-                    ))
-                
-                self.advance_if_token_is_semicolon_or_newline(p_result)
-                
-            if get_key_value(): return p_result
-            while self.current_token.is_type_of(TokenType.COMMA):
-                self.advance_register_advancement(p_result, True)
-                if get_key_value(): return p_result
-            
-            if not self.current_token.is_type_of(TokenType.RBRACE):
+            return p_result.success(DictNode(pos_start, self.current_token.pos_end.copy(), key_tokens, value_nodes))
+        
+        def get_key_value():
+            if not self.current_token.is_type_of(TokenType.IDENTIFIER):
                 return p_result.failure(ErrorInvalidSyntax(
-                    expected(TokenType.COMMA, TokenType.RBRACE),
+                    expected(TokenType.IDENTIFIER),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
-                
-            self.advance_register_advancement(p_result, False)
+            
+            key_tokens.append(self.current_token)
+            
+            self.advance_register_advancement(p_result, True)
+            
+            if not self.current_token.is_type_of(TokenType.COLON):
+                return p_result.failure(ErrorInvalidSyntax(
+                    expected(TokenType.COLON),
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+
+            self.advance_register_advancement(p_result, True)
+            
+            value_nodes.append(p_result.register(self.expr()))
+            
+            if p_result.error: 
+                return p_result.failure(ErrorInvalidSyntax(
+                    expected(TokenType.RBRACE, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER,
+                            TokenType.LBRACE, TokenType.LPAREN,
+                            Keyword.SETVAR, Keyword.NOT, Keyword.IF,
+                            Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+            
+            self.advance_if_token_is_semicolon_or_newline(p_result)
+        
+        if get_key_value(): return p_result
+        while self.current_token.is_type_of(TokenType.COMMA):
+            self.advance_register_advancement(p_result, True)
+            if get_key_value(): return p_result
+        
+        if not self.current_token.is_type_of(TokenType.RBRACE):
+            return p_result.failure(ErrorInvalidSyntax(
+                expected(TokenType.COMMA, TokenType.RBRACE),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+            
+        self.advance_register_advancement(p_result, False)
 
         return p_result.success(DictNode(pos_start, self.current_token.pos_end.copy(), key_tokens, value_nodes))
 

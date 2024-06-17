@@ -1,4 +1,6 @@
-var fibo = import("./examples/fibonacci.ns")
-var fibonacci = fibo["fibonacci"]
+var math = import("math.ns")
+var fibonacci = math["fibonacci"]
+var pi = math["pi"]
 
+print(pi)
 print(fibonacci(20))

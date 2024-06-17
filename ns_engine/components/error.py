@@ -11,7 +11,7 @@ class Error:
     pos_end: Position
     
     def __repr__(self) -> str:
-        return f"Error({self.name}, {self.details})"
+        return f"Error({self.name}, {self.pos_start}, {self.pos_end}, \"{self.details}\")"
     
     def as_string(self) -> str:
         message = f"File \"{self.pos_start.filename}\", line {self.pos_start.line + 1}\n"
@@ -23,19 +23,31 @@ class Error:
 class ErrorIllegalCharacter(Error):
     name: str = field(default="Illegal Character Error", init=False)
 
+    def __repr__(self) -> str:
+        return f"ErrorIllegalCharacter({self.pos_start}, {self.pos_end}, \"{self.details}\")"
+    
 @dataclass(frozen=True, slots=True)
 class ErrorExpectedCharacter(Error):
     name: str = field(default="Expected Character Error", init=False)
+
+    def __repr__(self) -> str:
+        return f"ErrorExpectedCharacter({self.pos_start}, {self.pos_end}, \"{self.details}\")"
     
 @dataclass(frozen=True, slots=True)
 class ErrorInvalidSyntax(Error):
     name: str = field(default="Invalid Syntax Error", init=False)
 
+    def __repr__(self) -> str:
+        return f"ErrorInvalidSyntax({self.pos_start}, {self.pos_end}, \"{self.details}\")"
+    
 @dataclass(frozen=True, slots=True)
 class ErrorRuntime(Error):
     name: str = field(default="Runtime Error", init=False)
     context: Context
-    
+
+    def __repr__(self) -> str:
+        return f"ErrorRuntime({self.pos_start}, {self.pos_end}, \"{self.details}\")"
+     
     def as_string(self) -> str:
         message = self.generate_traceback()
         message += f"{self.name}: {self.details}\n"

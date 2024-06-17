@@ -84,8 +84,15 @@ class Interpreter:
         
         if rt_result.should_return(): return rt_result
         
-        context.symbol_table.set(var_name, value)
+        symbol_table = context.symbol_table
         
+        # if symbol_table.exists(var_name):
+        #     return rt_result.failure(ErrorRuntime(
+        #         f"Variable '{var_name}' is already defined.",
+        #         node.pos_start, node.pos_end, context
+        #     ))
+            
+        symbol_table.set(var_name, value)
         return rt_result.success(value)
 
     def visit_VarUpdateNode(self, node: VarUpdateNode, context: Context) -> RuntimeResult:
@@ -97,15 +104,15 @@ class Interpreter:
         
         symbol_table = context.symbol_table
         
-        if symbol_table.exists(var_name):
-            symbol_table.set(var_name, value)
-            return rt_result.success(value)
-        else:
+        if not symbol_table.exists(var_name):
             return rt_result.failure(ErrorRuntime(
                 f"Variable '{var_name}' was not defined.",
                 node.pos_start, node.pos_end, context
             ))
-    
+            
+        symbol_table.set(var_name, value)
+        return rt_result.success(value)
+        
     def visit_VarDeleteNode(self, node: VarDeleteNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
         var_name: str = node.token.value

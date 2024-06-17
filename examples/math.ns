@@ -1,3 +1,5 @@
+var pi = 3.14
+
 func fibonacci(n)
     if n <= 0 then
         return 0

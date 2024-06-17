@@ -1,5 +1,5 @@
-from os import name as os_name
-from os.path import abspath, dirname
+from os import name as os_name, getcwd as os_getcwd, chdir as os_chdir
+from contextlib import contextmanager
 
 def set_console_title(title):
     if os_name == "nt":
@@ -18,32 +18,11 @@ def convert_to_snake_case(input_string: str) -> str:
         result = result[1:]
     return result
 
-def index_exists(list_or_tuple: list | tuple, index: int) -> bool:
+@contextmanager
+def temp_cwd(temp_dir: str):
+    original_dir = os_getcwd()
     try:
-        _ = list_or_tuple[index]
-        return True
-    except IndexError:
-        return False
-                    
-def try_get(list_or_tuple: list | tuple, index: int, default = None):
-    if index_exists(list_or_tuple, index):
-        return list_or_tuple[index]
-    return default
-
-def try_set(list_or_tuple: list | tuple, index: int, value = None):
-    if index_exists(list_or_tuple, index):
-        list_or_tuple[index] = value
-        return True
-    return False
-
-def try_del(list_or_tuple: list | tuple, index):
-    if index_exists(list_or_tuple, index):
-        del list_or_tuple[index]
-        return True
-    return False 
-
-def remove_none_elements(list: list) -> list:
-    return [item for item in list if item is not None]
-
-def get_abs_path(path: str):
-    return dirname(abspath(path))
+        os_chdir(temp_dir)
+        yield
+    finally:
+        os_chdir(original_dir)
