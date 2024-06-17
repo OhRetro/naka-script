@@ -663,7 +663,8 @@ class Parser:
     def expr(self) -> ParseResult:
         p_result = ParseResult()
         
-        if self.current_token.is_keyword_of(Keyword.SETVAR):
+        if self.current_token.is_keyword_of(Keyword.SETVAR, Keyword.SETIMMUTABLEVAR):
+            set_var_keyword = self.current_token.value
             self.advance_register_advancement(p_result, False)
             
             if not self.current_token.is_type_of(TokenType.IDENTIFIER):
@@ -685,8 +686,14 @@ class Parser:
             expr = p_result.register(self.expr())
             
             if p_result.error: return p_result
+            
+            symbols_dict_type = {
+                Keyword.SETVAR: "symbols",
+                Keyword.SETIMMUTABLEVAR: "immutable_symbols",
+                #Keyword.SETLOCALVAR: "local_symbols"
+            }
                 
-            return p_result.success(VarAssignNode(var_name_token, expr))
+            return p_result.success(VarAssignNode(var_name_token, expr, symbols_dict_type.get(set_var_keyword)))
         
         elif self.current_token.is_keyword_of(Keyword.DELETEVAR):
             self.advance_register_advancement(p_result, False)

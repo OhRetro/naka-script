@@ -20,6 +20,7 @@ class BaseFunction(Datatype):
 
         new_context = Context(self.name, self.context, self.pos_start)
         new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
+        
         return new_context
     
     def check_args(self, arg_names: list[str], args: list[Datatype]):
@@ -44,7 +45,7 @@ class BaseFunction(Datatype):
             arg_name = arg_names[i]
             arg_value = args[i]
             arg_value.set_context(context)
-            context.symbol_table.set(arg_name, arg_value)
+            context.symbol_table.set(arg_name, arg_value, "symbols")
 
     def check_populate_args(self, arg_names: list[str], args: list[Datatype], context: Context):
         rt_result = RuntimeResult()

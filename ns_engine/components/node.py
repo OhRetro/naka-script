@@ -55,6 +55,7 @@ class VarAccessNode(Node):
 @dataclass(slots=True)
 class VarAssignNode(Node):
     value_node: Node
+    assign_type: str
 
     def __post_init__(self):
         self.pos_start = self.token.pos_start

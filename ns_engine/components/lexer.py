@@ -61,7 +61,7 @@ class Lexer:
             elif self.current_char in DIGITS:
                 tokens.append(self._make_token_number())
                 
-            elif self.current_char in LETTERS:
+            elif self.current_char in LETTERS + "_":
                 tokens.append(self._make_token_identifier())
             
             elif self.current_char in ADVANCED_TOKENS:

@@ -25,7 +25,7 @@ def shell():
         try:
             command_text = input(">>> ")
             if not command_text.strip(): continue
-            result, error = ns_wrapper.interpret("<shell>", command_text)
+            result, error, _ = ns_wrapper.interpret("<shell>", command_text)
             
             if error: print(error.as_string())
             elif result:
@@ -40,7 +40,7 @@ def run(filename: str):
     if source_code is None or not source_code.strip(): return
 
     try:
-        _, error = ns_wrapper.interpret(filename, source_code)
+        _, error, _ = ns_wrapper.interpret(filename, source_code)
         if error: print(error.as_string())
         
     except KeyboardInterrupt:

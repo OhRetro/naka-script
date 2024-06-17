@@ -115,7 +115,7 @@ def _run(self: BuiltInFunction, context: Context):
             self.pos_start, self.pos_end, context
         ))
     
-    _, error = interpret(filename, script_code)
+    _, error, _ = interpret(filename, script_code)
     
     if error:
         return rt_result.failure(ErrorRuntime(
@@ -150,25 +150,15 @@ def _import(self: BuiltInFunction, context: Context):
             self.pos_start, self.pos_end, context
         ))
     
-    result, error = interpret(filename, script_code)
+    _, error, context = interpret(filename, script_code)
     
     if error:
         return rt_result.failure(ErrorRuntime(
             f"Failed to finish importing script's symbols from \"{filename}\":\n{error.as_string()}",
             self.pos_start, self.pos_end, context
         ))
-        
-    for datatype in reversed(result.value):
-        if datatype.context:
-            # from .utils import clear_global_symbols
-            symbol_table = datatype.context.symbol_table
-            # clear_global_symbols(symbol_table)
-            return rt_result.success(convert_to_datatype(symbol_table.symbols))
 
-    return rt_result.failure(ErrorRuntime(
-        f"Failed importing script's symbols from \"{filename}\" as there's no symbols to import",
-        self.pos_start, self.pos_end, context
-    ))
+    return rt_result.success(convert_to_datatype(context.symbol_table.symbols))
 
 built_in_functions = {
     "print": (("value",), _print),

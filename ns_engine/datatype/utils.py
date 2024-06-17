@@ -1,24 +1,22 @@
 from .number import Number
 from .builtinfunction import BuiltInFunction, built_in_functions
+from . import convert_to_datatype
 from ..components.symbol_table import SymbolTable
 
-def setup_global_symbols() -> SymbolTable:
+def setup_starter_symbol_table(**extras) -> SymbolTable:
     symbol_table = SymbolTable()
-    symbol_table.set("null", Number.null)
-    symbol_table.set("true", Number.true)
-    symbol_table.set("false", Number.false)
+    
+    for args in [
+        ("null", Number.null),
+        ("true", Number.true),
+        ("false", Number.false)
+    ]:
+        symbol_table.set(*args, "symbols")
     
     for k, v in built_in_functions.items():
-        symbol_table.set(k, BuiltInFunction(k, *v))
+        symbol_table.set(k, BuiltInFunction(k, *v), "symbols")
     
-    return symbol_table
-
-def clear_global_symbols(symbol_table: SymbolTable) -> SymbolTable:
-    symbol_table.remove("null")
-    symbol_table.remove("true")
-    symbol_table.remove("false")
-    
-    for k in built_in_functions:
-        symbol_table.remove(k)
+    for k, v in extras.items():
+        symbol_table.set(k, convert_to_datatype(v), "symbols")
     
     return symbol_table

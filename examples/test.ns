@@ -143,9 +143,23 @@ if 5 == 5 then
     )
 end
 
-run("importing.ns")
-print(fibonacci)
-# need to prevent the run function from importing the symbols
-# test_ = import("importing.ns")
+run("strings.ns")
+test_ = import("importing.ns")
+
+print(test_["fibonacci"](40))
+
+var _variable = "test"
+var pi = 3.14
+print(pi)
+
+func showPi()
+    var pi = 3.1415926536
+    print(pi)
+end
+
+showPi()
+print(pi)
+
+delvar pi
 
 # Test

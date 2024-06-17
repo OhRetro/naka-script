@@ -6,8 +6,8 @@ class Keyword(Enum):
     
     # Variables and Methods/Functions
     SETVAR = "var"
-    SETIMMUTABLEVAR = "const" # unused #! might remove this 
-    SETLOCALVAR = "local"
+    SETIMMUTABLEVAR = "const" 
+    SETLOCALVAR = "local" # unused #! might remove this 
     SETFUNCTION = "func"
     SETCLASS = "class" # unused
     DELETEVAR = "delvar"

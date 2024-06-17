@@ -7,10 +7,8 @@ from .components.context import Context
 from .components.error import Error
 from .components.node import Node
 from .datatype import List
-from .datatype.utils import setup_global_symbols
+from .datatype.utils import setup_starter_symbol_table
 from .utils.misc import temp_cwd
-
-global_symbol_table = setup_global_symbols()
 
 def generate_ast(src_filename: str, src_data: str)-> Tuple[Optional[Node], Optional[Error]]:
     lexer = Lexer(src_filename, src_data)
@@ -21,17 +19,17 @@ def generate_ast(src_filename: str, src_data: str)-> Tuple[Optional[Node], Optio
     ast = parser.parse()
     return ast.node, ast.error
 
-def interpret(src_filename: str, src_data: str) -> Tuple[Optional[List], Optional[Error]]:
+def interpret(src_filename: str, src_data: str) -> Tuple[Optional[List], Optional[Error], Context]:
     with temp_cwd(osp_dirname(osp_abspath(src_filename))):
         node, error = generate_ast(src_filename, src_data)
         if error: return None, error
         
         interpreter = Interpreter()
         context = Context("__main__")
-        context.symbol_table = global_symbol_table
+        context.symbol_table = setup_starter_symbol_table()
         result = interpreter.visit(node, context)
-
-        return result.value, result.error
+        
+        return result.value, result.error, context
 
 __all__ = [
     "interpret"

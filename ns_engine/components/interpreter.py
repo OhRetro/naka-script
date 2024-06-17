@@ -86,13 +86,13 @@ class Interpreter:
         
         symbol_table = context.symbol_table
         
-        # if symbol_table.exists(var_name):
-        #     return rt_result.failure(ErrorRuntime(
-        #         f"Variable '{var_name}' is already defined.",
-        #         node.pos_start, node.pos_end, context
-        #     ))
+        if symbol_table.exists(var_name):
+            return rt_result.failure(ErrorRuntime(
+                f"Variable '{var_name}' is already defined.",
+                node.pos_start, node.pos_end, context
+            ))
             
-        symbol_table.set(var_name, value)
+        symbol_table.set(var_name, value, node.assign_type)
         return rt_result.success(value)
 
     def visit_VarUpdateNode(self, node: VarUpdateNode, context: Context) -> RuntimeResult:
@@ -103,14 +103,26 @@ class Interpreter:
         if rt_result.should_return(): return rt_result
         
         symbol_table = context.symbol_table
+        symbols_dict_type, _ = symbol_table.exists_where(var_name)
         
         if not symbol_table.exists(var_name):
             return rt_result.failure(ErrorRuntime(
                 f"Variable '{var_name}' was not defined.",
                 node.pos_start, node.pos_end, context
             ))
+        else:
+            if symbols_dict_type == "immutable_symbols":
+                return rt_result.failure(ErrorRuntime(
+                    f"'{var_name}' is a constant variable.",
+                    node.pos_start, node.pos_end, context
+                ))
+            if symbols_dict_type == "persistent_symbols":
+                return rt_result.failure(ErrorRuntime(
+                    f"'{var_name}' is a persistent and builtin variable.",
+                    node.pos_start, node.pos_end, context
+                ))
             
-        symbol_table.set(var_name, value)
+        symbol_table.set(var_name, value, symbols_dict_type)
         return rt_result.success(value)
         
     def visit_VarDeleteNode(self, node: VarDeleteNode, context: Context) -> RuntimeResult:
@@ -118,15 +130,22 @@ class Interpreter:
         var_name: str = node.token.value
         
         symbol_table = context.symbol_table
+        symbols_dict_type, _ = symbol_table.exists_where(var_name)
         
-        if symbol_table.exists(var_name):
-            symbol_table.remove(var_name)
-            return rt_result.success(Number.null)
-        else:
+        if not symbol_table.exists(var_name):
             return rt_result.failure(ErrorRuntime(
-                f"Variable '{var_name}' is not defined.",
+                f"Variable '{var_name}' is already not defined.",
                 node.pos_start, node.pos_end, context
             ))
+        else:
+            if symbols_dict_type == "persistent_symbols":
+                return rt_result.failure(ErrorRuntime(
+                    f"'{var_name}' is a persistent and builtin variable and cannot be deleted.",
+                    node.pos_start, node.pos_end, context
+                ))
+    
+        symbol_table.remove(var_name)
+        return rt_result.success(Number.null)
     
     def visit_BinOpNode(self, node: BinOpNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
@@ -239,7 +258,7 @@ class Interpreter:
             condition = lambda: i > end_value_number.value
         
         while condition():
-            context.symbol_table.set(node.token.value, Number(i))
+            context.symbol_table.set(node.token.value, Number(i), "symbols")
             i += step_value_number.value
             
             value = rt_result.register(self.visit(node.body_node, context))
@@ -290,7 +309,7 @@ class Interpreter:
         func_value = Function(func_name, body_node, arg_names, node.should_auto_return).set_context(context).set_pos(node.pos_start, node.pos_end)
         
         if node.token:
-            context.symbol_table.set(func_name, func_value)
+            context.symbol_table.set(func_name, func_value, "symbols")
             
         return rt_result.success(func_value)
         

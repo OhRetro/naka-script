@@ -11,7 +11,7 @@ COMPONENTS_ENABLED = {
     "parser.py": 1,
     "interpreter.py": 0,
     
-    "run.py": 0,
+    "wrapper.py": 0,
     
     "context.py": 0,
     "node.py": 0,
@@ -26,16 +26,24 @@ class DebugMessage:
         calframe = i_getouterframes(curframe, 2)
         self.caller = calframe[1][1].replace("\\", "/").split("/")[-1].lower()
         
-        self.set_enabled(COMPONENTS_ENABLED.get(self.caller, DEFAULT_ENABLED) if not ALL_USES_DEFAULT else DEFAULT_ENABLED)
-        
     def log(self, message: str = DEFAULT_LOG_MESSAGE):
-        if not self.enabled: return
+        is_enabled = COMPONENTS_ENABLED.get(self.caller, DEFAULT_ENABLED) if not ALL_USES_DEFAULT else DEFAULT_ENABLED
+        if not is_enabled: return
         curframe = i_currentframe()
         calframe = i_getouterframes(curframe, 2)
         
         logg_log(logg_DEBUG, f"[{self.caller}]: [{calframe[2][3]}]: {message}")
+
+debug_message = DebugMessage()
+
+def quick_debug(message: str = DEFAULT_LOG_MESSAGE):
+    curframe = i_currentframe()
+    calframe = i_getouterframes(curframe, 2)
+    debug_message.caller = calframe[1][1].replace("\\", "/").split("/")[-1].lower()
     
-    def set_enabled(self, enabled):
-        self.enabled = enabled
-        return self
-    
+    debug_message.log(message)
+
+__all__ = [
+    "DebugMessage",
+    "quick_debug"
+]
