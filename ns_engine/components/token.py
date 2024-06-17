@@ -14,8 +14,8 @@ class TokenType(Enum):
     EQUALS = "="
     
     # Data types
-    INT = "int"
-    FLOAT = "float"
+    INT = "int" # unused
+    FLOAT = "float" # unused
     
     NUMBER = "number"
     STRING = "string"
@@ -43,18 +43,18 @@ class TokenType(Enum):
     GT = ">"
     LTE = "<="
     GTE = ">="
-    ISNULL = "?=" # Yet Unused
+    ISNULL = "?=" # unused
     
     # Other
-    DOT = "."
+    DOT = "." # unused
     COMMA = ","
     RIGHTARROW = "->"
-    LEFTARROW = "<-"
+    LEFTARROW = "<-" # unused
     SEMICOLON = ";"
     COLON = ":"
-    AT = "@"
-    AND = "&"
-    PIPE = "|"
+    AT = "@" # unused
+    AND = "&" # unused
+    PIPE = "|" # unused
     COMMENT = "#"
     
     NEWLINE = "newline"
@@ -81,9 +81,9 @@ class Token:
         else:
             return f"Token({self.type.name})"
     
-    def is_type_of(self, type: TokenType) -> bool:
-        return self.type == type
+    def is_type_of(self, *types: TokenType) -> bool:
+        return self.type in types
     
-    def is_keyword_of(self, keyword: Keyword) -> bool:
-        return self.is_type_of(TokenType.KEYWORD) and self.value == keyword
+    def is_keyword_of(self, *keywords: Keyword) -> bool:
+        return self.is_type_of(TokenType.KEYWORD) and self.value in keywords
     

@@ -2,14 +2,14 @@ from enum import Enum
 
 class Keyword(Enum):
     def __repr__(self) -> str:
-        return f"Keyword({self.name})"
+        return f"Keyword({self.name}: \"{self.value}\")"
     
     # Variables and Methods/Functions
     SETVAR = "var"
-    SETIMMUTABLEVAR = "const" #! might remove this
-    SETSCOPEDVAR = "local"
+    SETIMMUTABLEVAR = "const" # unused #! might remove this 
+    SETLOCALVAR = "local"
     SETFUNCTION = "func"
-    SETCLASS = "class"
+    SETCLASS = "class" # unused
     DELETEVAR = "delvar"
       
     # Conditional
@@ -34,5 +34,5 @@ class Keyword(Enum):
     # Other
     END = "end"
     RETURN = "return"
-    SELFREF = "inst"
+    SELFREF = "inst" # unused
     

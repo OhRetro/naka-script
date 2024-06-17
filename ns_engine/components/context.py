@@ -16,6 +16,9 @@ class Context:
     parent_entry_pos: Position = field(default=None)
     symbol_table: SymbolTable = field(default=None, init=False)
     
+    def __repr__(self) -> str:
+        return f"Context(\"{self.name}\", {self.symbol_table}, {self.parent})"
+    
     def get_symbol(self, name: str) -> Datatype:
         return self.symbol_table.get(name)
     

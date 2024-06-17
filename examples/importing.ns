@@ -1,0 +1,4 @@
+var fibo = import("./examples/fibonacci.ns")
+var fibonacci = fibo["fibonacci"]
+
+print(fibonacci(20))

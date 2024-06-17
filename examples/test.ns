@@ -83,7 +83,6 @@ runFunction(hello)
 (returnFunction(hello))()
 # I'll try to work like this: returnFunction(hello)()
 
-
 var helloworld = "hello world"
 print(helloworld / 2)
 print(helloworld[2])
@@ -127,5 +126,8 @@ if 5 == 5 then
         )
     )
 end
+
+run("./examples/importing.ns")
+var test = import("./examples/importing.ns")
 
 # Test

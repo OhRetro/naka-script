@@ -75,7 +75,7 @@ class Parser:
     def parse(self) -> ParseResult:
         response = self.statements()
         
-        if not response.error and not self.current_token_is_type_of(TokenType.EOF):
+        if not response.error and not self.current_token.is_type_of(TokenType.EOF):
             return response.failure(ErrorInvalidSyntax(
                 expected(TokenType.PLUS, TokenType.MINUS, TokenType.MULT, TokenType.DIV, TokenType.POWER, TokenType.MOD,
                          TokenType.ISEQUALS, TokenType.NE, TokenType.LT, TokenType.GT, TokenType.LTE, TokenType.GTE,
@@ -84,15 +84,9 @@ class Parser:
             ))
         
         return response
-
-    def current_token_is_type_of(self, type: TokenType) -> bool:
-        return self.current_token.is_type_of(type)
-    
-    def current_token_is_keyword_of(self, keyword: Keyword) -> bool:
-        return self.current_token.is_keyword_of(keyword)
     
     def current_token_is_semicolon_or_newline(self) -> bool:
-        return self.current_token.type in (TokenType.SEMICOLON, TokenType.NEWLINE)
+        return self.current_token.is_type_of(TokenType.SEMICOLON, TokenType.NEWLINE)
 
     # def next_token_is_type_of(self, type: TokenType) -> bool:
     #     try:
@@ -113,6 +107,7 @@ class Parser:
         parse_result.register_advancement()
         self.advance()
         advance_count = 1
+        
         if skip_semicolon_newline: 
             advance_count += self.advance_if_token_is_semicolon_or_newline(parse_result)
             
@@ -135,7 +130,7 @@ class Parser:
         elif token.is_type_of(TokenType.IDENTIFIER):
             self.advance_register_advancement(p_result, False)
             
-            if self.current_token_is_type_of(TokenType.EQUALS):
+            if self.current_token.is_type_of(TokenType.EQUALS):
                 var_name_token = token
             
                 self.advance_register_advancement(p_result, False)
@@ -155,7 +150,7 @@ class Parser:
             
             if p_result.error: return p_result
             
-            if self.current_token_is_type_of(TokenType.RPAREN):
+            if self.current_token.is_type_of(TokenType.RPAREN):
                 self.advance_register_advancement(p_result, False)
                 
                 return p_result.success(expr)
@@ -207,12 +202,12 @@ class Parser:
         atom: Node = p_result.register(self.atom())
         if p_result.error: return p_result
         
-        if self.current_token_is_type_of(TokenType.LPAREN):
+        if self.current_token.is_type_of(TokenType.LPAREN):
             self.advance_register_advancement(p_result, True)
             
             arg_nodes: list[Node] = []
             
-            if self.current_token_is_type_of(TokenType.RPAREN):
+            if self.current_token.is_type_of(TokenType.RPAREN):
                 self.advance_register_advancement(p_result, False)
             
             else:
@@ -230,11 +225,11 @@ class Parser:
                     self.advance_if_token_is_semicolon_or_newline(p_result)
                 
                 if get_arguments(): return p_result
-                while self.current_token_is_type_of(TokenType.COMMA):
+                while self.current_token.is_type_of(TokenType.COMMA):
                     self.advance_register_advancement(p_result, True)
                     if get_arguments(): return p_result
                     
-                if not self.current_token_is_type_of(TokenType.RPAREN):
+                if not self.current_token.is_type_of(TokenType.RPAREN):
                     return p_result.failure(ErrorInvalidSyntax(
                         expected(TokenType.COMMA, TokenType.RPAREN),
                         self.current_token.pos_start, self.current_token.pos_end
@@ -245,13 +240,13 @@ class Parser:
                 
             return p_result.success(CallNode(atom, arg_nodes))
 
-        elif self.current_token_is_type_of(TokenType.LSQUARE):
+        elif self.current_token.is_type_of(TokenType.LSQUARE):
             self.advance_register_advancement(p_result, False)
             
             index_node: Node = p_result.register(self.atom())
             if p_result.error: return p_result
             
-            if not self.current_token_is_type_of(TokenType.RSQUARE):
+            if not self.current_token.is_type_of(TokenType.RSQUARE):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.RSQUARE),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -289,7 +284,7 @@ class Parser:
     def comp_expr(self) -> ParseResult:
         p_result = ParseResult()
         
-        if self.current_token_is_keyword_of(Keyword.NOT):
+        if self.current_token.is_keyword_of(Keyword.NOT):
             operation_token = self.current_token
             self.advance_register_advancement(p_result, False)
             
@@ -317,7 +312,7 @@ class Parser:
         element_nodes: list[Node] = []
         pos_start = self.current_token.pos_start.copy()
         
-        if not self.current_token_is_type_of(TokenType.LSQUARE):
+        if not self.current_token.is_type_of(TokenType.LSQUARE):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(TokenType.LSQUARE),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -325,7 +320,7 @@ class Parser:
 
         self.advance_register_advancement(p_result, True)
         
-        if self.current_token_is_type_of(TokenType.RSQUARE):
+        if self.current_token.is_type_of(TokenType.RSQUARE):
             self.advance_register_advancement(p_result, False)
             
         else:
@@ -344,11 +339,11 @@ class Parser:
                 self.advance_if_token_is_semicolon_or_newline(p_result)
             
             if get_elements(): return p_result
-            while self.current_token_is_type_of(TokenType.COMMA):
+            while self.current_token.is_type_of(TokenType.COMMA):
                 self.advance_register_advancement(p_result, True)
                 if get_elements(): return p_result
                 
-            if not self.current_token_is_type_of(TokenType.RSQUARE):
+            if not self.current_token.is_type_of(TokenType.RSQUARE):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.COMMA, TokenType.RSQUARE),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -364,7 +359,7 @@ class Parser:
         value_nodes: list[Node] = []
         pos_start = self.current_token.pos_start.copy()
         
-        if not self.current_token_is_type_of(TokenType.LBRACE):
+        if not self.current_token.is_type_of(TokenType.LBRACE):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(TokenType.LBRACE),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -372,12 +367,12 @@ class Parser:
 
         self.advance_register_advancement(p_result, True)
         
-        if self.current_token_is_type_of(TokenType.RBRACE):
+        if self.current_token.is_type_of(TokenType.RBRACE):
             self.advance_register_advancement(p_result, False)
             
         else:
             def get_key_value():
-                if not self.current_token_is_type_of(TokenType.IDENTIFIER):
+                if not self.current_token.is_type_of(TokenType.IDENTIFIER):
                     return p_result.failure(ErrorInvalidSyntax(
                         expected(TokenType.IDENTIFIER),
                         self.current_token.pos_start, self.current_token.pos_end
@@ -387,7 +382,7 @@ class Parser:
                 
                 self.advance_register_advancement(p_result, True)
                 
-                if not self.current_token_is_type_of(TokenType.COLON):
+                if not self.current_token.is_type_of(TokenType.COLON):
                     return p_result.failure(ErrorInvalidSyntax(
                         expected(TokenType.COLON),
                         self.current_token.pos_start, self.current_token.pos_end
@@ -409,11 +404,11 @@ class Parser:
                 self.advance_if_token_is_semicolon_or_newline(p_result)
                 
             if get_key_value(): return p_result
-            while self.current_token_is_type_of(TokenType.COMMA):
+            while self.current_token.is_type_of(TokenType.COMMA):
                 self.advance_register_advancement(p_result, True)
                 if get_key_value(): return p_result
             
-            if not self.current_token_is_type_of(TokenType.RBRACE):
+            if not self.current_token.is_type_of(TokenType.RBRACE):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.COMMA, TokenType.RBRACE),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -437,7 +432,7 @@ class Parser:
         p_result = ParseResult()
         else_case = None
 
-        if self.current_token_is_keyword_of(Keyword.ELSE):
+        if self.current_token.is_keyword_of(Keyword.ELSE):
             self.advance_register_advancement(p_result, False)
 
             if self.current_token_is_semicolon_or_newline():
@@ -447,7 +442,7 @@ class Parser:
                 if p_result.error: return p_result
                 else_case = (statements, True)
 
-                if self.current_token_is_keyword_of(Keyword.END):
+                if self.current_token.is_keyword_of(Keyword.END):
                     self.advance_register_advancement(p_result, False)
                 else:
                     return p_result.failure(ErrorInvalidSyntax(
@@ -465,7 +460,7 @@ class Parser:
         p_result = ParseResult()
         cases, else_case = [], None
 
-        if self.current_token_is_keyword_of(Keyword.ELSEIF):
+        if self.current_token.is_keyword_of(Keyword.ELSEIF):
             all_cases = p_result.register(self.if_expr_elseif())
             if p_result.error: return p_result
             cases, else_case = all_cases
@@ -480,7 +475,7 @@ class Parser:
         cases = []
         else_case = None
 
-        if not self.current_token_is_keyword_of(case_keyword):
+        if not self.current_token.is_keyword_of(case_keyword):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(case_keyword),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -491,7 +486,7 @@ class Parser:
         condition = p_result.register(self.expr())
         if p_result.error: return p_result
 
-        if not self.current_token_is_keyword_of(Keyword.THEN):
+        if not self.current_token.is_keyword_of(Keyword.THEN):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(Keyword.THEN),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -506,7 +501,7 @@ class Parser:
             if p_result.error: return p_result
             cases.append((condition, statements, True))
 
-            if self.current_token_is_keyword_of(Keyword.END):
+            if self.current_token.is_keyword_of(Keyword.END):
                 self.advance_register_advancement(p_result, False)
             else:
                 all_cases = p_result.register(self.if_expr_elseif_or_else())
@@ -528,7 +523,7 @@ class Parser:
     def for_expr(self) -> ParseResult:
         p_result = ParseResult()
 
-        if not self.current_token_is_keyword_of(Keyword.FOR):
+        if not self.current_token.is_keyword_of(Keyword.FOR):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(Keyword.FOR),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -536,7 +531,7 @@ class Parser:
 
         self.advance_register_advancement(p_result, False)
 
-        if not self.current_token_is_type_of(TokenType.IDENTIFIER):
+        if not self.current_token.is_type_of(TokenType.IDENTIFIER):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(TokenType.IDENTIFIER),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -545,7 +540,7 @@ class Parser:
         var_name_token = self.current_token
         self.advance_register_advancement(p_result, False)
 
-        if not self.current_token_is_type_of(TokenType.EQUALS):
+        if not self.current_token.is_type_of(TokenType.EQUALS):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(TokenType.EQUALS),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -556,7 +551,7 @@ class Parser:
         start_value_node: Node = p_result.register(self.expr())
         if p_result.error: return p_result
 
-        if not self.current_token_is_keyword_of(Keyword.TO):
+        if not self.current_token.is_keyword_of(Keyword.TO):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(Keyword.TO),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -567,7 +562,7 @@ class Parser:
         end_value_node: Node = p_result.register(self.expr())
         if p_result.error: return p_result
 
-        if self.current_token_is_keyword_of(Keyword.STEP):
+        if self.current_token.is_keyword_of(Keyword.STEP):
             self.advance_register_advancement(p_result, False)
 
             step_value_node: Node = p_result.register(self.expr())
@@ -575,7 +570,7 @@ class Parser:
         else:
             step_value_node = None
 
-        if not self.current_token_is_keyword_of(Keyword.THEN):
+        if not self.current_token.is_keyword_of(Keyword.THEN):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(Keyword.THEN),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -590,7 +585,7 @@ class Parser:
             if p_result.error:
                 return p_result
 
-            if not self.current_token_is_keyword_of(Keyword.END):
+            if not self.current_token.is_keyword_of(Keyword.END):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(Keyword.END),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -608,7 +603,7 @@ class Parser:
     def while_expr(self) -> ParseResult:
         p_result = ParseResult()
 
-        if not self.current_token_is_keyword_of(Keyword.WHILE):
+        if not self.current_token.is_keyword_of(Keyword.WHILE):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(Keyword.WHILE),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -619,7 +614,7 @@ class Parser:
         condition_node: Node = p_result.register(self.expr())
         if p_result.error: return p_result
 
-        if not self.current_token_is_keyword_of(Keyword.THEN):
+        if not self.current_token.is_keyword_of(Keyword.THEN):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(Keyword.THEN),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -633,7 +628,7 @@ class Parser:
             body_node = p_result.register(self.statements())
             if p_result.error: return p_result
 
-            if not self.current_token_is_keyword_of(Keyword.END):
+            if not self.current_token.is_keyword_of(Keyword.END):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(Keyword.END),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -651,10 +646,10 @@ class Parser:
     def expr(self) -> ParseResult:
         p_result = ParseResult()
         
-        if self.current_token_is_keyword_of(Keyword.SETVAR):
+        if self.current_token.is_keyword_of(Keyword.SETVAR):
             self.advance_register_advancement(p_result, False)
             
-            if not self.current_token_is_type_of(TokenType.IDENTIFIER):
+            if not self.current_token.is_type_of(TokenType.IDENTIFIER):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.IDENTIFIER),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -663,7 +658,7 @@ class Parser:
             var_name_token = self.current_token
             self.advance_register_advancement(p_result, False)
 
-            if not self.current_token_is_type_of(TokenType.EQUALS):
+            if not self.current_token.is_type_of(TokenType.EQUALS):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.EQUALS),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -676,10 +671,10 @@ class Parser:
                 
             return p_result.success(VarAssignNode(var_name_token, expr))
         
-        elif self.current_token_is_keyword_of(Keyword.DELETEVAR):
+        elif self.current_token.is_keyword_of(Keyword.DELETEVAR):
             self.advance_register_advancement(p_result, False)
             
-            if not self.current_token_is_type_of(TokenType.IDENTIFIER):
+            if not self.current_token.is_type_of(TokenType.IDENTIFIER):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.IDENTIFIER),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -705,7 +700,7 @@ class Parser:
         p_result = ParseResult()
         pos_start = self.current_token.pos_start.copy()
         
-        if self.current_token_is_keyword_of(Keyword.RETURN):
+        if self.current_token.is_keyword_of(Keyword.RETURN):
             self.advance_register_advancement(p_result, False)
             
             expr = p_result.try_register(self.expr())
@@ -718,13 +713,13 @@ class Parser:
                 expr
             ))
 
-        elif self.current_token_is_keyword_of(Keyword.CONTINUE):
+        elif self.current_token.is_keyword_of(Keyword.CONTINUE):
             self.advance_register_advancement(p_result, False)
             return p_result.success(ContinueNode(
                 pos_start, self.current_token.pos_end.copy()
             ))
             
-        elif self.current_token_is_keyword_of(Keyword.BREAK):
+        elif self.current_token.is_keyword_of(Keyword.BREAK):
             self.advance_register_advancement(p_result, False)
             return p_result.success(BreakNode(
                 pos_start, self.current_token.pos_end.copy()
@@ -780,7 +775,7 @@ class Parser:
     def func_def(self) -> ParseResult:
         p_result = ParseResult()
         
-        if not self.current_token_is_keyword_of(Keyword.SETFUNCTION):
+        if not self.current_token.is_keyword_of(Keyword.SETFUNCTION):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(Keyword.SETFUNCTION),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -788,19 +783,19 @@ class Parser:
 
         self.advance_register_advancement(p_result, False)
         
-        if self.current_token_is_type_of(TokenType.IDENTIFIER):
+        if self.current_token.is_type_of(TokenType.IDENTIFIER):
             var_name_token = self.current_token
             
             self.advance_register_advancement(p_result, False)
             
-            if not self.current_token_is_type_of(TokenType.LPAREN):
+            if not self.current_token.is_type_of(TokenType.LPAREN):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.LPAREN),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
         else:
             var_name_token = None
-            if not self.current_token_is_type_of(TokenType.LPAREN):
+            if not self.current_token.is_type_of(TokenType.LPAREN):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.IDENTIFIER, TokenType.LPAREN),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -810,15 +805,15 @@ class Parser:
         
         arg_name_tokens: list[Token] = []
         
-        if self.current_token_is_type_of(TokenType.IDENTIFIER):
+        if self.current_token.is_type_of(TokenType.IDENTIFIER):
             arg_name_tokens.append(self.current_token)
             
             self.advance_register_advancement(p_result, False)
             
-            while self.current_token_is_type_of(TokenType.COMMA):
+            while self.current_token.is_type_of(TokenType.COMMA):
                 self.advance_register_advancement(p_result, False)
                 
-                if not self.current_token_is_type_of(TokenType.IDENTIFIER):
+                if not self.current_token.is_type_of(TokenType.IDENTIFIER):
                     return p_result.failure(ErrorInvalidSyntax(
                         expected(TokenType.IDENTIFIER),
                         self.current_token.pos_start, self.current_token.pos_end
@@ -828,13 +823,13 @@ class Parser:
                 
                 self.advance_register_advancement(p_result, False)
                 
-            if not self.current_token_is_type_of(TokenType.RPAREN):
+            if not self.current_token.is_type_of(TokenType.RPAREN):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.COMMA, TokenType.RPAREN),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
         else:
-            if not self.current_token_is_type_of(TokenType.RPAREN):
+            if not self.current_token.is_type_of(TokenType.RPAREN):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.IDENTIFIER, TokenType.RPAREN),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -842,7 +837,7 @@ class Parser:
         
         self.advance_register_advancement(p_result, False)
         
-        if self.current_token_is_type_of(TokenType.RIGHTARROW):
+        if self.current_token.is_type_of(TokenType.RIGHTARROW):
             self.advance_register_advancement(p_result, False)
             
             body_node: Node = p_result.register(self.expr())
@@ -863,7 +858,7 @@ class Parser:
         if p_result.error:
             return p_result
 
-        if not self.current_token_is_keyword_of(Keyword.END):
+        if not self.current_token.is_keyword_of(Keyword.END):
             return p_result.failure(ErrorInvalidSyntax(
                 expected(Keyword.END),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -883,7 +878,7 @@ class Parser:
         
         if p_result.error: return p_result
 
-        while self.current_token.type in operations or (self.current_token_is_type_of(TokenType.KEYWORD) and self.current_token.value in operations):
+        while self.current_token.type in operations or (self.current_token.is_type_of(TokenType.KEYWORD) and self.current_token.value in operations):
             operation_token = self.current_token
             self.advance_register_advancement(p_result, False)
             right = p_result.register(function_b())

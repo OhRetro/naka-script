@@ -9,6 +9,9 @@ class SymbolTable:
     
     parent: Self = field(default=None)
     
+    def __repr__(self) -> str:
+        return f"SymbolTable({len(self.symbols)} symbols, {len(self.local_symbols)} local_symbols)"
+    
     def get(self, name: str) -> Datatype:
         value = self.symbols.get(name, None)
         
@@ -28,4 +31,6 @@ class SymbolTable:
         
     def exists(self, name: str) -> bool:
         return name in self.symbols
-        
+    
+    def clear(self):
+        self.symbols.clear()

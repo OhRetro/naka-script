@@ -8,6 +8,7 @@ from .function import BaseFunction
 from .number import Number
 from .string import String
 from .list import List
+from . import convert_to_datatype
 from ..components.error import ErrorRuntime
 from ..components.runtime import RuntimeResult
 from ..components.context import Context
@@ -122,18 +123,66 @@ def _run(self: BuiltInFunction, context: Context):
             self.pos_start, self.pos_end, context
         ))
 
+def _import(self: BuiltInFunction, context: Context):
+    from ..wrapper import interpret 
+    
+    rt_result = RuntimeResult()
+    filename = context.get_symbol("filename")
+    
+    if not isinstance(filename, String):
+        return rt_result.failure(ErrorRuntime(
+            "Argument must be string",
+            self.pos_start, self.pos_end, context
+        ))
+    
+    filename = filename.value
+    file_abspath = osp_abspath(filename)
+    try:
+        if not osp_isfile(file_abspath):
+            raise FileNotFoundError("The provided path is not a file")
+            
+        with open(file_abspath, "r", encoding="utf-8") as f:
+            script_code = f.read()
+        
+    except FileNotFoundError as e:
+        return rt_result.failure(ErrorRuntime(
+            f"Failed to load script \"{filename}\": {e}",
+            self.pos_start, self.pos_end, context
+        ))
+    
+    result, error = interpret(filename, script_code)
+    
+    if error:
+        return rt_result.failure(ErrorRuntime(
+            f"Failed to finish importing script's symbols from \"{filename}\":\n{error.as_string()}",
+            self.pos_start, self.pos_end, context
+        ))
+        
+    for datatype in reversed(result.value):
+        if datatype.context:
+            # from .utils import clear_global_symbols
+            symbol_table = datatype.context.symbol_table
+            # clear_global_symbols(symbol_table)
+            return rt_result.success(convert_to_datatype(symbol_table.symbols))
+
+    return rt_result.failure(ErrorRuntime(
+        f"Failed importing script's symbols from \"{filename}\" as there's no symbols to import",
+        self.pos_start, self.pos_end, context
+    ))
+
 built_in_functions = {
-    "print": BuiltInFunction("print", ("value",), _print),
-    "clear": BuiltInFunction("clear", None, _clear),
-    "run": BuiltInFunction("run", ("filename",), _run),
-    
-    "to_string": BuiltInFunction("to_string", ("value",), _to_string),
-    
-    "input": BuiltInFunction("input", None, _input),
-    "input_number": BuiltInFunction("input_int", None, _input_number),
-    
-    "is_number": BuiltInFunction("is_number", ("value",), _is_number),
-    "is_string": BuiltInFunction("is_string", ("value",), _is_string),
-    "is_list": BuiltInFunction("is_list", ("value",), _is_list),
-    "is_function": BuiltInFunction("is_function", ("value",), _is_function),
+    "print": (("value",), _print),
+    "clear": (None, _clear),
+    "run": (("filename",), _run),
+    "import": (("filename",), _import),
+
+    "to_string": (("value",), _to_string),
+
+    "input": (None, _input),
+    "input_number": (None, _input_number),
+
+    "is_number": (("value",), _is_number),
+    "is_string": (("value",), _is_string),
+    "is_list": (("value",), _is_list),
+    "is_function": (("value",), _is_function)
 }

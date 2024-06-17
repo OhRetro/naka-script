@@ -13,5 +13,3 @@ func fibonacci(n)
         return b
     end
 end
-
-print(fibonacci(20))
