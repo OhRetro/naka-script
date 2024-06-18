@@ -49,6 +49,47 @@ class DictNode(Node):
         return f"DictNode({display})"
 
 @dataclass(slots=True)
+class FuncDefNode(Node):
+    arg_name_tokens: list[Token]
+    body_node: Node
+    should_auto_return: bool
+
+    def __post_init__(self):
+        if self.token:
+            pos_start = self.token.pos_start
+        elif len(self.arg_name_tokens) > 0:
+            pos_start = self.arg_name_tokens[0].pos_start
+        else:
+            pos_start = self.body_node.pos_start
+        
+        self.pos_start = pos_start
+        self.pos_end = self.body_node.pos_end
+
+    def __repr__(self) -> str:
+        if self.token:
+            return f"FuncDefNode({self.token.value}, {self.arg_name_tokens}, {self.body_node})"
+        else:
+            return f"FuncDefNode({self.arg_name_tokens}, {self.body_node})"
+
+@dataclass(slots=True)
+class CallNode(Node):
+    token: Token = field(default=None, init=False)
+    node_to_call: Node
+    arg_nodes: list[Node]
+
+    def __post_init__(self):
+        if len(self.arg_nodes) > 0:
+            pos_end = self.arg_nodes[-1].pos_end
+        else:
+            pos_end = self.node_to_call.pos_end
+        
+        self.pos_start = self.node_to_call.pos_start
+        self.pos_end = pos_end
+
+    def __repr__(self) -> str:
+        return f"CallNode({self.node_to_call}, {self.arg_nodes})"
+
+@dataclass(slots=True)
 class IndexNode(Node):
     token: Token = field(default=None, init=False)
     node_to_index: Node
@@ -172,47 +213,6 @@ class WhileNode(Node):
 
     def __repr__(self) -> str:
         return f"WhileNode({self.condition_node}, {self.body_node})"
-
-@dataclass(slots=True)
-class FuncDefNode(Node):
-    arg_name_tokens: list[Token]
-    body_node: Node
-    should_auto_return: bool
-
-    def __post_init__(self):
-        if self.token:
-            pos_start = self.token.pos_start
-        elif len(self.arg_name_tokens) > 0:
-            pos_start = self.arg_name_tokens[0].pos_start
-        else:
-            pos_start = self.body_node.pos_start
-        
-        self.pos_start = pos_start
-        self.pos_end = self.body_node.pos_end
-
-    def __repr__(self) -> str:
-        if self.token:
-            return f"FuncDefNode({self.token.value}, {self.arg_name_tokens}, {self.body_node})"
-        else:
-            return f"FuncDefNode({self.arg_name_tokens}, {self.body_node})"
-
-@dataclass(slots=True)
-class CallNode(Node):
-    token: Token = field(default=None, init=False)
-    node_to_call: Node
-    arg_nodes: list[Node]
-
-    def __post_init__(self):
-        if len(self.arg_nodes) > 0:
-            pos_end = self.arg_nodes[-1].pos_end
-        else:
-            pos_end = self.node_to_call.pos_end
-        
-        self.pos_start = self.node_to_call.pos_start
-        self.pos_end = pos_end
-
-    def __repr__(self) -> str:
-        return f"CallNode({self.node_to_call}, {self.arg_nodes})"
 
 @dataclass(slots=True)
 class ReturnNode(Node):
