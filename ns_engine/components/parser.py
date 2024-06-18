@@ -7,7 +7,7 @@ from .node import (Node,
                    BinOpNode, UnaryOpNode, 
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode, IndexNode, AccessNode, UpdateNode,
-                   VarAssignNode, VarAccessNode, VarDeleteNode,
+                   VarAssignNode, VarDeleteNode,
                    ReturnNode, ContinueNode, BreakNode)
 from .error import Error, ErrorInvalidSyntax
 from ..utils.expected import expected
@@ -149,7 +149,7 @@ class Parser:
                     
                 return p_result.success(UpdateNode(var_name_token, expr))
             else:
-                return p_result.success(VarAccessNode(token))
+                return p_result.success(AccessNode(token))
         
         elif token.is_type_of(TokenType.LPAREN):
             self.advance_register_advancement(p_result, False)

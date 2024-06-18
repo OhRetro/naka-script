@@ -4,7 +4,7 @@ from .node import (Node,
                    BinOpNode, UnaryOpNode,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode, IndexNode, AccessNode, UpdateNode,
-                   VarAccessNode, VarAssignNode, VarDeleteNode,
+                   VarAssignNode, VarDeleteNode,
                    ReturnNode)
 from .token import Token, TokenType
 from .keyword import Keyword
@@ -81,6 +81,7 @@ class Interpreter:
             ))
             
         indexed_value, error = value_to_index.index_at(index_value)
+        
         if error: 
             return rt_result.failure(error)
         
@@ -90,16 +91,25 @@ class Interpreter:
     def visit_AccessNode(self, node: AccessNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
         
-        value_to_access = rt_result.register(self.visit(node.node_to_access, context))
-        if rt_result.should_return(): return rt_result
-        value_to_access = value_to_access.copy().set_pos(node.pos_start, node.pos_end)
+        identifier_name = node.token.value
         
-        attribute_name = node.token.value
-        
-        accessed_value, error = value_to_access.access_at(attribute_name)
+        if node.node_to_access:
+            value_to_access = rt_result.register(self.visit(node.node_to_access, context))
+            if rt_result.should_return(): return rt_result
+            value_to_access = value_to_access.copy().set_pos(node.pos_start, node.pos_end)
+            
+            accessed_value, error = value_to_access.access_at(identifier_name)
 
-        if error: 
-            return rt_result.failure(error)
+            if error: 
+                return rt_result.failure(error)
+        else:
+            accessed_value = context.get_symbol(identifier_name)
+            
+            if not accessed_value:
+                return rt_result.failure(ErrorRuntime(
+                    f"Variable '{identifier_name}' is not defined.",
+                    node.pos_start, node.pos_end, context
+                ))
         
         accessed_value = accessed_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
         return rt_result.success(accessed_value)
@@ -169,20 +179,6 @@ class Interpreter:
             return rt_result.success(new_value)
         else:
             raise Exception("Somewere went wrong")
-       
-    def visit_VarAccessNode(self, node: VarAccessNode, context: Context) -> RuntimeResult:
-        rt_result = RuntimeResult()
-        var_name: str = node.token.value
-        var_value: Datatype = context.get_symbol(var_name)
-        
-        if not var_value:
-            return rt_result.failure(ErrorRuntime(
-                f"Variable '{var_name}' is not defined.",
-                node.pos_start, node.pos_end, context
-            ))
-        
-        var_value = var_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
-        return rt_result.success(var_value)
 
     def visit_VarAssignNode(self, node: VarAssignNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
