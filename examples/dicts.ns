@@ -1,6 +1,7 @@
 var hw = {
     hello: "hello",
-    world: "world"
+    world: "world",
+    "hello world": "hello world!"
 }
 
 var alphabet = {
@@ -12,14 +13,14 @@ print(hw)
 print(hw["hello"])
 print(hw["world"])
 print(hw["hello"] + " " + hw["world"])
+print(hw["hello world"])
 
 print(alphabet)
 alphabet * {c: 2, d: 3}
 print(alphabet)
 
-# Thinking about how to execute this idea
-# alphabet + "e", 4 -> {a: 0, b: 1, c: 2, d: 3, e: 4}
-# print(alphabet)
+alphabet["e"] = 4
+print(alphabet)
 
 alphabet - "d"
 print(alphabet)

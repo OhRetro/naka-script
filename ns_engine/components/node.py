@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Union
 from .token import Token
 from .position import Position
 
@@ -64,17 +65,6 @@ class VarAssignNode(Node):
     def __repr__(self) -> str:
         return f"VarAssignNode({self.token}, {self.value_node})"
 
-@dataclass(slots=True)
-class VarUpdateNode(Node):
-    value_node: Node
-
-    def __post_init__(self):
-        self.pos_start = self.token.pos_start
-        self.pos_end = self.value_node.pos_end
-
-    def __repr__(self) -> str:
-        return f"VarUpdateNode({self.token}, {self.value_node})"
-    
 @dataclass(slots=True)
 class VarDeleteNode(Node):
     def __repr__(self) -> str:
@@ -207,7 +197,6 @@ class IndexNode(Node):
 
 @dataclass(slots=True)
 class AccessNode(Node):
-    token: Token
     node_to_access: Node
 
     def __post_init__(self):
@@ -217,6 +206,19 @@ class AccessNode(Node):
     def __repr__(self) -> str:
         return f"AccessNode({self.node_to_access}, {self.token})"
 
+@dataclass(slots=True)
+class UpdateNode(Node):
+    token: Token = field(default=None, init=False)
+    node_or_identifier_to_update: Union[Node, Token]
+    new_value_node: Node
+
+    def __post_init__(self):
+        self.pos_start = self.node_or_identifier_to_update.pos_start
+        self.pos_end = self.new_value_node.pos_end
+
+    def __repr__(self) -> str:
+        return f"UpdateNode({self.node_or_identifier_to_update}, {self.new_value_node})"
+    
 @dataclass(slots=True)
 class ReturnNode(Node):
     token: Token = field(default=None, init=False)

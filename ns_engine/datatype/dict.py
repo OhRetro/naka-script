@@ -25,6 +25,16 @@ class Dict(Datatype):
     def _number_bool(self, value: bool) -> DATATYPE_OR_ERROR:
         return self._number(int(value))
 
+    def update_index_at(self, other: Datatype, new: Datatype) -> DATATYPE_OR_ERROR:
+        if isinstance(other, String):
+            self.value[other.value] = new
+            return None, None
+        else:
+            return None, ErrorRuntime(
+                "'Dict' datatype can be only indexed by 'String'",
+                other.pos_start, other.pos_end, self.context
+            )
+    
     def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, String):
             try:
@@ -48,12 +58,6 @@ class Dict(Datatype):
     #             f"Key '{attribute_name}' doesn't exist",
     #             self.pos_start, self.pos_end, self.context
     #         )
-    
-    #! need to think how to approach this
-    # def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
-    #     result: list = self._value_copy()
-    #     result.append(other)
-    #     return self.new(result)
     
     def subtracted_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, String):

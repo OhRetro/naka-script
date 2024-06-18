@@ -166,4 +166,30 @@ delvar pi
 
 print(alphabet["c"])
 
+var list = ["a", "b", "c"]
+var dict = {a: 1, b: 2, c: 3}
+
+# print(["1", "2", "3"][1] = "4")
+
+print(list)
+list[1] = "d"
+print(list)
+print(list[1])
+
+print(dict)
+dict["b"] = 4
+print(dict)
+print(dict["b"])
+
+dict["d"] = 4
+print(dict)
+
+dict - "b"
+# delvar dict["b"]
+print(dict)
+
+list - 1
+# delvar list[1]
+print(list)
+
 # Test

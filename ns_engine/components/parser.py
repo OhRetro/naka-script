@@ -6,9 +6,9 @@ from .node import (Node,
                    NumberNode, StringNode, ListNode, DictNode,
                    BinOpNode, UnaryOpNode, 
                    IfNode, ForNode, WhileNode,
-                   FuncDefNode, CallNode,
-                   VarAssignNode, VarAccessNode, VarDeleteNode, VarUpdateNode,
-                   ReturnNode, ContinueNode, BreakNode, IndexNode, AccessNode)
+                   FuncDefNode, CallNode, IndexNode, AccessNode, UpdateNode,
+                   VarAssignNode, VarAccessNode, VarDeleteNode,
+                   ReturnNode, ContinueNode, BreakNode)
 from .error import Error, ErrorInvalidSyntax
 from ..utils.expected import expected
 from ..utils.debug import DebugMessage
@@ -147,7 +147,7 @@ class Parser:
                 
                 if p_result.error: return p_result
                     
-                return p_result.success(VarUpdateNode(var_name_token, expr))
+                return p_result.success(UpdateNode(var_name_token, expr))
             else:
                 return p_result.success(VarAccessNode(token))
         
@@ -269,7 +269,15 @@ class Parser:
 
                 self.advance_register_advancement(p_result, False)
                 atom = IndexNode(atom, index_node)
-
+                
+                if self.current_token.is_type_of(TokenType.EQUALS):
+                    self.advance_register_advancement(p_result, False)
+                    expr = p_result.register(self.expr())
+                    
+                    if p_result.error: return p_result
+                    
+                    atom = UpdateNode(atom, expr)
+                    
             elif self.current_token.is_type_of(TokenType.DOT):
                 self.advance_register_advancement(p_result, False)
                 
@@ -405,9 +413,9 @@ class Parser:
             return p_result.success(DictNode(pos_start, self.current_token.pos_end.copy(), key_tokens, value_nodes))
         
         def get_key_value():
-            if not self.current_token.is_type_of(TokenType.IDENTIFIER):
+            if not self.current_token.is_type_of(TokenType.IDENTIFIER, TokenType.STRING):
                 return p_result.failure(ErrorInvalidSyntax(
-                    expected(TokenType.IDENTIFIER),
+                    expected(TokenType.IDENTIFIER, TokenType.STRING),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
             
@@ -708,7 +716,7 @@ class Parser:
                 Keyword.SETIMMUTABLEVAR: "immutable_symbols",
                 #Keyword.SETLOCALVAR: "local_symbols"
             }
-                
+            
             return p_result.success(VarAssignNode(var_name_token, expr, symbols_dict_type.get(set_var_keyword)))
         
         elif self.current_token.is_keyword_of(Keyword.DELETEVAR):

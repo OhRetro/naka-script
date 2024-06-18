@@ -3,10 +3,10 @@ from .node import (Node,
                    NumberNode, StringNode, ListNode, DictNode,
                    BinOpNode, UnaryOpNode,
                    IfNode, ForNode, WhileNode,
-                   FuncDefNode, CallNode,
-                   VarAccessNode, VarAssignNode, VarDeleteNode, VarUpdateNode,
-                   ReturnNode, IndexNode, AccessNode)
-from .token import TokenType
+                   FuncDefNode, CallNode, IndexNode, AccessNode, UpdateNode,
+                   VarAccessNode, VarAssignNode, VarDeleteNode,
+                   ReturnNode)
+from .token import Token, TokenType
 from .keyword import Keyword
 from .runtime import RuntimeResult
 from .context import Context
@@ -62,7 +62,114 @@ class Interpreter:
         return rt_result.success(
             Dict(values).set_context(context).set_pos(node.pos_start, node.pos_end)
         )
+
+    def visit_IndexNode(self, node: IndexNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
         
+        value_to_index: Union[String, List, Dict] = rt_result.register(self.visit(node.node_to_index, context))
+        if rt_result.should_return(): return rt_result
+        value_to_index = value_to_index.copy().set_pos(node.pos_start, node.pos_end)
+        
+        index_value: Union[Number, String] = rt_result.register(self.visit(node.index_node, context))
+        if rt_result.should_return(): return rt_result
+        index_value = index_value.copy().set_pos(node.pos_start, node.pos_end)
+
+        if not isinstance(value_to_index, (String, List, Dict)):
+            return rt_result.failure(ErrorRuntime(
+                f"'{value_to_index.__class__.__name__}' datatypes are not indexable.",
+                node.pos_start, node.pos_end, context
+            ))
+            
+        indexed_value, error = value_to_index.index_at(index_value)
+        if error: 
+            return rt_result.failure(error)
+        
+        indexed_value = indexed_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
+        return rt_result.success(indexed_value)
+
+    def visit_AccessNode(self, node: AccessNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
+        
+        value_to_access = rt_result.register(self.visit(node.node_to_access, context))
+        if rt_result.should_return(): return rt_result
+        value_to_access = value_to_access.copy().set_pos(node.pos_start, node.pos_end)
+        
+        attribute_name = node.token.value
+        
+        accessed_value, error = value_to_access.access_at(attribute_name)
+
+        if error: 
+            return rt_result.failure(error)
+        
+        accessed_value = accessed_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
+        return rt_result.success(accessed_value)
+    
+    def visit_UpdateNode(self, node: UpdateNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
+        
+        node_or_identifier_to_update: Union[Union[IndexNode, AccessNode], Token] = node.node_or_identifier_to_update
+        
+        new_value = rt_result.register(self.visit(node.new_value_node, context))
+        if rt_result.should_return(): return rt_result
+        
+        if isinstance(node_or_identifier_to_update, IndexNode):
+            main_node = node_or_identifier_to_update.node_to_index
+
+            if isinstance(main_node, StringNode):
+                return rt_result.failure(ErrorRuntime(
+                    f"'String' datatypes are immutable.",
+                    node.pos_start, node.pos_end, context
+                ))
+                
+            main_value = rt_result.register(self.visit(main_node, context))
+            if rt_result.should_return(): return rt_result
+            main_value = main_value.copy().set_pos(node.pos_start, node.pos_end)
+            
+            index_value: Union[Number, String] = rt_result.register(self.visit(node_or_identifier_to_update.index_node, context))
+            if rt_result.should_return(): return rt_result
+            index_value = index_value.copy().set_pos(node.pos_start, node.pos_end)
+            
+            if isinstance(main_value, String):
+                return rt_result.failure(ErrorRuntime(
+                    f"'String' datatypes are immutable.",
+                    node.pos_start, node.pos_end, context
+                ))
+        
+            _, error = main_value.update_index_at(index_value, new_value)
+
+            if error:
+                return rt_result.failure(error)
+        
+            return rt_result.success(Number.null)
+            
+        elif isinstance(node_or_identifier_to_update, Token):
+            var_name = node_or_identifier_to_update.value
+            
+            symbol_table = context.symbol_table
+            symbols_dict_type, _ = symbol_table.exists_where(var_name)
+            
+            if not symbol_table.exists(var_name):
+                return rt_result.failure(ErrorRuntime(
+                    f"Variable '{var_name}' was not defined.",
+                    node.pos_start, node.pos_end, context
+                ))
+            else:
+                if symbols_dict_type == "immutable_symbols":
+                    return rt_result.failure(ErrorRuntime(
+                        f"'{var_name}' is a constant variable.",
+                        node.pos_start, node.pos_end, context
+                    ))
+                if symbols_dict_type == "persistent_symbols":
+                    return rt_result.failure(ErrorRuntime(
+                        f"'{var_name}' is a persistent and builtin variable.",
+                        node.pos_start, node.pos_end, context
+                    ))
+                
+            symbol_table.set(var_name, new_value, symbols_dict_type)
+            return rt_result.success(new_value)
+        else:
+            raise Exception("Somewere went wrong")
+       
     def visit_VarAccessNode(self, node: VarAccessNode, context: Context) -> RuntimeResult:
         rt_result = RuntimeResult()
         var_name: str = node.token.value
@@ -93,36 +200,6 @@ class Interpreter:
             ))
             
         symbol_table.set(var_name, value, node.assign_type)
-        return rt_result.success(value)
-
-    def visit_VarUpdateNode(self, node: VarUpdateNode, context: Context) -> RuntimeResult:
-        rt_result = RuntimeResult()
-        var_name: str = node.token.value
-        value = rt_result.register(self.visit(node.value_node, context))
-        
-        if rt_result.should_return(): return rt_result
-        
-        symbol_table = context.symbol_table
-        symbols_dict_type, _ = symbol_table.exists_where(var_name)
-        
-        if not symbol_table.exists(var_name):
-            return rt_result.failure(ErrorRuntime(
-                f"Variable '{var_name}' was not defined.",
-                node.pos_start, node.pos_end, context
-            ))
-        else:
-            if symbols_dict_type == "immutable_symbols":
-                return rt_result.failure(ErrorRuntime(
-                    f"'{var_name}' is a constant variable.",
-                    node.pos_start, node.pos_end, context
-                ))
-            if symbols_dict_type == "persistent_symbols":
-                return rt_result.failure(ErrorRuntime(
-                    f"'{var_name}' is a persistent and builtin variable.",
-                    node.pos_start, node.pos_end, context
-                ))
-            
-        symbol_table.set(var_name, value, symbols_dict_type)
         return rt_result.success(value)
         
     def visit_VarDeleteNode(self, node: VarDeleteNode, context: Context) -> RuntimeResult:
@@ -338,47 +415,6 @@ class Interpreter:
         return_value = return_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
         return rt_result.success(return_value)
 
-    def visit_IndexNode(self, node: IndexNode, context: Context) -> RuntimeResult:
-        rt_result = RuntimeResult()
-        
-        value_to_index: Union[String, List, Dict] = rt_result.register(self.visit(node.node_to_index, context))
-        if rt_result.should_return(): return rt_result
-        value_to_index = value_to_index.copy().set_pos(node.pos_start, node.pos_end)
-        
-        index_value: Union[Number, String] = rt_result.register(self.visit(node.index_node, context))
-        if rt_result.should_return(): return rt_result
-        index_value = index_value.copy().set_pos(node.pos_start, node.pos_end)
-
-        if not isinstance(value_to_index, (String, List, Dict)):
-            return rt_result.failure(ErrorRuntime(
-                f"'{value_to_index.__class__.__name__}' datatypes are not indexable.",
-                node.pos_start, node.pos_end, context
-            ))
-            
-        indexed_value, error = value_to_index.index_at(index_value)
-        if error: 
-            return rt_result.failure(error)
-        
-        indexed_value = indexed_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
-        return rt_result.success(indexed_value)
-
-    def visit_AccessNode(self, node: AccessNode, context: Context) -> RuntimeResult:
-        rt_result = RuntimeResult()
-        
-        value_to_access = rt_result.register(self.visit(node.node_to_access, context))
-        if rt_result.should_return(): return rt_result
-        value_to_access = value_to_access.copy().set_pos(node.pos_start, node.pos_end)
-        
-        attribute_name = node.token.value
-        
-        accessed_value, error = value_to_access.access_at(attribute_name)
-
-        if error: 
-            return rt_result.failure(error)
-        
-        accessed_value = accessed_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
-        return rt_result.success(accessed_value)
-    
     def visit_ReturnNode(self, node: ReturnNode, context: Context):
         rt_result = RuntimeResult()
         

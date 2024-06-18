@@ -28,6 +28,22 @@ class List(Datatype):
     def _number_bool(self, value: bool) -> DATATYPE_OR_ERROR:
         return self._number(int(value))
 
+    def update_index_at(self, other: Datatype, new: Datatype) -> DATATYPE_OR_ERROR:
+        if isinstance(other, Number):
+            try:
+                self.value[other.value] = new
+                return None, None
+            except IndexError:
+                return None, ErrorRuntime(
+                    "Element at index doesn't exist, Out of bounds",
+                    other.pos_start, other.pos_end, self.context
+                )
+        else:
+            return None, ErrorRuntime(
+                "'List' datatype can be only indexed by 'Number: int'",
+                other.pos_start, other.pos_end, self.context
+            )
+    
     def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, Number):
             try:

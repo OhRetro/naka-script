@@ -10,6 +10,8 @@ from .datatype import List
 from .datatype.utils import setup_starter_symbol_table
 from .utils.misc import temp_cwd
 
+shell_symbol_table = setup_starter_symbol_table()
+
 def generate_ast(src_filename: str, src_data: str)-> Tuple[Optional[Node], Optional[Error]]:
     lexer = Lexer(src_filename, src_data)
     tokens, error = lexer.make_tokens()
@@ -26,7 +28,7 @@ def interpret(src_filename: str, src_data: str) -> Tuple[Optional[List], Optiona
         
         interpreter = Interpreter()
         context = Context("__main__")
-        context.symbol_table = setup_starter_symbol_table()
+        context.symbol_table = setup_starter_symbol_table() if src_filename != "<shell>" else shell_symbol_table
         result = interpreter.visit(node, context)
         
         return result.value, result.error, context

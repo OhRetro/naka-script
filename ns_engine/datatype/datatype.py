@@ -46,7 +46,7 @@ class Datatype:
         _temp = []
         for value in values_to_copy:
             if value.startswith(":"):
-                _temp.append(getattr(self, value)[:])
+                _temp.append(getattr(self, value.removeprefix(":"))[:])
             else:
                 _temp.append(getattr(self, value))
                 
@@ -62,6 +62,12 @@ class Datatype:
         return self._illegal_operation(other)
 
     def access_at(self, attribute_name: str) -> Tuple[Optional[Self], Optional[Error]]:
+        return self._illegal_operation()
+
+    def update_index_at(self, other: Self, new: Self) -> Tuple[Optional[Self], Optional[Error]]:
+        return self._illegal_operation(other)
+ 
+    def update_access_at(self, attribute_name: str, new: Self) -> Tuple[Optional[Self], Optional[Error]]:
         return self._illegal_operation()
     
     def added_to(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
