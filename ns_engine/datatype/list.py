@@ -10,14 +10,8 @@ class List(Datatype):
     def __post_init__(self):
         self._values_to_copy = ("value", )
 
-    # def __str__(self) -> str:
-    #     return self._elements_str()
-
     def __repr__(self) -> str:
         return f"[{self._elements_repr()}]"
-    
-    # def _elements_str(self):
-    #     return ", ".join([str(x) for x in self.value])
 
     def _elements_repr(self):
         return ", ".join([repr(x) for x in self.value])
