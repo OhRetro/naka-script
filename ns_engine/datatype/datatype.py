@@ -57,6 +57,12 @@ class Datatype:
         copy.set_pos(self.pos_start, self.pos_end)
         copy.set_context(self.context)
         return copy
+
+    def index_at(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
+        return self._illegal_operation(other)
+
+    def access_at(self, attribute_name: str) -> Tuple[Optional[Self], Optional[Error]]:
+        return self._illegal_operation()
     
     def added_to(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
         return self._illegal_operation(other)
@@ -106,9 +112,6 @@ class Datatype:
     def execute(self) -> Tuple[Optional[Self], Optional[Error]]:
         return self._illegal_operation()
     
-    def index_at(self, other: Self) -> Tuple[Optional[Self], Optional[Error]]:
-        return self._illegal_operation(other)
-
     def is_true(self) -> bool:
         return False
     

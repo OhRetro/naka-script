@@ -169,6 +169,4 @@ cython_debug/
 
 build/
 
-test/
-
 nuitka-crash-report.xml

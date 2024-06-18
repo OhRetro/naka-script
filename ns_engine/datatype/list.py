@@ -28,6 +28,21 @@ class List(Datatype):
     def _number_bool(self, value: bool) -> DATATYPE_OR_ERROR:
         return self._number(int(value))
 
+    def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        if isinstance(other, Number):
+            try:
+                return self.value[other.value], None
+            except IndexError:
+                return None, ErrorRuntime(
+                    "Element at index doesn't exist, Out of bounds",
+                    other.pos_start, other.pos_end, self.context
+                )
+        else:
+            return None, ErrorRuntime(
+                "'List' datatype can be only indexed by 'Number: int'",
+                other.pos_start, other.pos_end, self.context
+            )
+            
     def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
         self.value.append(other)
         return None, None
@@ -51,21 +66,6 @@ class List(Datatype):
             return None, None
         else:
             return self._illegal_operation(other)
-    
-    def divided_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, Number):
-            try:
-                return self.value[other.value], None
-            except IndexError:
-                return None, ErrorRuntime(
-                    "Element at index doesn't exist, Out of bounds",
-                    other.pos_start, other.pos_end, self.context
-                )
-        else:
-            return None, ErrorRuntime(
-                "'List' datatype can be only indexed by 'Number: int'",
-                other.pos_start, other.pos_end, self.context
-            )
 
     def is_equal_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
         return self._number_bool(self.value == other.value)
@@ -81,21 +81,6 @@ class List(Datatype):
     
     def notted(self) -> DATATYPE_OR_ERROR:
         return self._number(1 if self.value == [] else 0)
-
-    def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, Number):
-            try:
-                return self.value[other.value], None
-            except IndexError:
-                return None, ErrorRuntime(
-                    "Element at index doesn't exist, Out of bounds",
-                    other.pos_start, other.pos_end, self.context
-                )
-        else:
-            return None, ErrorRuntime(
-                "'List' datatype can be only indexed by 'Number: int'",
-                other.pos_start, other.pos_end, self.context
-            )
         
     def is_true(self) -> bool:
         return self.value != []

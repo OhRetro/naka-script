@@ -22,7 +22,7 @@ def generate_ast(src_filename: str, src_data: str)-> Tuple[Optional[Node], Optio
 def interpret(src_filename: str, src_data: str) -> Tuple[Optional[List], Optional[Error], Context]:
     with temp_cwd(osp_dirname(osp_abspath(src_filename))):
         node, error = generate_ast(src_filename, src_data)
-        if error: return None, error
+        if error: return None, error, None
         
         interpreter = Interpreter()
         context = Context("__main__")

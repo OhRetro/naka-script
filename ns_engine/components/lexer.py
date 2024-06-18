@@ -33,6 +33,7 @@ class Lexer:
             "]": TokenType.RSQUARE,
             "{": TokenType.LBRACE,
             "}": TokenType.RBRACE,
+            ".": TokenType.DOT,
             ",": TokenType.COMMA,
             ";": TokenType.SEMICOLON,
             ":": TokenType.COLON,

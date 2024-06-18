@@ -5,7 +5,7 @@ from .node import (Node,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
                    VarAccessNode, VarAssignNode, VarDeleteNode, VarUpdateNode,
-                   ReturnNode, IndexNode)
+                   ReturnNode, IndexNode, AccessNode)
 from .token import TokenType
 from .keyword import Keyword
 from .runtime import RuntimeResult
@@ -361,6 +361,23 @@ class Interpreter:
         
         indexed_value = indexed_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
         return rt_result.success(indexed_value)
+
+    def visit_AccessNode(self, node: AccessNode, context: Context) -> RuntimeResult:
+        rt_result = RuntimeResult()
+        
+        value_to_access = rt_result.register(self.visit(node.node_to_access, context))
+        if rt_result.should_return(): return rt_result
+        value_to_access = value_to_access.copy().set_pos(node.pos_start, node.pos_end)
+        
+        attribute_name = node.token.value
+        
+        accessed_value, error = value_to_access.access_at(attribute_name)
+
+        if error: 
+            return rt_result.failure(error)
+        
+        accessed_value = accessed_value.copy().set_context(context).set_pos(node.pos_start, node.pos_end)
+        return rt_result.success(accessed_value)
     
     def visit_ReturnNode(self, node: ReturnNode, context: Context):
         rt_result = RuntimeResult()

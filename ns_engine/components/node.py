@@ -206,6 +206,18 @@ class IndexNode(Node):
         return f"IndexNode({self.node_to_index}, {self.index_node})"
 
 @dataclass(slots=True)
+class AccessNode(Node):
+    token: Token
+    node_to_access: Node
+
+    def __post_init__(self):
+        self.pos_start = self.node_to_access.pos_start
+        self.pos_end = self.token.pos_end
+
+    def __repr__(self) -> str:
+        return f"AccessNode({self.node_to_access}, {self.token})"
+
+@dataclass(slots=True)
 class ReturnNode(Node):
     token: Token = field(default=None, init=False)
     node_to_return: Node

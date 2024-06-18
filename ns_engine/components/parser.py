@@ -8,7 +8,7 @@ from .node import (Node,
                    IfNode, ForNode, WhileNode,
                    FuncDefNode, CallNode,
                    VarAssignNode, VarAccessNode, VarDeleteNode, VarUpdateNode,
-                   ReturnNode, ContinueNode, BreakNode, IndexNode)
+                   ReturnNode, ContinueNode, BreakNode, IndexNode, AccessNode)
 from .error import Error, ErrorInvalidSyntax
 from ..utils.expected import expected
 from ..utils.debug import DebugMessage
@@ -270,6 +270,22 @@ class Parser:
                 self.advance_register_advancement(p_result, False)
                 atom = IndexNode(atom, index_node)
 
+            elif self.current_token.is_type_of(TokenType.DOT):
+                self.advance_register_advancement(p_result, False)
+                
+                if not self.current_token.is_type_of(TokenType.IDENTIFIER):
+                    return p_result.failure(
+                        ErrorInvalidSyntax(
+                            expected(TokenType.IDENTIFIER),
+                            self.current_token.pos_start, self.current_token.pos_end
+                        )
+                    )
+                    
+                attribute_name_token = self.current_token
+
+                self.advance_register_advancement(p_result, False)
+                atom = AccessNode(attribute_name_token, atom)
+                
             else:
                 break
 

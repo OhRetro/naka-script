@@ -88,8 +88,8 @@ runFunction(hello)
 returnFunction(hello)()
 
 var helloworld = "hello world"
-print(helloworld / 2)
-print(helloworld[2])
+print(helloworld[0])
+print(helloworld[6])
 
 func range(end_point)
     return for i = 0 to end_point then i
@@ -143,8 +143,8 @@ if 5 == 5 then
     )
 end
 
-run("strings.ns")
-test_ = import("importing.ns")
+run("../strings.ns")
+test_ = import("../importing.ns")
 
 print(test_["fibonacci"](40))
 
@@ -161,5 +161,9 @@ showPi()
 print(pi)
 
 delvar pi
+
+#showPi.abc
+
+print(alphabet["c"])
 
 # Test

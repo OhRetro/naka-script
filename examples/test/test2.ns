@@ -1,0 +1,6 @@
+
+if rt__name__ == "__main__" then
+    print("i'm the main script")
+    run("./t_.ns")
+    var t = import("./t_.ns")
+end

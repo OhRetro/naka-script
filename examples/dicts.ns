@@ -9,7 +9,9 @@ var alphabet = {
 }
 
 print(hw)
-print(hw / "hello" + " " + hw["world"])
+print(hw["hello"])
+print(hw["world"])
+print(hw["hello"] + " " + hw["world"])
 
 print(alphabet)
 alphabet * {c: 2, d: 3}

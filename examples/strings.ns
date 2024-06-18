@@ -2,7 +2,7 @@ var hw = "hello world"
 var alphabet = "ab"
 
 print(hw)
-print(hw / 0 + hw[6])
+print(hw[0] + hw[6])
 
 print(alphabet)
 alphabet = alphabet + "cd"

@@ -6,7 +6,7 @@ var alphabet = [
 ]
 
 print(hw)
-print(hw / 0 + " " + hw[1])
+print(hw[0] + " " + hw[1])
 
 print(alphabet)
 alphabet * ["c", "d"]

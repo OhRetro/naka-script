@@ -25,6 +25,31 @@ class Dict(Datatype):
     def _number_bool(self, value: bool) -> DATATYPE_OR_ERROR:
         return self._number(int(value))
 
+    def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        if isinstance(other, String):
+            try:
+                return self.value[other.value], None
+            except KeyError:
+                return None, ErrorRuntime(
+                    f"Key '{other.value}' doesn't exist",
+                    other.pos_start, other.pos_end, self.context
+                )
+        else:
+            return None, ErrorRuntime(
+                "'Dict' datatype can be only indexed by 'String'",
+                other.pos_start, other.pos_end, self.context
+            )
+
+    # def access_at(self, attribute_name: str) -> DATATYPE_OR_ERROR:
+    #     try:
+    #         return self.value[attribute_name], None
+    #     except KeyError:
+    #         return None, ErrorRuntime(
+    #             f"Key '{attribute_name}' doesn't exist",
+    #             self.pos_start, self.pos_end, self.context
+    #         )
+    
+    #! need to think how to approach this
     # def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
     #     result: list = self._value_copy()
     #     result.append(other)
@@ -49,21 +74,6 @@ class Dict(Datatype):
             return None, None
         else:
             return self._illegal_operation(other)
-    
-    def divided_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, String):
-            try:
-                return self.value[other.value], None
-            except KeyError:
-                return None, ErrorRuntime(
-                    f"Key '{other.value}' doesn't exist",
-                    other.pos_start, other.pos_end, self.context
-                )
-        else:
-            return None, ErrorRuntime(
-                "'Dict' datatype can be only indexed by 'String'",
-                other.pos_start, other.pos_end, self.context
-            )
 
     def is_equal_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
         return self._number_bool(self.value == other.value)
@@ -80,21 +90,6 @@ class Dict(Datatype):
     def notted(self) -> DATATYPE_OR_ERROR:
         return self._number(1 if self.value == {} else 0)
 
-    def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, String):
-            try:
-                return self.value[other.value], None
-            except KeyError:
-                return None, ErrorRuntime(
-                    f"Key '{other.value}' doesn't exist",
-                    other.pos_start, other.pos_end, self.context
-                )
-        else:
-            return None, ErrorRuntime(
-                "'Dict' datatype can be only indexed by 'String'",
-                other.pos_start, other.pos_end, self.context
-            )
-            
     def is_true(self) -> bool:
         return self.value != {}
     
