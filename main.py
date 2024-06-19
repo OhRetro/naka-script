@@ -1,6 +1,6 @@
 from sys import argv as sys_argv
 from ns_engine import __version__ as ns_version, wrapper as ns_wrapper
-from ns_engine.utils.misc import get_filedata
+from ns_engine.utils.misc import get_filedata, look_like_path
 
 def argument(shortflag: str, flag: str) -> bool:
     return (shortflag in sys_argv and shortflag != None) or (flag in sys_argv and flag != None)
@@ -22,7 +22,13 @@ def shell():
             break
 
 def run(filename: str):
-    source_code = get_filedata(filename)    
+    try:
+        source_code = get_filedata(filename)
+            
+    except FileNotFoundError as e:
+        print(f"Failed to load script \"{filename}\": {e}")
+        source_code = None
+         
     if source_code is None or not source_code.strip(): return
 
     try:
@@ -38,14 +44,13 @@ if __name__ == "__main__":
     
     if args_len >= 1:
         first_arg = sys_argv[1]
-        is_first_arg_scriptfile = first_arg
+        is_first_arg_scriptfile = look_like_path(first_arg)
     
     if is_first_arg_scriptfile:
         run(first_arg)
     else:
         if not args_len:
-            shell()
-                
+            shell() 
         elif argument("-v", "--version"):
             print(f"v{ns_version}")
         

@@ -1,7 +1,7 @@
-from typing import Optional
 from os import name as os_name, getcwd as os_getcwd, chdir as os_chdir
 from os.path import abspath as osp_abspath, isfile as osp_isfile
 from contextlib import contextmanager
+from re import compile as re_compile
 
 def set_console_title(title):
     if os_name == "nt":
@@ -39,15 +39,19 @@ def clean_filetextdata(text: str) -> str:
 
     return "\n".join(new_text_in_lines)
     
-def get_filedata(filename: str) -> Optional[str]:
+def get_filedata(filename: str) -> str:
     file_abspath = osp_abspath(filename)
-    try:
-        if not osp_isfile(file_abspath):
-            raise FileNotFoundError(f"The provided path is not a file: '{file_abspath}'")
-            
-        with open(file_abspath, "r", encoding="utf-8") as f:
-            return clean_filetextdata(f.read())
-        
-    except FileNotFoundError as e:
-        raise e
     
+    #! It's not in a try-except block by design
+    if not osp_isfile(file_abspath):
+        raise FileNotFoundError(f"The provided path is not a file: '{file_abspath}'")
+        
+    with open(file_abspath, "r", encoding="utf-8") as f:
+        return clean_filetextdata(f.read())
+
+def look_like_path(string: str) -> bool:
+    path_pattern = re_compile(
+        r"^(\/|\\|[a-zA-Z]:\\|\.\/|\.\.\/|[^\/\\]+\/|[^\/\\]+\\)"
+    )
+    
+    return path_pattern.match(string)
