@@ -1,21 +1,10 @@
 from ..components.position import Position
-
-from pprint import pprint
-
-def get_correct_error_location(text: str, pos_start: Position, pos_end: Position):
-    result = ""
-    
-    text_in_lines = text.split("\n")
-    #pprint(text_in_lines)
-    print(pos_start)
-    print(pos_end)
-    
-    #return "\n".join(text_in_lines)
     
 def string_with_arrows(text: str, pos_start: Position, pos_end: Position):
     result = ""
 
-    #print(get_correct_error_location(text, pos_start, pos_end))
+    print(pos_start)
+    print(pos_end)
     
     # Calculate indices
     index_start = max(text.rfind("\n", 0, pos_start.index), 0)

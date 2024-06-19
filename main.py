@@ -1,24 +1,10 @@
-from typing import Optional
 from sys import argv as sys_argv
-from os.path import abspath as osp_abspath, isfile as osp_isfile
 from ns_engine import __version__ as ns_version, wrapper as ns_wrapper
+from ns_engine.utils.misc import get_filedata
 
 def argument(shortflag: str, flag: str) -> bool:
     return (shortflag in sys_argv and shortflag != None) or (flag in sys_argv and flag != None)
 
-def get_filedata(filename: str) -> Optional[str]:
-    file_abspath = osp_abspath(filename)
-    try:
-        if not osp_isfile(file_abspath):
-            raise FileNotFoundError()
-            
-        with open(file_abspath, "r", encoding="utf-8") as f:
-            return f.read()
-        
-    except FileNotFoundError:
-        print(f"File not found: '{file_abspath}'")
-        return None
-    
 def shell():
     print(f"Welcome to NakaScript v{ns_version} Shell")
     while True:

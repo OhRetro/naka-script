@@ -33,9 +33,11 @@
 #     [1]
 # ]
 # #print(randomList)
-var randomList = []
 
-randomList = []
+var randomList = [1,1]
 
+var randomDict = {a:1, "":2}
+
+    
 
 #1

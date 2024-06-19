@@ -13,6 +13,7 @@ from .module import Module
 from ..components.error import ErrorRuntime
 from ..components.runtime import RuntimeResult
 from ..components.context import Context
+from ..utils.misc import get_filedata
 
 @dataclass(slots=True)
 class BuiltInFunction(BaseFunction):
@@ -148,20 +149,15 @@ def _import(self: BuiltInFunction, context: Context):
         ))
     
     filename = filename.value
-    file_abspath = osp_abspath(filename)
-    try:
-        if not osp_isfile(file_abspath):
-            raise FileNotFoundError("The provided path is not a file")
-            
-        with open(file_abspath, "r", encoding="utf-8") as f:
-            script_code = f.read()
-        
-    except FileNotFoundError as e:
+    
+    script_code = get_filedata(filename)
+    
+    if not script_code:
         return self._rt_result_failure(ErrorRuntime(
-            f"Failed to load module \"{filename}\": {e}",
+            f"Failed to load module \"{filename}\"",
             self.pos_start, self.pos_end, context
         ))
-    
+        
     _, error, context = interpret(filename, script_code)
     
     if error:
