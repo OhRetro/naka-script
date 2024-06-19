@@ -2,3 +2,4 @@ const math = import("math.ns")
 
 print(math.pi)
 print(math.fibonacci(20))
+print(math.factorial(5))

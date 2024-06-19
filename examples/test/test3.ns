@@ -12,6 +12,6 @@ var pi_copy = math.pi
 
 print(math.pi)
 print(pi_copy)
-math.pi = 1
+#math.pi = 1, pi is a const on math, but the idea is to see if will change 
 print(math.pi)
-print(pi_copy)
+math.print(pi_copy)

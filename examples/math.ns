@@ -15,3 +15,19 @@ func fibonacci(n)
         return b
     end
 end
+
+func factorial(n)
+    if n < 0 then
+        return 0
+    elseif n == 0 or n == 1 then
+        return 1
+    else
+        var result = 1
+
+        for i = 2 to n + 1 then
+            result = result * i
+        end
+
+        return result
+    end
+end
