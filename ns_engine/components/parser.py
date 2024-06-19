@@ -745,7 +745,13 @@ class Parser:
             set_var_keyword = self.current_token.value
             self.advance_register_advancement(p_result, False)
             
-            if not self.current_token.is_type_of(TokenType.IDENTIFIER):
+            if self.current_token.is_type_of(TokenType.KEYWORD):
+                return p_result.failure(ErrorInvalidSyntax(
+                    f"Cannot assign values to reserved keywords such as '{self.current_token.value.value}'",
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+                        
+            elif not self.current_token.is_type_of(TokenType.IDENTIFIER):
                 return p_result.failure(ErrorInvalidSyntax(
                     expected(TokenType.IDENTIFIER),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -767,8 +773,7 @@ class Parser:
             
             symbols_dict_type = {
                 Keyword.SETVAR: "symbols",
-                Keyword.SETIMMUTABLEVAR: "immutable_symbols",
-                #Keyword.SETLOCALVAR: "local_symbols"
+                Keyword.SETIMMUTABLEVAR: "immutable_symbols"
             }
             
             return p_result.success(VarAssignNode(var_name_token, expr, symbols_dict_type.get(set_var_keyword)))

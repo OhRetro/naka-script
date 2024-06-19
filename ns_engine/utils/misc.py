@@ -43,12 +43,11 @@ def get_filedata(filename: str) -> Optional[str]:
     file_abspath = osp_abspath(filename)
     try:
         if not osp_isfile(file_abspath):
-            raise FileNotFoundError()
+            raise FileNotFoundError(f"The provided path is not a file: '{file_abspath}'")
             
         with open(file_abspath, "r", encoding="utf-8") as f:
             return clean_filetextdata(f.read())
         
-    except FileNotFoundError:
-        print(f"The provided path is not a file: '{file_abspath}'")
-        return None
+    except FileNotFoundError as e:
+        raise e
     

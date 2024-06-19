@@ -43,16 +43,34 @@ class Lexer:
         # Advanced Tokens are tokens that require more complex handling in comparison to Simple Tokens
         ADVANCED_TOKENS = {
             # Check if it's a Mult or Power Token, the rest follow the same rules
-            "*": lambda: self._make_token_advanced(TokenType.MULT, ( {"char": "*", "token_type": TokenType.POWER}, )), 
-            "-": lambda: self._make_token_advanced(TokenType.MINUS, ( {"char": ">", "token_type": TokenType.RIGHTARROW}, )), 
+            "*": lambda: self._make_token_advanced(
+                TokenType.MULT,
+                ({"char": "*", "token_type": TokenType.POWER},)
+            ), 
+            "-": lambda: self._make_token_advanced(
+                TokenType.MINUS,
+                ({"char": ">", "token_type": TokenType.RIGHTARROW},)
+            ), 
+            "=": lambda: self._make_token_advanced(
+                TokenType.EQUALS,
+                ({"char": "=", "token_type": TokenType.ISEQUALS},)
+            ), 
+            "<": lambda: self._make_token_advanced(
+                TokenType.LT,
+                ({"char": "=", "token_type": TokenType.LTE, "break": True},
+                 {"char": "-", "token_type": TokenType.LEFTARROW, "break": True})
+            ), 
+            ">": lambda: self._make_token_advanced(
+                TokenType.GT,
+                ({"char": "=", "token_type": TokenType.GTE},)
+            ),
+            "!": lambda: self._make_token_advanced(
+                None,
+                ({"char": "=", "token_type": TokenType.NE, "enforced": True},)
+            ),
             
-            "=": lambda: self._make_token_advanced(TokenType.EQUALS, ( {"char": "=", "token_type": TokenType.ISEQUALS}, )), 
-            "<": lambda: self._make_token_advanced(TokenType.LT, ( {"char": "=", "token_type": TokenType.LTE}, )), 
-            ">": lambda: self._make_token_advanced(TokenType.GT, ( {"char": "=", "token_type": TokenType.GTE}, )),
-            "!": lambda: self._make_token_advanced(None, ( {"char": "=", "token_type": TokenType.NE, "enforced": True}, )),
-            
-            '"': lambda: self._make_token_string(),
-            "#": lambda: self._make_token_comment()
+            '"': self._make_token_string,
+            "#": self._make_comment
         }
         
         while self.current_char != None:
@@ -184,7 +202,7 @@ class Lexer:
         
         return Token(token_type, token_value, pos_start, self.pos)
     
-    def _make_token_comment(self) -> Tuple[None, Optional[Error]]:        
+    def _make_comment(self) -> Tuple[None, Optional[Error]]:        
         pos_start = self.pos.copy()
         
         self.advance()

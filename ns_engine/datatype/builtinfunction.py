@@ -96,10 +96,10 @@ def _random_int(self: BuiltInFunction, context: Context):
     
     if (not isinstance(min_, Number) or not isinstance(max_, Number)) or (
         not isinstance(min_.value, int) or not isinstance(max_.value, int)):
-        return self._rt_result_failure(ErrorRuntime(
+        return self._rt_result_failure(
             "Both arguments must be 'Number: int'",
-            self.pos_start, self.pos_end, context
-        ))
+            context
+        )
         
     return self._rt_result_success(Number(randint(min_.value, max_.value)))
     
@@ -109,33 +109,28 @@ def _run(self: BuiltInFunction, context: Context):
     filename = context.get_symbol("filename")
     
     if not isinstance(filename, String):
-        return self._rt_result_failure(ErrorRuntime(
+        return self._rt_result_failure(
             "Argument must be string",
-            self.pos_start, self.pos_end, context
-        ))
+            context
+        )
     
     filename = filename.value
-    file_abspath = osp_abspath(filename)
     try:
-        if not osp_isfile(file_abspath):
-            raise FileNotFoundError("The provided path is not a file")
+        script_code = get_filedata(filename)
             
-        with open(file_abspath, "r", encoding="utf-8") as f:
-            script_code = f.read()
-        
     except FileNotFoundError as e:
-        return self._rt_result_failure(ErrorRuntime(
+        return self._rt_result_failure(
             f"Failed to load script \"{filename}\": {e}",
-            self.pos_start, self.pos_end, context
-        ))
+            context
+        )
     
     _, error, _ = interpret(filename, script_code)
     
     if error:
-        return self._rt_result_failure(ErrorRuntime(
+        return self._rt_result_failure(
             f"Failed to finish script \"{filename}\":\n{error.as_string()}",
-            self.pos_start, self.pos_end, context
-        ))
+            context
+        )
 
 def _import(self: BuiltInFunction, context: Context):
     from ..wrapper import interpret 
@@ -143,28 +138,28 @@ def _import(self: BuiltInFunction, context: Context):
     filename = context.get_symbol("filename")
     
     if not isinstance(filename, String):
-        return self._rt_result_failure(ErrorRuntime(
+        return self._rt_result_failure(
             "Argument must be string",
-            self.pos_start, self.pos_end, context
-        ))
+            context
+        )
     
     filename = filename.value
-    
-    script_code = get_filedata(filename)
-    
-    if not script_code:
-        return self._rt_result_failure(ErrorRuntime(
-            f"Failed to load module \"{filename}\"",
-            self.pos_start, self.pos_end, context
-        ))
+    try:
+        script_code = get_filedata(filename)
+            
+    except FileNotFoundError as e:
+        return self._rt_result_failure(
+            f"Failed to load module \"{filename}\": {e}",
+            context
+        )
         
     _, error, context = interpret(filename, script_code)
     
     if error:
-        return self._rt_result_failure(ErrorRuntime(
+        return self._rt_result_failure(
             f"Failed to finish importing \"{filename}\":\n{error.as_string()}",
-            self.pos_start, self.pos_end, context
-        ))
+            context
+        )
 
     return self._rt_result_success(Module(context))
 

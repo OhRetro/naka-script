@@ -55,7 +55,6 @@ class TokenType(Enum):
     AT = "@" # unused
     AND = "&" # unused
     PIPE = "|" # unused
-    COMMENT = "#"
     
     NEWLINE = "newline"
     
