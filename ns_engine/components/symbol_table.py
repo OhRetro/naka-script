@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Self, Tuple, Optional
 from gc import collect as gc_collect
-from ..datatype import Datatype, convert_to_datatype
+from .datatypes import Datatype, convert_to_datatype
 
 SYMBOLS_DICT = dict[str, Datatype]
 

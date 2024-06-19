@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from typing import Any, Self, Tuple, Optional
 from copy import deepcopy
-from ..components.position import Position
-from ..components.context import Context
-from ..components.error import Error, ErrorRuntime
+from ..position import Position
+from ..context import Context
+from ..error import Error, ErrorRuntime
 
 @dataclass(slots=True)
 class Datatype:

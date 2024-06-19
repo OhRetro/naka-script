@@ -9,7 +9,7 @@ from .dict import Dict
 from .module import Module
 
 if TYPE_CHECKING:
-    from ..components.context import Context
+    from ..context import Context
 else:
     Context = TypeVar("Context")
 

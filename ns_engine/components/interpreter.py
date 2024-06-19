@@ -11,7 +11,7 @@ from .keyword import Keyword
 from .runtime import RuntimeResult
 from .context import Context
 from .error import ErrorRuntime
-from ..datatype import Datatype, Number, String, List, Dict, BaseFunction, Function
+from .datatypes import Datatype, Number, String, List, Dict, BaseFunction, Function
 
 class Interpreter:
     def visit(self, node: Node, context: Context) -> RuntimeResult:

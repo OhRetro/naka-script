@@ -2,10 +2,10 @@ from dataclasses import dataclass, field
 from typing import Never
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .number import Number
-from ..components.error import ErrorRuntime
-from ..components.node import Node
-from ..components.runtime import RuntimeResult
-from ..components.context import Context
+from ..error import ErrorRuntime
+from ..node import Node
+from ..runtime import RuntimeResult
+from ..context import Context
 
 @dataclass(slots=True)
 class BaseFunction(Datatype):
@@ -16,7 +16,7 @@ class BaseFunction(Datatype):
         self._values_to_copy = ("name", )
 
     def generate_new_context(self) -> Context:
-        from ..components.symbol_table import SymbolTable
+        from ..symbol_table import SymbolTable
 
         new_context = Context(self.name, self.context, self.pos_start)
         new_context.symbol_table = SymbolTable(new_context.parent.symbol_table)
@@ -68,7 +68,7 @@ class Function(BaseFunction):
         return f"<function {self.name}>"
     
     def execute(self, args: list[Datatype]) -> DATATYPE_OR_ERROR:
-        from ..components.interpreter import Interpreter
+        from ..interpreter import Interpreter
 
         rt_result = RuntimeResult()
         interpreter = Interpreter()

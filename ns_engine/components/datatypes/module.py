@@ -2,10 +2,10 @@ from dataclasses import dataclass
 from typing import TypeVar, TYPE_CHECKING
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .number import Number
-from ..components.error import ErrorRuntime
+from ..error import ErrorRuntime
 
 if TYPE_CHECKING:
-    from ..components.context import Context
+    from ..context import Context
 else:
     Context = TypeVar("Context")
 

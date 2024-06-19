@@ -4,7 +4,7 @@ from .position import Position
 
 if TYPE_CHECKING:
     from .symbol_table import SymbolTable
-    from ..datatype import Datatype
+    from .datatypes import Datatype
 else:
     SymbolTable = TypeVar("SymbolTable")
     Datatype = TypeVar("Datatype")

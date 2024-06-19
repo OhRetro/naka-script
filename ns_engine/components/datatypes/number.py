@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from .datatype import Datatype, DATATYPE_OR_ERROR
-from ..components.error import ErrorRuntime
-from ..utils.strings_template import DIVISION_BY_ZERO_ERROR
+from ..error import ErrorRuntime
 
 @dataclass(slots=True)
 class Number(Datatype):
@@ -29,7 +28,7 @@ class Number(Datatype):
                 return self.new(result)
             except ZeroDivisionError:
                 return None, ErrorRuntime(
-                    DIVISION_BY_ZERO_ERROR,
+                    "Division by zero",
                     other.pos_start, other.pos_end, self.context
                 )
         else:

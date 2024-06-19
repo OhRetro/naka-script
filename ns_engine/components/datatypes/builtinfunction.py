@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Callable
 from types import MethodType
 from os import name as os_name, system as os_system
-from os.path import abspath as osp_abspath, isfile as osp_isfile
 from random import random, randint
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .function import BaseFunction
@@ -10,10 +9,10 @@ from .number import Number
 from .string import String
 from .list import List
 from .module import Module
-from ..components.error import ErrorRuntime
-from ..components.runtime import RuntimeResult
-from ..components.context import Context
-from ..utils.misc import get_filedata
+from ..error import ErrorRuntime
+from ..runtime import RuntimeResult
+from ..context import Context
+from ns_engine.utils.misc import get_filedata
 
 @dataclass(slots=True)
 class BuiltInFunction(BaseFunction):
@@ -104,7 +103,7 @@ def _random_int(self: BuiltInFunction, context: Context):
     return self._rt_result_success(Number(randint(min_.value, max_.value)))
     
 def _run(self: BuiltInFunction, context: Context):
-    from ..wrapper import interpret 
+    from ns_engine.wrapper import interpret 
     
     filename = context.get_symbol("filename")
     
@@ -133,7 +132,7 @@ def _run(self: BuiltInFunction, context: Context):
         )
 
 def _import(self: BuiltInFunction, context: Context):
-    from ..wrapper import interpret 
+    from ns_engine.wrapper import interpret 
 
     filename = context.get_symbol("filename")
     

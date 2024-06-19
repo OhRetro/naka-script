@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .number import Number
-from ..components.error import ErrorRuntime
+from ..error import ErrorRuntime
 
 @dataclass(slots=True)
 class String(Datatype):

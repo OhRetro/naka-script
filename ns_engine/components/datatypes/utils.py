@@ -1,7 +1,7 @@
 from .number import Number
 from .builtinfunction import BuiltInFunction, built_in_functions
 from . import convert_to_datatype
-from ..components.symbol_table import SymbolTable
+from ..symbol_table import SymbolTable
 
 def setup_starter_symbol_table(**extras) -> SymbolTable:
     symbol_table = SymbolTable()

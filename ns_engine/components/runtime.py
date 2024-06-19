@@ -3,7 +3,7 @@ from typing import Self, TypeVar, TYPE_CHECKING
 from .error import Error
 
 if TYPE_CHECKING:
-    from ..datatype import Datatype
+    from .datatypes import Datatype
 else:
     Datatype = TypeVar("Datatype")
 

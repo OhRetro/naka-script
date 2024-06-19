@@ -1,20 +1,17 @@
 from dataclasses import dataclass
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .number import Number
-from .string import String
-from ..components.error import ErrorRuntime
+from ..error import ErrorRuntime
 
 @dataclass(slots=True)
-class Dict(Datatype):
-    value: dict[str, Datatype]
+class List(Datatype):
+    value: list[Datatype]
 
     def __repr__(self) -> str:
-        display = ""
+        return f"[{self._elements_repr()}]"
 
-        for index, (k, v) in enumerate(self.value.items()):
-            display += f"{k}: {repr(v)}" + (", " if index < len(self.value) - 1 and len(self.value) > 1 else "")
-        
-        return f"{{{display}}}"
+    def _elements_repr(self):
+        return ", ".join([repr(x) for x in self.value])
     
     def _number(self, value: int | float) -> DATATYPE_OR_ERROR:
         return Number(value).set_context(self.context), None
@@ -23,46 +20,56 @@ class Dict(Datatype):
         return self._number(int(value))
 
     def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, String):
+        if isinstance(other, Number):
             try:
                 return self.value[other.value], None
-            except KeyError:
+            except IndexError:
                 return None, ErrorRuntime(
-                    f"Key '{other.value}' doesn't exist",
+                    "Element at index doesn't exist, Out of bounds",
                     other.pos_start, other.pos_end, self.context
                 )
         else:
             return None, ErrorRuntime(
-                "'Dict' datatype can be only indexed by 'String'",
+                "'List' datatype can be only indexed by 'Number: int'",
                 other.pos_start, other.pos_end, self.context
             )
-    
+
     def update_index_at(self, other: Datatype, new: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, String):
-            self.value[other.value] = new
-            return None, None
+        if isinstance(other, Number):
+            try:
+                self.value[other.value] = new
+                return None, None
+            except IndexError:
+                return None, ErrorRuntime(
+                    "Element at index doesn't exist, Out of bounds",
+                    other.pos_start, other.pos_end, self.context
+                )
         else:
             return None, ErrorRuntime(
-                "'Dict' datatype can be only indexed by 'String'",
+                "'List' datatype can be only indexed by 'Number: int'",
                 other.pos_start, other.pos_end, self.context
             )
+       
+    def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        self.value.append(other)
+        return None, None
     
     def subtracted_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, String):
+        if isinstance(other, Number):
             try:
-                del self.value[other.value]
+                self.value.pop(other.value)
                 return None, None
-            except KeyError:
+            except IndexError:
                 None, ErrorRuntime(
-                    f"Key '{other.value}' doesn't exist",
+                    "Element at index doesn't exist, Out of bounds",
                     other.pos_start, other.pos_end, self.context
                 )
         else:
             return self._illegal_operation(other)
     
     def multiplied_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, Dict):
-            self.value.update(other.value)
+        if isinstance(other, List):
+            self.value.extend(other.value)
             return None, None
         else:
             return self._illegal_operation(other)
@@ -80,8 +87,8 @@ class Dict(Datatype):
         return self._number_bool(self.value or other.value)
     
     def notted(self) -> DATATYPE_OR_ERROR:
-        return self._number(1 if self.value == {} else 0)
-
+        return self._number(1 if self.value == [] else 0)
+        
     def is_true(self) -> bool:
-        return self.value != {}
+        return self.value != []
     
