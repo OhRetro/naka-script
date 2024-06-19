@@ -1,12 +1,17 @@
 const math = import("../math.ns")
 
-var list = [math["pi"]]
+#var list = [math.pi]
 
-var dict = {
-    list: list
-}
-
-list + dict
-
-
+# var dict = {
+#     list: list
+# }
+# list + dict
 # print(list) causes a recursion error
+
+var pi_copy = math.pi
+
+print(math.pi)
+print(pi_copy)
+math.pi = 1
+print(math.pi)
+print(pi_copy)

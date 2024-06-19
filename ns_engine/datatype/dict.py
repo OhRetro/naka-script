@@ -8,9 +8,6 @@ from ..components.error import ErrorRuntime
 class Dict(Datatype):
     value: dict[str, Datatype]
 
-    def __post_init__(self):
-        self._values_to_copy = ("value", )
-
     def __repr__(self) -> str:
         display = ""
 
@@ -25,16 +22,6 @@ class Dict(Datatype):
     def _number_bool(self, value: bool) -> DATATYPE_OR_ERROR:
         return self._number(int(value))
 
-    def update_index_at(self, other: Datatype, new: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, String):
-            self.value[other.value] = new
-            return None, None
-        else:
-            return None, ErrorRuntime(
-                "'Dict' datatype can be only indexed by 'String'",
-                other.pos_start, other.pos_end, self.context
-            )
-    
     def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, String):
             try:
@@ -49,15 +36,16 @@ class Dict(Datatype):
                 "'Dict' datatype can be only indexed by 'String'",
                 other.pos_start, other.pos_end, self.context
             )
-
-    # def access_at(self, attribute_name: str) -> DATATYPE_OR_ERROR:
-    #     try:
-    #         return self.value[attribute_name], None
-    #     except KeyError:
-    #         return None, ErrorRuntime(
-    #             f"Key '{attribute_name}' doesn't exist",
-    #             self.pos_start, self.pos_end, self.context
-    #         )
+    
+    def update_index_at(self, other: Datatype, new: Datatype) -> DATATYPE_OR_ERROR:
+        if isinstance(other, String):
+            self.value[other.value] = new
+            return None, None
+        else:
+            return None, ErrorRuntime(
+                "'Dict' datatype can be only indexed by 'String'",
+                other.pos_start, other.pos_end, self.context
+            )
     
     def subtracted_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, String):

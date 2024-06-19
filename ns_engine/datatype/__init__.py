@@ -1,4 +1,4 @@
-from typing import Any, Tuple, TypeVar, TYPE_CHECKING, List as type_List, Dict as type_Dict
+from typing import Any, TypeVar, TYPE_CHECKING, List as type_List, Dict as type_Dict
 from types import NoneType
 from .datatype import Datatype
 from .number import Number
@@ -6,6 +6,7 @@ from .function import Function, BaseFunction
 from .string import String
 from .list import List
 from .dict import Dict
+from .module import Module
 
 if TYPE_CHECKING:
     from ..components.context import Context
@@ -38,10 +39,6 @@ def convert_to_datatype(value: Any) -> Datatype:
     else:
         raise TypeError(f"Could not convert '{value}' to a Datatype")
 
-#! NOT A FINISHED FUNCTION
-def new_datatype(value: Any, context: Context) -> Tuple[Datatype, None]:
-    return convert_to_datatype(value).set_context(context), None
-
 __all__ = [
     "Datatype",
     "Number",
@@ -49,6 +46,7 @@ __all__ = [
     "String",
     "List",
     "Dict",
+    "Module",
     
     "convert_to_datatype"
 ]

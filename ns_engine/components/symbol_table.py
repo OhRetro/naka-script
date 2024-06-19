@@ -23,7 +23,7 @@ class SymbolTable:
         symbols_dict: SYMBOLS_DICT = getattr(self, type)
         return symbols_dict
     
-    def get(self, name: str) -> Datatype:
+    def get(self, name: str) -> Optional[Datatype]:
         _, symbols_dict = self.exists_where(name)
         
         value = symbols_dict.get(name) if symbols_dict else None

@@ -188,7 +188,23 @@ class Interpreter:
                 return rt_result.failure(error)
         
             return rt_result.success(Number.null)
+        
+        elif isinstance(node_or_identifier_to_update, AccessNode):
+            main_node = node_or_identifier_to_update.node_to_access
             
+            main_datatype = rt_result.register(self.visit(main_node, context))
+            if rt_result.should_return(): return rt_result
+            main_datatype = main_datatype.copy().set_pos(node.pos_start, node.pos_end)
+            
+            identifier_name: str = node_or_identifier_to_update.token.value
+            
+            _, error = main_datatype.update_access_at(identifier_name, new_datatype)
+
+            if error:
+                return rt_result.failure(error)
+        
+            return rt_result.success(Number.null)
+        
         elif isinstance(node_or_identifier_to_update, Token):
             identifier_name: str = node_or_identifier_to_update.value
             

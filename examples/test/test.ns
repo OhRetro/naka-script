@@ -146,7 +146,7 @@ end
 run("../strings.ns")
 test_ = import("../importing.ns")
 
-print(test_["fibonacci"](40))
+# print(test_["fibonacci"](40))
 
 var _variable = "test"
 var pi = 3.14

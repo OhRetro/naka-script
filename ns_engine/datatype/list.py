@@ -7,9 +7,6 @@ from ..components.error import ErrorRuntime
 class List(Datatype):
     value: list[Datatype]
 
-    def __post_init__(self):
-        self._values_to_copy = ("value", )
-
     def __repr__(self) -> str:
         return f"[{self._elements_repr()}]"
 
@@ -21,6 +18,21 @@ class List(Datatype):
 
     def _number_bool(self, value: bool) -> DATATYPE_OR_ERROR:
         return self._number(int(value))
+
+    def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        if isinstance(other, Number):
+            try:
+                return self.value[other.value], None
+            except IndexError:
+                return None, ErrorRuntime(
+                    "Element at index doesn't exist, Out of bounds",
+                    other.pos_start, other.pos_end, self.context
+                )
+        else:
+            return None, ErrorRuntime(
+                "'List' datatype can be only indexed by 'Number: int'",
+                other.pos_start, other.pos_end, self.context
+            )
 
     def update_index_at(self, other: Datatype, new: Datatype) -> DATATYPE_OR_ERROR:
         if isinstance(other, Number):
@@ -37,22 +49,7 @@ class List(Datatype):
                 "'List' datatype can be only indexed by 'Number: int'",
                 other.pos_start, other.pos_end, self.context
             )
-    
-    def index_at(self, other: Datatype) -> DATATYPE_OR_ERROR:
-        if isinstance(other, Number):
-            try:
-                return self.value[other.value], None
-            except IndexError:
-                return None, ErrorRuntime(
-                    "Element at index doesn't exist, Out of bounds",
-                    other.pos_start, other.pos_end, self.context
-                )
-        else:
-            return None, ErrorRuntime(
-                "'List' datatype can be only indexed by 'Number: int'",
-                other.pos_start, other.pos_end, self.context
-            )
-            
+       
     def added_to(self, other: Datatype) -> DATATYPE_OR_ERROR:
         self.value.append(other)
         return None, None

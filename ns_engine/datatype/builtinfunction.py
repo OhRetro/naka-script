@@ -3,12 +3,13 @@ from typing import Callable
 from types import MethodType
 from os import name as os_name, system as os_system
 from os.path import abspath as osp_abspath, isfile as osp_isfile
+from random import random, randint
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .function import BaseFunction
 from .number import Number
 from .string import String
 from .list import List
-from . import convert_to_datatype
+from .module import Module
 from ..components.error import ErrorRuntime
 from ..components.runtime import RuntimeResult
 from ..components.context import Context
@@ -88,14 +89,26 @@ def _is_function(self: BuiltInFunction, context: Context):
     is_function = isinstance(context.get_symbol("value"), BaseFunction)
     return self._rt_result_success(Number.true if is_function else Number.false)
 
+def _random_int(self: BuiltInFunction, context: Context):
+    min_ = context.get_symbol("min")
+    max_ = context.get_symbol("max")
+    
+    if (not isinstance(min_, Number) or not isinstance(max_, Number)) or (
+        not isinstance(min_.value, int) or not isinstance(max_.value, int)):
+        return self._rt_result_failure(ErrorRuntime(
+            "Both arguments must be 'Number: int'",
+            self.pos_start, self.pos_end, context
+        ))
+        
+    return self._rt_result_success(Number(randint(min_.value, max_.value)))
+    
 def _run(self: BuiltInFunction, context: Context):
     from ..wrapper import interpret 
     
-    rt_result = RuntimeResult()
     filename = context.get_symbol("filename")
     
     if not isinstance(filename, String):
-        return rt_result.failure(ErrorRuntime(
+        return self._rt_result_failure(ErrorRuntime(
             "Argument must be string",
             self.pos_start, self.pos_end, context
         ))
@@ -110,7 +123,7 @@ def _run(self: BuiltInFunction, context: Context):
             script_code = f.read()
         
     except FileNotFoundError as e:
-        return rt_result.failure(ErrorRuntime(
+        return self._rt_result_failure(ErrorRuntime(
             f"Failed to load script \"{filename}\": {e}",
             self.pos_start, self.pos_end, context
         ))
@@ -118,19 +131,18 @@ def _run(self: BuiltInFunction, context: Context):
     _, error, _ = interpret(filename, script_code)
     
     if error:
-        return rt_result.failure(ErrorRuntime(
+        return self._rt_result_failure(ErrorRuntime(
             f"Failed to finish script \"{filename}\":\n{error.as_string()}",
             self.pos_start, self.pos_end, context
         ))
 
 def _import(self: BuiltInFunction, context: Context):
     from ..wrapper import interpret 
-    
-    rt_result = RuntimeResult()
+
     filename = context.get_symbol("filename")
     
     if not isinstance(filename, String):
-        return rt_result.failure(ErrorRuntime(
+        return self._rt_result_failure(ErrorRuntime(
             "Argument must be string",
             self.pos_start, self.pos_end, context
         ))
@@ -145,20 +157,20 @@ def _import(self: BuiltInFunction, context: Context):
             script_code = f.read()
         
     except FileNotFoundError as e:
-        return rt_result.failure(ErrorRuntime(
-            f"Failed to load script \"{filename}\": {e}",
+        return self._rt_result_failure(ErrorRuntime(
+            f"Failed to load module \"{filename}\": {e}",
             self.pos_start, self.pos_end, context
         ))
     
     _, error, context = interpret(filename, script_code)
     
     if error:
-        return rt_result.failure(ErrorRuntime(
-            f"Failed to finish importing script's symbols from \"{filename}\":\n{error.as_string()}",
+        return self._rt_result_failure(ErrorRuntime(
+            f"Failed to finish importing \"{filename}\":\n{error.as_string()}",
             self.pos_start, self.pos_end, context
         ))
 
-    return rt_result.success(convert_to_datatype(context.symbol_table.symbols))
+    return self._rt_result_success(Module(context))
 
 built_in_functions = {
     "print": (("value",), _print),
@@ -166,13 +178,15 @@ built_in_functions = {
     "run": (("filename",), _run),
     "import": (("filename",), _import),
 
-    "to_string": (("value",), _to_string),
+    "toString": (("value",), _to_string),
 
     "input": (None, _input),
-    "input_number": (None, _input_number),
+    "inputNumber": (None, _input_number),
 
-    "is_number": (("value",), _is_number),
-    "is_string": (("value",), _is_string),
-    "is_list": (("value",), _is_list),
-    "is_function": (("value",), _is_function)
+    "isNumber": (("value",), _is_number),
+    "isString": (("value",), _is_string),
+    "isList": (("value",), _is_list),
+    "isFunction": (("value",), _is_function),
+    
+    "randomInt": (("min", "max"), _random_int)
 }

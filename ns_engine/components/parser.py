@@ -294,6 +294,14 @@ class Parser:
                 self.advance_register_advancement(p_result, False)
                 atom = AccessNode(attribute_name_token, atom)
                 
+                if self.current_token.is_type_of(TokenType.EQUALS):
+                    self.advance_register_advancement(p_result, False)
+                    expr = p_result.register(self.expr())
+                    
+                    if p_result.error: return p_result
+                    
+                    atom = UpdateNode(atom, expr)
+                
             else:
                 break
 

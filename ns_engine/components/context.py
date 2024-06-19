@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Self, TypeVar, TYPE_CHECKING
+from typing import Self, TypeVar, Optional, TYPE_CHECKING
 from .position import Position
 
 if TYPE_CHECKING:
@@ -19,6 +19,6 @@ class Context:
     def __repr__(self) -> str:
         return f"Context(\"{self.name}\", {self.symbol_table}, {self.parent})"
     
-    def get_symbol(self, name: str) -> Datatype:
+    def get_symbol(self, name: str) -> Optional[Datatype]:
         return self.symbol_table.get(name)
     
