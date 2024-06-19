@@ -66,15 +66,13 @@ class Parser:
     def __post_init__(self):
         self.advance()
         
-    def advance(self) -> Token:
-        self.token_index += 1
+    def advance(self, amount: int = 1) -> Token:
+        self.token_index += amount
         self.update_current_token()
         return self.current_token
     
     def reverse(self, amount: int = 1) -> Token:
-        self.token_index -= amount
-        self.update_current_token()
-        return self.current_token
+        return self.advance(-amount)
     
     def update_current_token(self):
         if self.token_index >= 0 and self.token_index < len(self.tokens):
@@ -95,12 +93,6 @@ class Parser:
     
     def current_token_is_semicolon_or_newline(self) -> bool:
         return self.current_token.is_type_of(TokenType.SEMICOLON, TokenType.NEWLINE)
-
-    # def next_token_is_type_of(self, type: TokenType) -> bool:
-    #     try:
-    #         return self.tokens[self.token_index + 1].is_type_of(type)
-    #     except IndexError:
-    #         return False
     
     def advance_if_token_is_semicolon_or_newline(self, parse_result: ParseResult) -> int:
         semicolon_newline_count = 0
@@ -120,6 +112,15 @@ class Parser:
             advance_count += self.advance_if_token_is_semicolon_or_newline(parse_result)
             
         return advance_count
+    
+    def try_register_to_reverse(self, parse_result: ParseResult, node: ParseResult):
+        node: Node = parse_result.try_register(node)
+        
+        if not node:
+            self.reverse(parse_result.to_reverse_count)
+            return None
+        
+        return node
 
     #!================================================================
 
@@ -378,8 +379,8 @@ class Parser:
             
             if p_result.error:
                 return p_result.failure(ErrorInvalidSyntax(
-                    expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
-                                TokenType.LPAREN, TokenType.LSQUARE,
+                    expected(TokenType.RSQUARE, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
+                            TokenType.LPAREN, TokenType.LSQUARE,
                             Keyword.SETVAR, Keyword.NOT, Keyword.IF,
                             Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
                     self.current_token.pos_start, self.current_token.pos_end
@@ -759,11 +760,8 @@ class Parser:
         if self.current_token.is_keyword_of(Keyword.RETURN):
             self.advance_register_advancement(p_result, False)
             
-            expr = p_result.try_register(self.expr())
+            expr: Node = self.try_register_to_reverse(p_result, self.expr())
             
-            if not expr:
-                self.reverse(p_result.to_reverse_count)
-                
             return p_result.success(ReturnNode(
                 pos_start, self.current_token.pos_end.copy(),
                 expr
@@ -814,13 +812,11 @@ class Parser:
                 
             if not more_statements: break
             
-            statement: Node = p_result.try_register(self.statement())
-
+            statement: Node = self.try_register_to_reverse(p_result, self.statement())
             if not statement:
-                self.reverse(p_result.to_reverse_count)
                 more_statements = False
                 continue
-            
+                   
             statements.append(statement)
             
         return p_result.success(ListNode(

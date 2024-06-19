@@ -1,6 +1,41 @@
 
-if rt__name__ == "__main__" then
-    print("i'm the main script")
-    run("./t_.ns")
-    var t = import("./t_.ns")
-end
+# if rt__name__ == "__main__" then
+#     print("i'm the main script")
+#     run("./t_.ns")
+#     var t = import("./t_.ns")
+# end
+
+# var alphabet = {
+#     a
+#     : 
+#     0
+#     ,
+
+#     b
+    
+#     :
+    
+#     1
+
+#     ,
+#     c: 2
+# }
+
+#print(alphabet)
+
+# var randomList = [
+#     1
+#     ,
+
+#     "test"
+
+#     ,
+#     [1]
+# ]
+# #print(randomList)
+var randomList = []
+
+randomList = []
+
+
+#1

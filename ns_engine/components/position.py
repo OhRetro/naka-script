@@ -29,4 +29,3 @@ class Position:
     def copy(self) -> Self:
         return Position(self.index, self.line, self.column, self.filename, self.filedata)
     
-    
