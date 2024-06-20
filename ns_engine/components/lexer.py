@@ -24,9 +24,6 @@ class Lexer:
         tokens: list[Token] = []
         
         SIMPLE_TOKENS = {
-            "+": TokenType.PLUS,
-            "/": TokenType.DIV,
-            "%": TokenType.MOD,
             "(": TokenType.LPAREN,
             ")": TokenType.RPAREN,
             "[": TokenType.LSQUARE,
@@ -43,13 +40,28 @@ class Lexer:
         # Advanced Tokens are tokens that require more complex handling in comparison to Simple Tokens
         ADVANCED_TOKENS = {
             # Check if it's a Mult or Power Token, the rest follow the same rules
-            "*": lambda: self._make_token_advanced(
-                TokenType.MULT,
-                ({"char": "*", "token_type": TokenType.POWER},)
+            "+": lambda: self._make_token_advanced(
+                TokenType.PLUS,
+                ({"char": "=", "token_type": TokenType.PLUSEQUAL},)
             ), 
             "-": lambda: self._make_token_advanced(
                 TokenType.MINUS,
-                ({"char": ">", "token_type": TokenType.RIGHTARROW},)
+                ({"char": ">", "token_type": TokenType.RIGHTARROW, "break": True},
+                 {"char": "=", "token_type": TokenType.MINUSEQUAL, "break": True})
+            ), 
+            "*": lambda: self._make_token_advanced(
+                TokenType.MULT,
+                ({"char": "=", "token_type": TokenType.MULTEQUAL, "break": True},
+                 {"char": "*", "token_type": TokenType.POWER},
+                 {"char": "=", "token_type": TokenType.POWER, "break": True})
+            ),
+            "/": lambda: self._make_token_advanced(
+                TokenType.DIV,
+                ({"char": "=", "token_type": TokenType.DIVEQUAL},)
+            ),
+            "%": lambda: self._make_token_advanced(
+                TokenType.MOD,
+                ({"char": "=", "token_type": TokenType.MODEQUAL},)
             ), 
             "=": lambda: self._make_token_advanced(
                 TokenType.EQUALS,
@@ -204,7 +216,7 @@ class Lexer:
     
     def _make_comment(self) -> Tuple[None, Optional[Error]]:        
         pos_start = self.pos.copy()
-        
+        # comment = str(self.current_char)
         self.advance()
         
         if self.src_name == "<shell>":
@@ -215,7 +227,11 @@ class Lexer:
             )
         
         while self.current_char not in ("\n", None):
+            # comment += str(self.current_char)
             self.advance()
-        self.advance()
+        # self.advance()
+        # comment += str(self.current_char)
+        
+        # print(f"{comment}")
         
         return None, None

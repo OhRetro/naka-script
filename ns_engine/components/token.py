@@ -11,24 +11,29 @@ class TokenType(Enum):
     # General types
     KEYWORD = "keyword"
     IDENTIFIER = "identifier"
-    EQUALS = "="
     
     # Data types
-    INT = "int" # unused
-    FLOAT = "float" # unused
-    
     NUMBER = "number"
     STRING = "string"
     
-    # Mathmatic types
+    # Mathematical operators
     PLUS = "+"
     MINUS = "-"
     MULT = "*"
     POWER = "**"
     DIV = "/"
     MOD = "%"
+
+    # Assignment operators
+    EQUALS = "="
+    PLUSEQUAL = "+=" # unused
+    MINUSEQUAL = "-=" # unused
+    MULTEQUAL = "*=" # unused
+    POWEREQUAL = "**=" # unused
+    DIVEQUAL = "/=" # unused
+    MODEQUAL = "%=" # unused
     
-    # Parenthesis, Square and Brace
+    # Parentheses, Square  & Braces
     LPAREN = "("
     RPAREN = ")"
     LSQUARE = "["
@@ -36,7 +41,7 @@ class TokenType(Enum):
     LBRACE = "{"
     RBRACE = "}"
     
-    # Conditional types
+    # Conditional operators
     ISEQUALS = "=="
     NE = "!="
     LT = "<"
@@ -45,19 +50,23 @@ class TokenType(Enum):
     GTE = ">="
     ISNULL = "?=" # unused
     
-    # Other
-    DOT = "." # unused
+    # Punctuation
+    DOT = "."
     COMMA = ","
-    RIGHTARROW = "->"
-    LEFTARROW = "<-" # unused
     SEMICOLON = ";"
     COLON = ":"
+    
+    # Arrows
+    RIGHTARROW = "->"
+    LEFTARROW = "<-" # unused
+    
+    # Special characters
     AT = "@" # unused
     AND = "&" # unused
     PIPE = "|" # unused
     
+    # Others
     NEWLINE = "newline"
-    
     EOF = "EOF"
 
 @dataclass(slots=True)
