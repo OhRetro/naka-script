@@ -3,7 +3,7 @@ from typing import Any, Self, Tuple, Optional
 from copy import deepcopy
 from ..position import Position
 from ..context import Context
-from ..error import Error, ErrorRuntime
+from ..errors import Error, NSRuntimeError
 
 @dataclass(slots=True)
 class Datatype:
@@ -19,19 +19,19 @@ class Datatype:
     def _value_copy(self) -> Any:
         return deepcopy(self.value)
     
-    def _illegal_operation(self, other: Self = None) -> Tuple[None, ErrorRuntime]:
+    def _illegal_operation(self, other: Self = None) -> Tuple[None, NSRuntimeError]:
         other = other or self
         
-        return None, ErrorRuntime(
+        return None, NSRuntimeError(
             "Illegal operation",
             self.pos_start, other.pos_end, self.context
             )
     
-    def _readonly_state(self, other: Self = None) -> Tuple[None, ErrorRuntime]:
+    def _readonly_state(self, other: Self = None) -> Tuple[None, NSRuntimeError]:
         other = other or self
         
         if self.readonly:
-            return None, ErrorRuntime(
+            return None, NSRuntimeError(
                 f"This '{type(self).__name__}' object is on a read-only state",
                 other.pos_start, other.pos_end, self.context
             )

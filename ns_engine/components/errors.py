@@ -20,28 +20,28 @@ class Error:
         return message
 
 @dataclass(frozen=True, slots=True)
-class ErrorIllegalCharacter(Error):
+class NSIllegalCharacterError(Error):
     name: str = field(default="Illegal Character Error", init=False)
 
     def __repr__(self) -> str:
         return f"ErrorIllegalCharacter({self.pos_start}, {self.pos_end}, \"{self.details}\")"
     
 @dataclass(frozen=True, slots=True)
-class ErrorExpectedCharacter(Error):
+class NSExpectedCharacterError(Error):
     name: str = field(default="Expected Character Error", init=False)
 
     def __repr__(self) -> str:
         return f"ErrorExpectedCharacter({self.pos_start}, {self.pos_end}, \"{self.details}\")"
     
 @dataclass(frozen=True, slots=True)
-class ErrorInvalidSyntax(Error):
+class NSInvalidSyntaxError(Error):
     name: str = field(default="Invalid Syntax Error", init=False)
 
     def __repr__(self) -> str:
         return f"ErrorInvalidSyntax({self.pos_start}, {self.pos_end}, \"{self.details}\")"
     
 @dataclass(frozen=True, slots=True)
-class ErrorRuntime(Error):
+class NSRuntimeError(Error):
     name: str = field(default="Runtime Error", init=False)
     context: Context
 

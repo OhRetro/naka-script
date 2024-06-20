@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .number import Number
-from ..error import ErrorRuntime
+from ..errors import NSRuntimeError
 
 @dataclass(slots=True)
 class List(Datatype):
@@ -24,12 +24,12 @@ class List(Datatype):
             try:
                 return self.value[other.value], None
             except IndexError:
-                return None, ErrorRuntime(
+                return None, NSRuntimeError(
                     "Element at index doesn't exist, Out of bounds",
                     other.pos_start, other.pos_end, self.context
                 )
         else:
-            return None, ErrorRuntime(
+            return None, NSRuntimeError(
                 "'List' datatype can be only indexed by 'Number: int'",
                 other.pos_start, other.pos_end, self.context
             )
@@ -40,12 +40,12 @@ class List(Datatype):
                 self.value[other.value] = new
                 return None, None
             except IndexError:
-                return None, ErrorRuntime(
+                return None, NSRuntimeError(
                     "Element at index doesn't exist, Out of bounds",
                     other.pos_start, other.pos_end, self.context
                 )
         else:
-            return None, ErrorRuntime(
+            return None, NSRuntimeError(
                 "'List' datatype can be only indexed by 'Number: int'",
                 other.pos_start, other.pos_end, self.context
             )
@@ -60,7 +60,7 @@ class List(Datatype):
                 self.value.pop(other.value)
                 return None, None
             except IndexError:
-                None, ErrorRuntime(
+                None, NSRuntimeError(
                     "Element at index doesn't exist, Out of bounds",
                     other.pos_start, other.pos_end, self.context
                 )

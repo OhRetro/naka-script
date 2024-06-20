@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Self, TypeVar, TYPE_CHECKING
-from .error import Error
+from .errors import Error
 
 if TYPE_CHECKING:
     from .datatypes import Datatype

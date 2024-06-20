@@ -9,7 +9,7 @@ from .node import (Node,
                    FuncDefNode, CallNode, IndexNode, AccessNode, UpdateNode,
                    VarAssignNode, VarDeleteNode,
                    ReturnNode, ContinueNode, BreakNode)
-from .error import Error, ErrorInvalidSyntax
+from .errors import Error, NSInvalidSyntaxError
 from ..utils.expected import expected
 from ..utils.debug import DebugMessage
 
@@ -82,7 +82,7 @@ class Parser:
         p_result = self.statements()
         
         if not p_result.error and not self.current_token.is_type_of(TokenType.EOF):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.PLUS, TokenType.MINUS, TokenType.MULT, TokenType.DIV, TokenType.POWER, TokenType.MOD,
                          TokenType.ISEQUALS, TokenType.NE, TokenType.LT, TokenType.GT, TokenType.LTE, TokenType.GTE,
                          Keyword.AND, Keyword.OR),
@@ -164,7 +164,7 @@ class Parser:
                 
                 return p_result.success(expr)
             else:
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.RPAREN),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
@@ -199,7 +199,7 @@ class Parser:
             if p_result.error: return p_result
             return p_result.success(func_def)
         
-        return p_result.failure(ErrorInvalidSyntax(
+        return p_result.failure(NSInvalidSyntaxError(
             expected(TokenType.STRING, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
                      TokenType.LPAREN, TokenType.LSQUARE,
                      Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION),
@@ -226,7 +226,7 @@ class Parser:
                         arg_nodes.append(p_result.register(self.expr()))
                         if p_result.error:
                             return p_result.failure(
-                                ErrorInvalidSyntax(
+                                NSInvalidSyntaxError(
                                     expected(TokenType.RPAREN, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
                                              TokenType.LPAREN, TokenType.LSQUARE,
                                              Keyword.SETVAR, Keyword.NOT, Keyword.IF,
@@ -244,7 +244,7 @@ class Parser:
 
                     if not self.current_token.is_type_of(TokenType.RPAREN):
                         return p_result.failure(
-                            ErrorInvalidSyntax(
+                            NSInvalidSyntaxError(
                                 expected(TokenType.COMMA, TokenType.RPAREN),
                                 self.current_token.pos_start, self.current_token.pos_end
                             )
@@ -262,7 +262,7 @@ class Parser:
 
                 if not self.current_token.is_type_of(TokenType.RSQUARE):
                     return p_result.failure(
-                        ErrorInvalidSyntax(
+                        NSInvalidSyntaxError(
                             expected(TokenType.RSQUARE),
                             self.current_token.pos_start, self.current_token.pos_end
                         )
@@ -284,7 +284,7 @@ class Parser:
                 
                 if not self.current_token.is_type_of(TokenType.IDENTIFIER):
                     return p_result.failure(
-                        ErrorInvalidSyntax(
+                        NSInvalidSyntaxError(
                             expected(TokenType.IDENTIFIER),
                             self.current_token.pos_start, self.current_token.pos_end
                         )
@@ -349,7 +349,7 @@ class Parser:
             self.arith_expr))
 
         if p_result.error:
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE,
                          Keyword.NOT),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -364,7 +364,7 @@ class Parser:
         to_reverse = 0
         
         if not self.current_token.is_type_of(TokenType.LSQUARE):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.LSQUARE),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -379,7 +379,7 @@ class Parser:
         
         if p_result.error:
             self.reverse(to_reverse - 1)
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.RSQUARE, TokenType.NUMBER, TokenType.STRING, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
                         TokenType.LPAREN, TokenType.LSQUARE, TokenType.LBRACE,
                         Keyword.SETVAR, Keyword.NOT, Keyword.IF,
@@ -396,7 +396,7 @@ class Parser:
             
             if p_result.error:
                 self.reverse(to_reverse - 1)
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.NUMBER, TokenType.STRING, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
                             TokenType.LPAREN, TokenType.LSQUARE, TokenType.LBRACE,
                             Keyword.SETVAR, Keyword.NOT, Keyword.IF,
@@ -408,7 +408,7 @@ class Parser:
             
         if not self.current_token.is_type_of(TokenType.RSQUARE):
             self.reverse(to_reverse)
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.COMMA, TokenType.RSQUARE),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -424,7 +424,7 @@ class Parser:
         to_reverse = 0
         
         if not self.current_token.is_type_of(TokenType.LBRACE):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.LBRACE),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -437,7 +437,7 @@ class Parser:
         
         if not self.current_token.is_type_of(TokenType.IDENTIFIER, TokenType.STRING):
             self.reverse(to_reverse - 1)
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.IDENTIFIER, TokenType.STRING),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -447,7 +447,7 @@ class Parser:
         
         if not self.current_token.is_type_of(TokenType.COLON):
             self.reverse(to_reverse - 1)
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.COLON),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -457,7 +457,7 @@ class Parser:
         
         if p_result.error: 
             self.reverse(to_reverse - 1)
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.NUMBER, TokenType.STRING, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
                         TokenType.LPAREN, TokenType.LSQUARE, TokenType.LBRACE,
                         Keyword.SETVAR, Keyword.NOT, Keyword.IF,
@@ -472,7 +472,7 @@ class Parser:
             
             if not self.current_token.is_type_of(TokenType.IDENTIFIER, TokenType.STRING):
                 self.reverse(to_reverse - 1)
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.IDENTIFIER, TokenType.STRING),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
@@ -482,7 +482,7 @@ class Parser:
             
             if not self.current_token.is_type_of(TokenType.COLON):
                 self.reverse(to_reverse - 1)
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.COLON),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
@@ -492,7 +492,7 @@ class Parser:
             
             if p_result.error:
                 self.reverse(to_reverse - 1)
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.NUMBER, TokenType.STRING, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
                             TokenType.LPAREN, TokenType.LSQUARE, TokenType.LBRACE,
                             Keyword.SETVAR, Keyword.NOT, Keyword.IF,
@@ -504,7 +504,7 @@ class Parser:
         
         if not self.current_token.is_type_of(TokenType.RBRACE):
             self.reverse(to_reverse)
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.COMMA, TokenType.RBRACE),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -540,7 +540,7 @@ class Parser:
                 if self.current_token.is_keyword_of(Keyword.END):
                     self.advance_register_advancement(p_result, False)
                 else:
-                    return p_result.failure(ErrorInvalidSyntax(
+                    return p_result.failure(NSInvalidSyntaxError(
                         expected(Keyword.END),
                         self.current_token.pos_start, self.current_token.pos_end
                     ))
@@ -571,7 +571,7 @@ class Parser:
         else_case = None
 
         if not self.current_token.is_keyword_of(case_keyword):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(case_keyword),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -582,7 +582,7 @@ class Parser:
         if p_result.error: return p_result
 
         if not self.current_token.is_keyword_of(Keyword.THEN):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(Keyword.THEN),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -619,7 +619,7 @@ class Parser:
         p_result = ParseResult()
 
         if not self.current_token.is_keyword_of(Keyword.FOR):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(Keyword.FOR),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -627,7 +627,7 @@ class Parser:
         self.advance_register_advancement(p_result, False)
 
         if not self.current_token.is_type_of(TokenType.IDENTIFIER):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.IDENTIFIER),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -636,7 +636,7 @@ class Parser:
         self.advance_register_advancement(p_result, False)
 
         if not self.current_token.is_type_of(TokenType.EQUALS):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.EQUALS),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -647,7 +647,7 @@ class Parser:
         if p_result.error: return p_result
 
         if not self.current_token.is_keyword_of(Keyword.TO):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(Keyword.TO),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -666,7 +666,7 @@ class Parser:
             step_value_node = None
 
         if not self.current_token.is_keyword_of(Keyword.THEN):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(Keyword.THEN),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -681,7 +681,7 @@ class Parser:
                 return p_result
 
             if not self.current_token.is_keyword_of(Keyword.END):
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(Keyword.END),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
@@ -699,7 +699,7 @@ class Parser:
         p_result = ParseResult()
 
         if not self.current_token.is_keyword_of(Keyword.WHILE):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(Keyword.WHILE),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -710,7 +710,7 @@ class Parser:
         if p_result.error: return p_result
 
         if not self.current_token.is_keyword_of(Keyword.THEN):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(Keyword.THEN),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -724,7 +724,7 @@ class Parser:
             if p_result.error: return p_result
 
             if not self.current_token.is_keyword_of(Keyword.END):
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(Keyword.END),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
@@ -746,13 +746,13 @@ class Parser:
             self.advance_register_advancement(p_result, False)
             
             if self.current_token.is_type_of(TokenType.KEYWORD):
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     f"Cannot assign values to reserved keywords such as '{self.current_token.value.value}'",
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
                         
             elif not self.current_token.is_type_of(TokenType.IDENTIFIER):
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.IDENTIFIER),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
@@ -761,7 +761,7 @@ class Parser:
             self.advance_register_advancement(p_result, False)
 
             if not self.current_token.is_type_of(TokenType.EQUALS):
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.EQUALS),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
@@ -782,7 +782,7 @@ class Parser:
             self.advance_register_advancement(p_result, False)
             
             if not self.current_token.is_type_of(TokenType.IDENTIFIER):
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.IDENTIFIER),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
@@ -795,7 +795,7 @@ class Parser:
         node = p_result.register(self.bin_op((Keyword.AND, Keyword.OR), self.comp_expr))
         
         if p_result.error:
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(Keyword.SETVAR, Keyword.DELETEVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE, Keyword.NOT,
                          Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION),
                 self.current_token.pos_start, self.current_token.pos_end
@@ -831,7 +831,7 @@ class Parser:
             
         expr = p_result.register(self.expr())
         if p_result.error:
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(Keyword.RETURN, Keyword.CONTINUE, Keyword.BREAK, Keyword.SETVAR, Keyword.DELETEVAR,
                          Keyword.NOT, Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION,
                          TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE
@@ -878,7 +878,7 @@ class Parser:
         p_result = ParseResult()
         
         if not self.current_token.is_keyword_of(Keyword.SETFUNCTION):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(Keyword.SETFUNCTION),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
@@ -891,14 +891,14 @@ class Parser:
             self.advance_register_advancement(p_result, False)
             
             if not self.current_token.is_type_of(TokenType.LPAREN):
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.LPAREN),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
         else:
             var_name_token = None
             if not self.current_token.is_type_of(TokenType.LPAREN):
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.IDENTIFIER, TokenType.LPAREN),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
@@ -916,7 +916,7 @@ class Parser:
                 self.advance_register_advancement(p_result, False)
                 
                 if not self.current_token.is_type_of(TokenType.IDENTIFIER):
-                    return p_result.failure(ErrorInvalidSyntax(
+                    return p_result.failure(NSInvalidSyntaxError(
                         expected(TokenType.IDENTIFIER),
                         self.current_token.pos_start, self.current_token.pos_end
                     ))
@@ -926,13 +926,13 @@ class Parser:
                 self.advance_register_advancement(p_result, False)
                 
             if not self.current_token.is_type_of(TokenType.RPAREN):
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.COMMA, TokenType.RPAREN),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
         else:
             if not self.current_token.is_type_of(TokenType.RPAREN):
-                return p_result.failure(ErrorInvalidSyntax(
+                return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.IDENTIFIER, TokenType.RPAREN),
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
@@ -949,7 +949,7 @@ class Parser:
             return p_result.success(FuncDefNode(var_name_token, tuple(arg_name_tokens), body_node, True))
     
         if not self.current_token_is_semicolon_or_newline():
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.RIGHTARROW, TokenType.SEMICOLON, TokenType.NEWLINE),
                 self.current_token.pos_start, self.current_token.pos_end,
             ))
@@ -961,7 +961,7 @@ class Parser:
             return p_result
 
         if not self.current_token.is_keyword_of(Keyword.END):
-            return p_result.failure(ErrorInvalidSyntax(
+            return p_result.failure(NSInvalidSyntaxError(
                 expected(Keyword.END),
                 self.current_token.pos_start, self.current_token.pos_end
             ))

@@ -10,7 +10,7 @@ from .number import Number
 from .string import String
 from .list import List
 from .module import Module
-from ..error import ErrorRuntime
+from ..errors import NSRuntimeError
 from ..runtime import RuntimeResult
 from ..context import Context
 from ns_engine.utils.misc import get_filedata
@@ -30,7 +30,7 @@ class BuiltInFunction(BaseFunction):
         return RuntimeResult().success(datatype)
 
     def _rt_result_failure(self, details: str, context: Context) -> RuntimeResult:
-        return RuntimeResult().failure(ErrorRuntime(
+        return RuntimeResult().failure(NSRuntimeError(
             details, self.pos_start, self.pos_end, context
         ))
 

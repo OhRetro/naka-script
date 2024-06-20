@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Never
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .number import Number
-from ..error import ErrorRuntime
+from ..errors import NSRuntimeError
 from ..node import Node
 from ..runtime import RuntimeResult
 from ..context import Context
@@ -27,13 +27,13 @@ class BaseFunction(Datatype):
         rt_result = RuntimeResult()
         
         if len(args) > len(arg_names):
-            return rt_result.failure(ErrorRuntime(
+            return rt_result.failure(NSRuntimeError(
                 f"{len(args) - len(arg_names)} too many arguments passed into '{self.name}'",
                 self.pos_start, self.pos_end, self.context
             ))
             
         elif len(args) < len(arg_names):
-            return rt_result.failure(ErrorRuntime(
+            return rt_result.failure(NSRuntimeError(
                 f"{len(arg_names) - len(args)} too few arguments passed into '{self.name}'",
                 self.pos_start, self.pos_end, self.context
             ))

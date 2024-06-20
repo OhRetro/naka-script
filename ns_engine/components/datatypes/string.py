@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .number import Number
-from ..error import ErrorRuntime
+from ..errors import NSRuntimeError
 
 @dataclass(slots=True)
 class String(Datatype):
@@ -24,12 +24,12 @@ class String(Datatype):
             try:
                 return self.new(self.value[other.value])
             except IndexError:
-                return None, ErrorRuntime(
+                return None, NSRuntimeError(
                     "Element at index doesn't exist, Out of bounds",
                     other.pos_start, other.pos_end, self.context
                 )
         else:
-            return None, ErrorRuntime(
+            return None, NSRuntimeError(
                 "'String' datatype can be only indexed by 'Number: int'",
                 other.pos_start, other.pos_end, self.context
             )

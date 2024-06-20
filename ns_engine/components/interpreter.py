@@ -10,7 +10,7 @@ from .token import Token, TokenType
 from .keyword import Keyword
 from .runtime import RuntimeResult
 from .context import Context
-from .error import ErrorRuntime
+from .errors import NSRuntimeError
 from .datatypes import Datatype, Number, String, List, Dict, BaseFunction, Function
 
 class Interpreter:
@@ -89,7 +89,7 @@ class Interpreter:
             if rt_result.should_return(): return rt_result
             
         if not isinstance(datatype_to_call, BaseFunction):
-            return rt_result.failure(ErrorRuntime(
+            return rt_result.failure(NSRuntimeError(
                 f"'{datatype_to_call.__class__.__name__}' datatypes are not callable.",
                 node.pos_start, node.pos_end, context
             ))
@@ -112,7 +112,7 @@ class Interpreter:
         index_datatype = index_datatype.copy().set_pos(node.pos_start, node.pos_end)
 
         if not isinstance(datatype_to_index, (String, List, Dict)):
-            return rt_result.failure(ErrorRuntime(
+            return rt_result.failure(NSRuntimeError(
                 f"'{datatype_to_index.__class__.__name__}' datatypes are not indexable.",
                 node.pos_start, node.pos_end, context
             ))
@@ -143,7 +143,7 @@ class Interpreter:
             accessed_datatype = context.get_symbol(identifier_name)
             
             if not accessed_datatype:
-                return rt_result.failure(ErrorRuntime(
+                return rt_result.failure(NSRuntimeError(
                     f"Variable '{identifier_name}' is not defined.",
                     node.pos_start, node.pos_end, context
                 ))
@@ -163,7 +163,7 @@ class Interpreter:
             main_node = node_or_identifier_to_update.node_to_index
 
             if isinstance(main_node, StringNode):
-                return rt_result.failure(ErrorRuntime(
+                return rt_result.failure(NSRuntimeError(
                     f"'String' datatypes are immutable.",
                     node.pos_start, node.pos_end, context
                 ))
@@ -177,7 +177,7 @@ class Interpreter:
             index_datatype = index_datatype.copy().set_pos(node.pos_start, node.pos_end)
             
             if isinstance(main_datatype, String):
-                return rt_result.failure(ErrorRuntime(
+                return rt_result.failure(NSRuntimeError(
                     f"'String' datatypes are immutable.",
                     node.pos_start, node.pos_end, context
                 ))
@@ -212,18 +212,18 @@ class Interpreter:
             symbols_dict_type, _ = symbol_table.exists_where(identifier_name)
             
             if not symbol_table.exists(identifier_name):
-                return rt_result.failure(ErrorRuntime(
+                return rt_result.failure(NSRuntimeError(
                     f"Variable '{identifier_name}' was not defined.",
                     node.pos_start, node.pos_end, context
                 ))
             else:
                 if symbols_dict_type == "immutable_symbols":
-                    return rt_result.failure(ErrorRuntime(
+                    return rt_result.failure(NSRuntimeError(
                         f"'{identifier_name}' is a constant variable.",
                         node.pos_start, node.pos_end, context
                     ))
                 if symbols_dict_type == "persistent_symbols":
-                    return rt_result.failure(ErrorRuntime(
+                    return rt_result.failure(NSRuntimeError(
                         f"'{identifier_name}' is a persistent and builtin variable.",
                         node.pos_start, node.pos_end, context
                     ))
@@ -243,7 +243,7 @@ class Interpreter:
         symbol_table = context.symbol_table
         
         if symbol_table.exists(identifier_name):
-            return rt_result.failure(ErrorRuntime(
+            return rt_result.failure(NSRuntimeError(
                 f"Variable '{identifier_name}' is already defined.",
                 node.pos_start, node.pos_end, context
             ))
@@ -267,13 +267,13 @@ class Interpreter:
         symbols_dict_type, _ = symbol_table.exists_where(identifier_name)
         
         if not symbol_table.exists(identifier_name):
-            return rt_result.failure(ErrorRuntime(
+            return rt_result.failure(NSRuntimeError(
                 f"Variable '{identifier_name}' is already not defined.",
                 node.pos_start, node.pos_end, context
             ))
         else:
             if symbols_dict_type == "persistent_symbols":
-                return rt_result.failure(ErrorRuntime(
+                return rt_result.failure(NSRuntimeError(
                     f"'{identifier_name}' is a persistent and builtin variable and cannot be deleted.",
                     node.pos_start, node.pos_end, context
                 ))

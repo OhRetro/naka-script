@@ -5,10 +5,10 @@ from .components.parser import Parser
 from .components.interpreter import Interpreter
 from .components.token import Token, TokenType
 from .components.context import Context
-from .components.error import Error
+from .components.errors import Error
 from .components.node import Node
 from .components.datatypes import List
-from .components.datatypes.utils import setup_starter_symbol_table
+from .components.symbol_table import setup_starter_symbol_table
 from .utils.misc import temp_cwd
 
 shell_symbol_table = setup_starter_symbol_table()

@@ -23,11 +23,9 @@ def convert_to_datatype(value: Any) -> Datatype:
     elif isinstance(value, str):
         return String(value)
     elif isinstance(value, type_List):
-        new_value: list[Datatype] = []
-
-        for v in value:
-            new_value.append(convert_to_datatype(v) if not isinstance(v, Datatype) else v)
-            
+        new_value: list[Datatype] = [
+            convert_to_datatype(v) if not isinstance(v, Datatype) else v for v in value
+        ]
         return List(new_value)
     elif isinstance(value, type_Dict):
         new_value: dict[str, Datatype] = {}

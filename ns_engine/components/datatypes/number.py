@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from .datatype import Datatype, DATATYPE_OR_ERROR
-from ..error import ErrorRuntime
+from ..errors import NSRuntimeError
 
 @dataclass(slots=True)
 class Number(Datatype):
@@ -27,7 +27,7 @@ class Number(Datatype):
                 result = OPERATIONS[operation](self.value, other.value)
                 return self.new(result)
             except ZeroDivisionError:
-                return None, ErrorRuntime(
+                return None, NSRuntimeError(
                     "Division by zero",
                     other.pos_start, other.pos_end, self.context
                 )

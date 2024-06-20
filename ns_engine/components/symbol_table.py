@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Self, Tuple, Optional
 from gc import collect as gc_collect
-from .datatypes import Datatype, convert_to_datatype
+from .datatypes import Datatype, Number, convert_to_datatype
+from .datatypes.builtinfunction import BuiltInFunction, built_in_functions
 
 SYMBOLS_DICT = dict[str, Datatype]
 
@@ -61,3 +62,21 @@ class SymbolTable:
     
     def clear(self, type: str):
         self._get_symbols_dict(type).clear()
+
+def setup_starter_symbol_table(**extras) -> SymbolTable:
+    symbol_table = SymbolTable()
+    
+    for args in [
+        ("null", Number.null),
+        ("true", Number.true),
+        ("false", Number.false)
+    ]:
+        symbol_table.set(*args, "symbols")
+    
+    for k, v in built_in_functions.items():
+        symbol_table.set(k, BuiltInFunction(k, *v), "symbols")
+    
+    for k, v in extras.items():
+        symbol_table.set(k, convert_to_datatype(v), "symbols")
+    
+    return symbol_table

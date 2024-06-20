@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .number import Number
 from .string import String
-from ..error import ErrorRuntime
+from ..errors import NSRuntimeError
 
 @dataclass(slots=True)
 class Dict(Datatype):
@@ -27,12 +27,12 @@ class Dict(Datatype):
             try:
                 return self.value[other.value], None
             except KeyError:
-                return None, ErrorRuntime(
+                return None, NSRuntimeError(
                     f"Key '{other.value}' doesn't exist",
                     other.pos_start, other.pos_end, self.context
                 )
         else:
-            return None, ErrorRuntime(
+            return None, NSRuntimeError(
                 "'Dict' datatype can be only indexed by 'String'",
                 other.pos_start, other.pos_end, self.context
             )
@@ -44,7 +44,7 @@ class Dict(Datatype):
             self.value[other.value] = new
             return None, None
         else:
-            return None, ErrorRuntime(
+            return None, NSRuntimeError(
                 "'Dict' datatype can be only indexed by 'String'",
                 other.pos_start, other.pos_end, self.context
             )
@@ -57,7 +57,7 @@ class Dict(Datatype):
                 del self.value[other.value]
                 return None, None
             except KeyError:
-                None, ErrorRuntime(
+                None, NSRuntimeError(
                     f"Key '{other.value}' doesn't exist",
                     other.pos_start, other.pos_end, self.context
                 )

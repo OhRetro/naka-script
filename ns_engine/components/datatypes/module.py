@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TypeVar, TYPE_CHECKING
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .number import Number
-from ..error import ErrorRuntime
+from ..errors import NSRuntimeError
 
 if TYPE_CHECKING:
     from ..context import Context
@@ -20,7 +20,7 @@ class Module(Datatype):
         datatype_attribute = self.value.get_symbol(attribute_name)
         
         if not datatype_attribute:
-            return None, ErrorRuntime(
+            return None, NSRuntimeError(
                 f"Attribute '{attribute_name}' doesn't exist",
                 self.pos_start, self.pos_end, self.context
             )
@@ -32,18 +32,18 @@ class Module(Datatype):
         symbols_dict_type, _ = symbol_table.exists_where(attribute_name)
         
         if not symbol_table.exists(attribute_name):
-            return None, ErrorRuntime(
+            return None, NSRuntimeError(
                 f"Variable '{attribute_name}' was not defined.",
                 self.pos_start, self.pos_end, self.context
             )
         else:
             if symbols_dict_type == "immutable_symbols":
-                return None, ErrorRuntime(
+                return None, NSRuntimeError(
                     f"'{attribute_name}' is a constant variable.",
                     self.pos_start, self.pos_end, self.context
                 )
             if symbols_dict_type == "persistent_symbols":
-                return None, ErrorRuntime(
+                return None, NSRuntimeError(
                     f"'{attribute_name}' is a persistent and builtin variable.",
                     self.pos_start, self.pos_end, self.context
                 )

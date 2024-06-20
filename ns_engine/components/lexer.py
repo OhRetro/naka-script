@@ -2,7 +2,7 @@ from typing import Tuple, List, Optional
 from string import ascii_letters as LETTERS
 from .token import TokenType, Token
 from .keyword import Keyword
-from .error import Error, ErrorIllegalCharacter, ErrorExpectedCharacter
+from .errors import Error, NSIllegalCharacterError, NSExpectedCharacterError
 from .position import Position
 
 DIGITS = "0123456789"
@@ -97,7 +97,7 @@ class Lexer:
                 pos_start = self.pos.copy()
                 illegal_char = self.current_char
                 self.advance()
-                return None, ErrorIllegalCharacter(f"'{illegal_char}'", pos_start, self.pos)
+                return None, NSIllegalCharacterError(f"'{illegal_char}'", pos_start, self.pos)
         
         tokens.append(Token(TokenType.EOF, pos_start=self.pos))
         return tokens, None
@@ -121,13 +121,13 @@ class Lexer:
             
             elif self.current_char != char and condition.get("enforced", False):
                 self.advance()
-                return None, ErrorExpectedCharacter(
+                return None, NSExpectedCharacterError(
                     f"'{char}' (after '{full_char}')",
                     pos_start, self.pos
                 )
         
         if not token_type:
-            return None, ErrorExpectedCharacter(
+            return None, NSExpectedCharacterError(
                 f"'{conditions[0].get('char')}'",
                 pos_start, self.pos
             )
@@ -178,7 +178,7 @@ class Lexer:
         
         if self.current_char != '"':
             self.advance()
-            return None, ErrorExpectedCharacter(
+            return None, NSExpectedCharacterError(
                 "'\"'",
                 pos_start, self.pos
             )
