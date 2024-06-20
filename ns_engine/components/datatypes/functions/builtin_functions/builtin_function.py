@@ -1,18 +1,14 @@
 from dataclasses import dataclass
 from typing import Callable
-from types import MethodType
+from types import MethodType, NoneType
 from os import name as os_name, system as os_system
 from os.path import abspath as osp_abspath
 from random import random, randint
-from .datatype import Datatype, DATATYPE_OR_ERROR
-from .function import BaseFunction
-from .number import Number
-from .string import String
-from .list import List
-from .module import Module
-from ..errors import NSRuntimeError
-from ..runtime import RuntimeResult
-from ..context import Context
+from ..base_function import BaseFunction
+from ns_engine.components.datatypes import Datatype, Number, String, List, Module
+from ns_engine.components.errors import NSRuntimeError
+from ns_engine.components.runtime import RuntimeResult
+from ns_engine.components.context import Context
 from ns_engine.utils.misc import get_filedata
 
 @dataclass(slots=True)
@@ -34,7 +30,7 @@ class BuiltInFunction(BaseFunction):
             details, self.pos_start, self.pos_end, context
         ))
 
-    def execute(self, args: list[Datatype]) -> DATATYPE_OR_ERROR:
+    def execute(self, args: list[Datatype]) -> Datatype:
         rt_result = RuntimeResult()
         context = self.generate_new_context()
 
@@ -42,8 +38,10 @@ class BuiltInFunction(BaseFunction):
             raise Exception(f"The logic function '{self.logic_function.__name__}' for '{self.name}' doesn't contain at least 2 arguments")
         
         method = MethodType(self.logic_function, self)
+        
+        arg_names = tuple([self.arg_names]) if not isinstance(self.arg_names, (list, tuple, NoneType)) else self.arg_names
 
-        rt_result.register(self.check_populate_args(self.arg_names or tuple(), args, context))
+        rt_result.register(self.check_populate_args(arg_names or tuple(), args, context))
         if rt_result.should_return():
             return rt_result
 
@@ -71,7 +69,7 @@ def _input_number(self: BuiltInFunction, _):
     except ValueError:
         return None
 
-def _clear(_, __):
+def _clear(*_):
     os_system("cls" if os_name == "nt" else "clear")
 
 def _is_number(self: BuiltInFunction, context: Context):
@@ -90,10 +88,13 @@ def _is_function(self: BuiltInFunction, context: Context):
     is_function = isinstance(context.get_symbol("value"), BaseFunction)
     return self._rt_result_success(Number.true if is_function else Number.false)
 
+def _random(self: BuiltInFunction, _):
+    return self._rt_result_success(Number(random()))
+
 def _random_int(self: BuiltInFunction, context: Context):
     min_ = context.get_symbol("min")
     max_ = context.get_symbol("max")
-    
+
     if (not isinstance(min_, Number) or not isinstance(max_, Number)) or (
         not isinstance(min_.value, int) or not isinstance(max_.value, int)):
         return self._rt_result_failure(
@@ -102,7 +103,7 @@ def _random_int(self: BuiltInFunction, context: Context):
         )
         
     return self._rt_result_success(Number(randint(min_.value, max_.value)))
-    
+
 def _run(self: BuiltInFunction, context: Context):
     from ns_engine.wrapper import interpret 
     
@@ -175,20 +176,21 @@ def _import(self: BuiltInFunction, context: Context):
     return self._rt_result_success(already_imported_module or imported_module)
 
 built_in_functions = {
-    "print": (("value",), _print),
+    "print": ("value", _print),
     "clear": (None, _clear),
-    "run": (("filename",), _run),
-    "import": (("filename",), _import),
+    "run": ("filename", _run),
+    "import": ("filename", _import),
 
-    "toString": (("value",), _to_string),
+    "toString": ("value", _to_string),
 
     "input": (None, _input),
     "inputNumber": (None, _input_number),
 
-    "isNumber": (("value",), _is_number),
-    "isString": (("value",), _is_string),
-    "isList": (("value",), _is_list),
-    "isFunction": (("value",), _is_function),
+    "isNumber": ("value", _is_number),
+    "isString": ("value", _is_string),
+    "isList": ("value", _is_list),
+    "isFunction": ("value", _is_function),
     
+    "random": (None, _random),
     "randomInt": (("min", "max"), _random_int)
 }

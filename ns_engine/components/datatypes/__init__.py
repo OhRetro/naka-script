@@ -2,7 +2,6 @@ from typing import Any, TypeVar, TYPE_CHECKING, List as type_List, Dict as type_
 from types import NoneType
 from .datatype import Datatype
 from .number import Number
-from .function import Function, BaseFunction
 from .string import String
 from .list import List
 from .dict import Dict
@@ -40,7 +39,6 @@ def convert_to_datatype(value: Any) -> Datatype:
 __all__ = [
     "Datatype",
     "Number",
-    "Function", "BaseFunction",
     "String",
     "List",
     "Dict",

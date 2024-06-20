@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Self, Tuple, Optional
 from gc import collect as gc_collect
-from .datatypes import Datatype, Number, convert_to_datatype
-from .datatypes.builtinfunction import BuiltInFunction, built_in_functions
+from .datatypes import Datatype, Number, convert_to_datatype 
+from .datatypes.functions import BuiltInFunction, built_in_functions
 
 SYMBOLS_DICT = dict[str, Datatype]
 

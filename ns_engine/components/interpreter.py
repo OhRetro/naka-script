@@ -11,7 +11,8 @@ from .keyword import Keyword
 from .runtime import RuntimeResult
 from .context import Context
 from .errors import NSRuntimeError
-from .datatypes import Datatype, Number, String, List, Dict, BaseFunction, Function
+from .datatypes import Datatype, Number, String, List, Dict
+from .datatypes.functions import BaseFunction, Function
 
 class Interpreter:
     def visit(self, node: Node, context: Context) -> RuntimeResult:
@@ -248,11 +249,11 @@ class Interpreter:
                 node.pos_start, node.pos_end, context
             ))
         
-        match node.assign_type:
+        # match node.assign_type:
             # case "symbols":
             #     datatype.set_readonly(False)
-            case "immutable_symbols":
-                datatype.set_readonly(True)
+            # case "immutable_symbols":
+            #     datatype.set_readonly(True)
             # case "persistent_symbols":
             #     datatype.set_readonly(True)
             
@@ -449,8 +450,8 @@ class Interpreter:
         # Fun Fact: While making it I forgot to return the runtime result in a function about returning, ironic
         return rt_result.success_return(datatype)
 
-    def visit_ContinueNode(self, _, __):
+    def visit_ContinueNode(self, *_):
         return RuntimeResult().success_continue()
 
-    def visit_BreakNode(self, _, __):
+    def visit_BreakNode(self, *_):
         return RuntimeResult().success_break()
