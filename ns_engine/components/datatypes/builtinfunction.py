@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Callable
 from types import MethodType
 from os import name as os_name, system as os_system
+from os.path import abspath as osp_abspath
 from random import random, randint
 from .datatype import Datatype, DATATYPE_OR_ERROR
 from .function import BaseFunction
@@ -23,7 +24,7 @@ class BuiltInFunction(BaseFunction):
         self._values_to_copy = ("name", "arg_names", "logic_function")
 
     def __repr__(self) -> str:
-        return f"<built-in function {self.name}>"
+        return f"<built-in function \"{self.name}\">"
 
     def _rt_result_success(self, datatype: Datatype) -> RuntimeResult:
         return RuntimeResult().success(datatype)
@@ -123,7 +124,7 @@ def _run(self: BuiltInFunction, context: Context):
             context
         )
     
-    _, error, _ = interpret(filename, script_code)
+    _, error, _ = interpret(filename, script_code) # , ctx_name="__submain__")
     
     if error:
         return self._rt_result_failure(
@@ -132,7 +133,7 @@ def _run(self: BuiltInFunction, context: Context):
         )
 
 def _import(self: BuiltInFunction, context: Context):
-    from ns_engine.wrapper import interpret 
+    from ns_engine.wrapper import interpret, imported_modules
 
     filename = context.get_symbol("filename")
     
@@ -143,24 +144,35 @@ def _import(self: BuiltInFunction, context: Context):
         )
     
     filename = filename.value
-    try:
-        script_code = get_filedata(filename)
-            
-    except FileNotFoundError as e:
-        return self._rt_result_failure(
-            f"Failed to load module \"{filename}\": {e}",
-            context
-        )
-        
-    _, error, context = interpret(filename, script_code)
+    abspath_filename = osp_abspath(filename)
     
-    if error:
-        return self._rt_result_failure(
-            f"Failed to finish importing \"{filename}\":\n{error.as_string()}",
-            context
-        )
-
-    return self._rt_result_success(Module(context))
+    already_imported_module = imported_modules.get(abspath_filename, False)
+    
+    if not already_imported_module:
+        try:
+            script_code = get_filedata(filename)
+                
+        except FileNotFoundError as e:
+            return self._rt_result_failure(
+                f"Failed to load module \"{filename}\": {e}",
+                context
+            )
+            
+        filenameext = abspath_filename.replace("\\", "/").split("/")[-1]
+            
+        _, error, context = interpret(filename, script_code, 
+                                      ctx_name="__module__", ctx_name_post=filenameext)
+        
+        if error:
+            return self._rt_result_failure(
+                f"Failed to finish importing \"{filename}\":\n{error.as_string()}",
+                context
+            )
+            
+        imported_module = Module(context)
+        imported_modules[abspath_filename] = imported_module
+        
+    return self._rt_result_success(already_imported_module or imported_module)
 
 built_in_functions = {
     "print": (("value",), _print),

@@ -1,9 +1,0 @@
-
-# if rt__name__ == "__running__" then
-#     print("i'm being used in a run()")
-
-# elseif rt__name__ == "__import__" then
-#     print("i'm being imported")
-
-# end
-# 1+1

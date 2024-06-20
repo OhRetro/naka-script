@@ -12,6 +12,7 @@ from .components.datatypes.utils import setup_starter_symbol_table
 from .utils.misc import temp_cwd
 
 shell_symbol_table = setup_starter_symbol_table()
+imported_modules = {}
 
 def is_valid_tokens(tokens: list[Token]) -> bool:
     for token in tokens:
@@ -34,11 +35,11 @@ def generate_ast(src_filename: str, src_data: str)-> Tuple[Optional[Node], Optio
     ast = parser.parse()
     return ast.node, ast.error
 
-def interpret(src_filename: str, src_data: str) -> Tuple[Optional[List], Optional[Error], Optional[Context]]:
+def interpret(src_filename: str, src_data: str, **kwargs) -> Tuple[Optional[List], Optional[Error], Optional[Context]]:
     abs_filepath = osp_abspath(src_filename)
     dir_filepath = osp_dirname(abs_filepath)
     
-    with temp_cwd(dir_filepath):
+    with temp_cwd(kwargs.get("cwd", dir_filepath)):
         node, error = generate_ast(src_filename, src_data)
         if error: 
             return None, error, None
@@ -46,9 +47,13 @@ def interpret(src_filename: str, src_data: str) -> Tuple[Optional[List], Optiona
             return None, None, None
         
         interpreter = Interpreter()
-        context = Context("__main__")
+        context = Context(kwargs.get("ctx_name", "__main__"))
         context.symbol_table = setup_starter_symbol_table() if src_filename != "<shell>" else shell_symbol_table
         result = interpreter.visit(node, context)
+        
+        # hey look, it's the walrus operator
+        if cnp := kwargs.get("ctx_name_post", False):
+            context.name = cnp
         
         return result.value, result.error, context
 

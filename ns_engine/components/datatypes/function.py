@@ -65,7 +65,7 @@ class Function(BaseFunction):
         self._values_to_copy = ("name", "body_node", "arg_names", "should_auto_return")
 
     def __repr__(self) -> str:
-        return f"<function {self.name}>"
+        return f"<function \"{self.name}\">"
     
     def execute(self, args: list[Datatype]) -> DATATYPE_OR_ERROR:
         from ..interpreter import Interpreter

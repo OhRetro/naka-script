@@ -14,7 +14,7 @@ class Module(Datatype):
     value: Context
 
     def __repr__(self) -> str:
-        return f"<module {self.value.name}>"
+        return f"<module \"{self.value.name}\">"
     
     def access_at(self, attribute_name: str) -> DATATYPE_OR_ERROR:
         datatype_attribute = self.value.get_symbol(attribute_name)

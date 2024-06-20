@@ -1,0 +1,3 @@
+var t_ = import("./t_.ns")
+
+print(t_.a)

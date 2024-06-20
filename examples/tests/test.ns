@@ -192,4 +192,18 @@ list - 1
 # delvar list[1]
 print(list)
 
+const constDict = {test: "1"}
+
+#constDict["test"] = "hey"
+
+#print(constDict["test"])
+print(constDict)
+
+var dict_ = constDict 
+# but the dict object still in a read-only state
+
+#dict_["test"] = "hey"
+print(dict_)
+print(constDict) # test
+
 # Test

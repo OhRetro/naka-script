@@ -12,10 +12,10 @@ class Dict(Datatype):
         display = ""
 
         for index, (k, v) in enumerate(self.value.items()):
-            display += f"{k}: {repr(v)}" + (", " if index < len(self.value) - 1 and len(self.value) > 1 else "")
+            display += f"\"{k}\": {repr(v)}" + (", " if index < len(self.value) - 1 and len(self.value) > 1 else "")
         
         return f"{{{display}}}"
-    
+
     def _number(self, value: int | float) -> DATATYPE_OR_ERROR:
         return Number(value).set_context(self.context), None
 
@@ -38,6 +38,8 @@ class Dict(Datatype):
             )
     
     def update_index_at(self, other: Datatype, new: Datatype) -> DATATYPE_OR_ERROR:
+        if on_readonly := self._readonly_state(other): return on_readonly
+        
         if isinstance(other, String):
             self.value[other.value] = new
             return None, None
@@ -48,6 +50,8 @@ class Dict(Datatype):
             )
     
     def subtracted_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        if on_readonly := self._readonly_state(other): return on_readonly
+            
         if isinstance(other, String):
             try:
                 del self.value[other.value]
@@ -61,6 +65,8 @@ class Dict(Datatype):
             return self._illegal_operation(other)
     
     def multiplied_by(self, other: Datatype) -> DATATYPE_OR_ERROR:
+        if on_readonly := self._readonly_state(other): return on_readonly
+            
         if isinstance(other, Dict):
             self.value.update(other.value)
             return None, None

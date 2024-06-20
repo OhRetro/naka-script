@@ -247,6 +247,14 @@ class Interpreter:
                 f"Variable '{identifier_name}' is already defined.",
                 node.pos_start, node.pos_end, context
             ))
+        
+        match node.assign_type:
+            # case "symbols":
+            #     datatype.set_readonly(False)
+            case "immutable_symbols":
+                datatype.set_readonly(True)
+            # case "persistent_symbols":
+            #     datatype.set_readonly(True)
             
         symbol_table.set(identifier_name, datatype, node.assign_type)
         return rt_result.success(datatype)

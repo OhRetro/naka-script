@@ -1,5 +1,17 @@
-const math = import("math.ns")
+const math = import("./modules/math.ns")
+const module = import("./modules/module_name.ns")
 
 print(math.pi)
 print(math.fibonacci(20))
 print(math.factorial(5))
+
+print("\nmodule.variable = " + module.variable)
+print("Changing module.variable")
+module.variable = "hello, i've being changed"
+print("module.variable = " + module.variable)
+
+const module_ = import("./modules/module_name.ns")
+print("module_.variable = " + module_.variable + "\n")
+
+print("Once a module has been imported, the module object will be cached")
+print("so if you try to import the same module file, you will get the same module object")
