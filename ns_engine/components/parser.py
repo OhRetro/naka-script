@@ -77,19 +77,6 @@ class Parser:
     def update_current_token(self):
         if self.token_index >= 0 and self.token_index < len(self.tokens):
             self.current_token = self.tokens[self.token_index]
-               
-    def parse(self) -> ParseResult:
-        p_result = self.statements()
-        
-        if not p_result.error and not self.current_token.is_type_of(TokenType.EOF):
-            return p_result.failure(NSInvalidSyntaxError(
-                expected(TokenType.PLUS, TokenType.MINUS, TokenType.MULT, TokenType.DIV, TokenType.POWER, TokenType.MOD,
-                         TokenType.ISEQUALS, TokenType.NE, TokenType.LT, TokenType.GT, TokenType.LTE, TokenType.GTE,
-                         Keyword.AND, Keyword.OR),
-                self.current_token.pos_start, self.current_token.pos_end
-            ))
-        
-        return p_result
     
     def current_token_is_semicolon_or_newline(self) -> bool:
         return self.current_token.is_type_of(TokenType.SEMICOLON, TokenType.NEWLINE)
@@ -127,24 +114,36 @@ class Parser:
             print(f"[{self.current_token}]")
             return
             
-        left_neighbors = ""
-        right_neighbors = ""
+        left_neighbors, right_neighbors = "", ""
         
         # Get left side neighbors
         for i in range(1, number_of_neighbors + 1):
             if len(self.tokens) <= self.token_index - i:
                 break
             
-            left_neighbors = f"{self.tokens[self.token_index - i]} < {left_neighbors}"
+            left_neighbors = f" {self.tokens[self.token_index - i]} >{left_neighbors}"
         
         # Get right side neighbors
         for i in range(1, number_of_neighbors + 1):
-            if len(self.tokens) <= self.token_index + i:
+            if self.token_index + i >= len(self.tokens):
                 break
             
-            right_neighbors = f"{right_neighbors} > {self.tokens[self.token_index + i]}"
+            right_neighbors = f"{right_neighbors}< {self.tokens[self.token_index + i]} "
+
+        print(f"[{left_neighbors}>> {self.current_token} <<{right_neighbors}]")
         
-        print(f"[{left_neighbors} << {self.current_token} >> {right_neighbors}]")
+    def parse(self) -> ParseResult:
+        p_result = self.statements()
+        
+        if not p_result.error and not self.current_token.is_type_of(TokenType.EOF):
+            return p_result.failure(NSInvalidSyntaxError(
+                expected(TokenType.PLUS, TokenType.MINUS, TokenType.MULT, TokenType.DIV, TokenType.POWER, TokenType.MOD,
+                         TokenType.ISEQUALS, TokenType.NE, TokenType.LT, TokenType.GT, TokenType.LTE, TokenType.GTE,
+                         Keyword.AND, Keyword.OR),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+        
+        return p_result
 
     #!================================================================
 
@@ -436,7 +435,7 @@ class Parser:
                 expected(TokenType.COMMA, TokenType.RSQUARE),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
-        
+
         self.advance_register_advancement(p_result, False)
         return p_result.success(ListNode(pos_start, self.current_token.pos_end.copy(), element_nodes))
     
