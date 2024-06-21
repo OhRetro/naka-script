@@ -78,25 +78,26 @@ class Parser:
         if self.token_index >= 0 and self.token_index < len(self.tokens):
             self.current_token = self.tokens[self.token_index]
     
-    def current_token_is_semicolon_or_newline(self) -> bool:
-        return self.current_token.is_type_of(TokenType.SEMICOLON, TokenType.NEWLINE)
+    def current_token_is_semicolon_or_newline(self, newline_exclusive: bool = False) -> bool:
+        args = (TokenType.NEWLINE, ) if newline_exclusive else (TokenType.SEMICOLON, TokenType.NEWLINE)
+        return self.current_token.is_type_of(*args)
     
-    def advance_if_token_is_semicolon_or_newline(self, parse_result: ParseResult) -> int:
+    def advance_if_token_is_semicolon_or_newline(self, parse_result: ParseResult, newline_exclusive: bool = False) -> int:
         semicolon_newline_count = 0
-        while self.current_token_is_semicolon_or_newline():
+        while self.current_token_is_semicolon_or_newline(newline_exclusive):
             parse_result.register_advancement()
             self.advance()
             semicolon_newline_count += 1
             
         return semicolon_newline_count
     
-    def advance_register_advancement(self, parse_result: ParseResult, skip_semicolon_newline: bool):
+    def advance_register_advancement(self, parse_result: ParseResult, skip_semicolon_newline: bool, newline_exclusive: bool = False):
         parse_result.register_advancement()
         self.advance()
         advance_count = 1
         
         if skip_semicolon_newline: 
-            advance_count += self.advance_if_token_is_semicolon_or_newline(parse_result)
+            advance_count += self.advance_if_token_is_semicolon_or_newline(parse_result, newline_exclusive)
             
         return advance_count
     
@@ -146,6 +147,298 @@ class Parser:
         return p_result
 
     #!================================================================
+
+    def statements(self):
+        p_result = ParseResult()
+        statements: list[Node] = []
+        pos_start = self.current_token.pos_start.copy()
+        
+        self.advance_if_token_is_semicolon_or_newline(p_result)
+            
+        statement: Node = p_result.register(self.statement())
+        if p_result.error: return p_result
+        statements.append(statement)
+        
+        more_statements = True
+        
+        USE_EXPERIMENTAL_MODEL = False
+        
+        while True:
+            newline_count = self.advance_if_token_is_semicolon_or_newline(p_result, True)
+            if not newline_count:
+                more_statements = False
+            if not more_statements: break
+            
+            if USE_EXPERIMENTAL_MODEL:
+                statement: Node = p_result.register(self.statement())
+                if p_result.error: return p_result
+                
+            else:
+                statement: Node = self.try_register_to_reverse(p_result, self.statement())
+                if not statement:
+                    more_statements = False
+                    continue
+                   
+            statements.append(statement)
+            
+        return p_result.success(ListNode(
+            pos_start, self.current_token.pos_end.copy(),
+            statements
+        ))
+
+    def statement(self) -> ParseResult:
+        p_result = ParseResult()
+        pos_start = self.current_token.pos_start.copy()
+        
+        if self.current_token.is_keyword_of(Keyword.RETURN):
+            self.advance_register_advancement(p_result, False)
+            
+            expr: Node = self.try_register_to_reverse(p_result, self.expr())
+            
+            return p_result.success(ReturnNode(
+                pos_start, self.current_token.pos_end.copy(),
+                expr
+            ))
+
+        elif self.current_token.is_keyword_of(Keyword.CONTINUE):
+            self.advance_register_advancement(p_result, False)
+            return p_result.success(ContinueNode(
+                pos_start, self.current_token.pos_end.copy()
+            ))
+            
+        elif self.current_token.is_keyword_of(Keyword.BREAK):
+            self.advance_register_advancement(p_result, False)
+            return p_result.success(BreakNode(
+                pos_start, self.current_token.pos_end.copy()
+            ))
+            
+        expr = p_result.register(self.expr())
+        if p_result.error:
+            return p_result.failure(NSInvalidSyntaxError(
+                expected(Keyword.RETURN, Keyword.CONTINUE, Keyword.BREAK, Keyword.SETVAR, Keyword.DELETEVAR,
+                         Keyword.NOT, Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION,
+                         TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE
+                         ),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+            
+        return p_result.success(expr)
+
+    def expr(self) -> ParseResult:
+        p_result = ParseResult()
+        
+        if self.current_token.is_keyword_of(Keyword.SETVAR, Keyword.SETIMMUTABLEVAR):
+            set_var_keyword = self.current_token.value
+            self.advance_register_advancement(p_result, False)
+            
+            if self.current_token.is_type_of(TokenType.KEYWORD):
+                return p_result.failure(NSInvalidSyntaxError(
+                    f"Cannot assign values to reserved keywords such as '{self.current_token.value.value}'",
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+                        
+            elif not self.current_token.is_type_of(TokenType.IDENTIFIER):
+                return p_result.failure(NSInvalidSyntaxError(
+                    expected(TokenType.IDENTIFIER),
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+                
+            var_name_token = self.current_token
+            self.advance_register_advancement(p_result, False)
+
+            if not self.current_token.is_type_of(TokenType.EQUALS):
+                return p_result.failure(NSInvalidSyntaxError(
+                    expected(TokenType.EQUALS),
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+                
+            self.advance_register_advancement(p_result, False)
+            expr = p_result.register(self.expr())
+            
+            if p_result.error: return p_result
+            
+            symbols_dict_type = {
+                Keyword.SETVAR: "symbols",
+                Keyword.SETIMMUTABLEVAR: "immutable_symbols"
+            }
+            
+            return p_result.success(VarAssignNode(var_name_token, expr, symbols_dict_type.get(set_var_keyword)))
+        
+        elif self.current_token.is_keyword_of(Keyword.DELETEVAR):
+            self.advance_register_advancement(p_result, False)
+            
+            if not self.current_token.is_type_of(TokenType.IDENTIFIER):
+                return p_result.failure(NSInvalidSyntaxError(
+                    expected(TokenType.IDENTIFIER),
+                    self.current_token.pos_start, self.current_token.pos_end
+                ))
+                
+            var_name_token = self.current_token
+            self.advance_register_advancement(p_result, False)
+            
+            return p_result.success(VarDeleteNode(var_name_token))
+        
+        node = p_result.register(self.bin_op((Keyword.AND, Keyword.OR), self.comp_expr))
+        
+        if p_result.error:
+            return p_result.failure(NSInvalidSyntaxError(
+                expected(Keyword.SETVAR, Keyword.DELETEVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE, Keyword.NOT,
+                         Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+        
+        return p_result.success(node)
+
+    def comp_expr(self) -> ParseResult:
+        p_result = ParseResult()
+        
+        if self.current_token.is_keyword_of(Keyword.NOT):
+            operation_token = self.current_token
+            self.advance_register_advancement(p_result, False)
+            
+            node = p_result.register(self.comp_expr())
+            if p_result.error: return p_result
+            return p_result.success(UnaryOpNode(operation_token, node))
+        
+        node = p_result.register(self.bin_op(
+            (TokenType.ISEQUALS, TokenType.NE,
+             TokenType.LT, TokenType.GT, 
+             TokenType.LTE, TokenType.GTE), 
+            self.arith_expr))
+
+        if p_result.error:
+            return p_result.failure(NSInvalidSyntaxError(
+                expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE,
+                         Keyword.NOT),
+                self.current_token.pos_start, self.current_token.pos_end
+            ))
+        
+        return p_result.success(node)
+
+    def arith_expr(self) -> ParseResult:
+        return self.bin_op((TokenType.PLUS, TokenType.MINUS), self.term)
+
+    def term(self) -> ParseResult:
+        return self.bin_op((TokenType.MULT, TokenType.DIV, TokenType.MOD), self.factor)
+
+    def factor(self) -> ParseResult:
+        p_result = ParseResult()
+        token = self.current_token
+        
+        if token.type in (TokenType.PLUS, TokenType.MINUS):
+            self.advance_register_advancement(p_result, False)
+            factor = p_result.register(self.factor())
+            
+            if p_result.error: return p_result
+            
+            return p_result.success(UnaryOpNode(token, factor))
+        
+        return self.power()
+    
+    def power(self) -> ParseResult:
+        return self.bin_op((TokenType.POWER, ), self.call, self.factor)
+    
+    def call(self) -> ParseResult:
+        p_result = ParseResult()
+        
+        atom: Node = p_result.register(self.atom())
+        if p_result.error: return p_result
+
+        while True:
+            if self.current_token.is_type_of(TokenType.LPAREN):
+                self.advance_register_advancement(p_result, True)
+                
+                arg_nodes: list[Node] = []
+
+                if self.current_token.is_type_of(TokenType.RPAREN):
+                    self.advance_register_advancement(p_result, False)
+                    
+                else:
+                    def get_arguments():
+                        arg_nodes.append(p_result.register(self.expr()))
+                        if p_result.error:
+                            return p_result.failure(
+                                NSInvalidSyntaxError(
+                                    expected(TokenType.RPAREN, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
+                                             TokenType.LPAREN, TokenType.LSQUARE,
+                                             Keyword.SETVAR, Keyword.NOT, Keyword.IF,
+                                              Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
+                                    self.current_token.pos_start, self.current_token.pos_end
+                                )
+                            )
+                            
+                        self.advance_if_token_is_semicolon_or_newline(p_result)
+                    
+                    if get_arguments(): return p_result
+                    while self.current_token.is_type_of(TokenType.COMMA):
+                        self.advance_register_advancement(p_result, True)
+                        if get_arguments(): return p_result
+
+                    if not self.current_token.is_type_of(TokenType.RPAREN):
+                        return p_result.failure(
+                            NSInvalidSyntaxError(
+                                expected(TokenType.COMMA, TokenType.RPAREN),
+                                self.current_token.pos_start, self.current_token.pos_end
+                            )
+                        )
+
+                    self.advance_register_advancement(p_result, False)
+
+                atom = CallNode(atom, arg_nodes)
+
+            elif self.current_token.is_type_of(TokenType.LSQUARE):
+                self.advance_register_advancement(p_result, False)
+                
+                index_node: Node = p_result.register(self.expr())
+                if p_result.error: return p_result
+
+                if not self.current_token.is_type_of(TokenType.RSQUARE):
+                    return p_result.failure(
+                        NSInvalidSyntaxError(
+                            expected(TokenType.RSQUARE),
+                            self.current_token.pos_start, self.current_token.pos_end
+                        )
+                    )
+
+                self.advance_register_advancement(p_result, False)
+                atom = IndexNode(atom, index_node)
+                
+                if self.current_token.is_type_of(TokenType.EQUALS):
+                    self.advance_register_advancement(p_result, False)
+                    expr = p_result.register(self.expr())
+                    
+                    if p_result.error: return p_result
+                    
+                    atom = UpdateNode(atom, expr)
+                    
+            elif self.current_token.is_type_of(TokenType.DOT):
+                self.advance_register_advancement(p_result, False)
+                
+                if not self.current_token.is_type_of(TokenType.IDENTIFIER):
+                    return p_result.failure(
+                        NSInvalidSyntaxError(
+                            expected(TokenType.IDENTIFIER),
+                            self.current_token.pos_start, self.current_token.pos_end
+                        )
+                    )
+                    
+                attribute_name_token = self.current_token
+
+                self.advance_register_advancement(p_result, False)
+                atom = AccessNode(attribute_name_token, atom)
+                
+                if self.current_token.is_type_of(TokenType.EQUALS):
+                    self.advance_register_advancement(p_result, False)
+                    expr = p_result.register(self.expr())
+                    
+                    if p_result.error: return p_result
+                    
+                    atom = UpdateNode(atom, expr)
+                
+            else:
+                break
+
+        return p_result.success(atom)
 
     def atom(self) -> ParseResult:
         p_result = ParseResult()
@@ -228,157 +521,6 @@ class Parser:
                      Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION),
             token.pos_start, token.pos_end
         ))
-
-    def call(self) -> ParseResult:
-        p_result = ParseResult()
-        
-        atom: Node = p_result.register(self.atom())
-        if p_result.error: return p_result
-
-        while True:
-            if self.current_token.is_type_of(TokenType.LPAREN):
-                self.advance_register_advancement(p_result, True)
-                
-                arg_nodes: list[Node] = []
-
-                if self.current_token.is_type_of(TokenType.RPAREN):
-                    self.advance_register_advancement(p_result, False)
-                    
-                else:
-                    def get_arguments():
-                        arg_nodes.append(p_result.register(self.expr()))
-                        if p_result.error:
-                            return p_result.failure(
-                                NSInvalidSyntaxError(
-                                    expected(TokenType.RPAREN, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, 
-                                             TokenType.LPAREN, TokenType.LSQUARE,
-                                             Keyword.SETVAR, Keyword.NOT, Keyword.IF,
-                                             Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
-                                    self.current_token.pos_start, self.current_token.pos_end
-                                )
-                            )
-                            
-                        self.advance_if_token_is_semicolon_or_newline(p_result)
-                    
-                    if get_arguments(): return p_result
-                    while self.current_token.is_type_of(TokenType.COMMA):
-                        self.advance_register_advancement(p_result, True)
-                        if get_arguments(): return p_result
-
-                    if not self.current_token.is_type_of(TokenType.RPAREN):
-                        return p_result.failure(
-                            NSInvalidSyntaxError(
-                                expected(TokenType.COMMA, TokenType.RPAREN),
-                                self.current_token.pos_start, self.current_token.pos_end
-                            )
-                        )
-
-                    self.advance_register_advancement(p_result, False)
-
-                atom = CallNode(atom, arg_nodes)
-
-            elif self.current_token.is_type_of(TokenType.LSQUARE):
-                self.advance_register_advancement(p_result, False)
-                
-                index_node: Node = p_result.register(self.expr())
-                if p_result.error: return p_result
-
-                if not self.current_token.is_type_of(TokenType.RSQUARE):
-                    return p_result.failure(
-                        NSInvalidSyntaxError(
-                            expected(TokenType.RSQUARE),
-                            self.current_token.pos_start, self.current_token.pos_end
-                        )
-                    )
-
-                self.advance_register_advancement(p_result, False)
-                atom = IndexNode(atom, index_node)
-                
-                if self.current_token.is_type_of(TokenType.EQUALS):
-                    self.advance_register_advancement(p_result, False)
-                    expr = p_result.register(self.expr())
-                    
-                    if p_result.error: return p_result
-                    
-                    atom = UpdateNode(atom, expr)
-                    
-            elif self.current_token.is_type_of(TokenType.DOT):
-                self.advance_register_advancement(p_result, False)
-                
-                if not self.current_token.is_type_of(TokenType.IDENTIFIER):
-                    return p_result.failure(
-                        NSInvalidSyntaxError(
-                            expected(TokenType.IDENTIFIER),
-                            self.current_token.pos_start, self.current_token.pos_end
-                        )
-                    )
-                    
-                attribute_name_token = self.current_token
-
-                self.advance_register_advancement(p_result, False)
-                atom = AccessNode(attribute_name_token, atom)
-                
-                if self.current_token.is_type_of(TokenType.EQUALS):
-                    self.advance_register_advancement(p_result, False)
-                    expr = p_result.register(self.expr())
-                    
-                    if p_result.error: return p_result
-                    
-                    atom = UpdateNode(atom, expr)
-                
-            else:
-                break
-
-        return p_result.success(atom)
-
-    def power(self) -> ParseResult:
-        return self.bin_op((TokenType.POWER, ), self.call, self.factor)
-    
-    def factor(self) -> ParseResult:
-        p_result = ParseResult()
-        token = self.current_token
-        
-        if token.type in (TokenType.PLUS, TokenType.MINUS):
-            self.advance_register_advancement(p_result, False)
-            factor = p_result.register(self.factor())
-            
-            if p_result.error: return p_result
-            
-            return p_result.success(UnaryOpNode(token, factor))
-        
-        return self.power()
-    
-    def term(self) -> ParseResult:
-        return self.bin_op((TokenType.MULT, TokenType.DIV, TokenType.MOD), self.factor)
-
-    def arith_expr(self) -> ParseResult:
-        return self.bin_op((TokenType.PLUS, TokenType.MINUS), self.term)
-        
-    def comp_expr(self) -> ParseResult:
-        p_result = ParseResult()
-        
-        if self.current_token.is_keyword_of(Keyword.NOT):
-            operation_token = self.current_token
-            self.advance_register_advancement(p_result, False)
-            
-            node = p_result.register(self.comp_expr())
-            if p_result.error: return p_result
-            return p_result.success(UnaryOpNode(operation_token, node))
-        
-        node = p_result.register(self.bin_op(
-            (TokenType.ISEQUALS, TokenType.NE,
-             TokenType.LT, TokenType.GT, 
-             TokenType.LTE, TokenType.GTE), 
-            self.arith_expr))
-
-        if p_result.error:
-            return p_result.failure(NSInvalidSyntaxError(
-                expected(TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE,
-                         Keyword.NOT),
-                self.current_token.pos_start, self.current_token.pos_end
-            ))
-        
-        return p_result.success(node)
 
     def list_expr(self) -> ParseResult:
         p_result = ParseResult()
@@ -761,142 +903,6 @@ class Parser:
 
         return p_result.success(WhileNode(condition_node, body_node, False))
 
-    def expr(self) -> ParseResult:
-        p_result = ParseResult()
-        
-        if self.current_token.is_keyword_of(Keyword.SETVAR, Keyword.SETIMMUTABLEVAR):
-            set_var_keyword = self.current_token.value
-            self.advance_register_advancement(p_result, False)
-            
-            if self.current_token.is_type_of(TokenType.KEYWORD):
-                return p_result.failure(NSInvalidSyntaxError(
-                    f"Cannot assign values to reserved keywords such as '{self.current_token.value.value}'",
-                    self.current_token.pos_start, self.current_token.pos_end
-                ))
-                        
-            elif not self.current_token.is_type_of(TokenType.IDENTIFIER):
-                return p_result.failure(NSInvalidSyntaxError(
-                    expected(TokenType.IDENTIFIER),
-                    self.current_token.pos_start, self.current_token.pos_end
-                ))
-                
-            var_name_token = self.current_token
-            self.advance_register_advancement(p_result, False)
-
-            if not self.current_token.is_type_of(TokenType.EQUALS):
-                return p_result.failure(NSInvalidSyntaxError(
-                    expected(TokenType.EQUALS),
-                    self.current_token.pos_start, self.current_token.pos_end
-                ))
-                
-            self.advance_register_advancement(p_result, False)
-            expr = p_result.register(self.expr())
-            
-            if p_result.error: return p_result
-            
-            symbols_dict_type = {
-                Keyword.SETVAR: "symbols",
-                Keyword.SETIMMUTABLEVAR: "immutable_symbols"
-            }
-            
-            return p_result.success(VarAssignNode(var_name_token, expr, symbols_dict_type.get(set_var_keyword)))
-        
-        elif self.current_token.is_keyword_of(Keyword.DELETEVAR):
-            self.advance_register_advancement(p_result, False)
-            
-            if not self.current_token.is_type_of(TokenType.IDENTIFIER):
-                return p_result.failure(NSInvalidSyntaxError(
-                    expected(TokenType.IDENTIFIER),
-                    self.current_token.pos_start, self.current_token.pos_end
-                ))
-                
-            var_name_token = self.current_token
-            self.advance_register_advancement(p_result, False)
-            
-            return p_result.success(VarDeleteNode(var_name_token))
-        
-        node = p_result.register(self.bin_op((Keyword.AND, Keyword.OR), self.comp_expr))
-        
-        if p_result.error:
-            return p_result.failure(NSInvalidSyntaxError(
-                expected(Keyword.SETVAR, Keyword.DELETEVAR, TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE, Keyword.NOT,
-                         Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION),
-                self.current_token.pos_start, self.current_token.pos_end
-            ))
-        
-        return p_result.success(node)
-    
-    def statement(self) -> ParseResult:
-        p_result = ParseResult()
-        pos_start = self.current_token.pos_start.copy()
-        
-        if self.current_token.is_keyword_of(Keyword.RETURN):
-            self.advance_register_advancement(p_result, False)
-            
-            expr: Node = self.try_register_to_reverse(p_result, self.expr())
-            
-            return p_result.success(ReturnNode(
-                pos_start, self.current_token.pos_end.copy(),
-                expr
-            ))
-
-        elif self.current_token.is_keyword_of(Keyword.CONTINUE):
-            self.advance_register_advancement(p_result, False)
-            return p_result.success(ContinueNode(
-                pos_start, self.current_token.pos_end.copy()
-            ))
-            
-        elif self.current_token.is_keyword_of(Keyword.BREAK):
-            self.advance_register_advancement(p_result, False)
-            return p_result.success(BreakNode(
-                pos_start, self.current_token.pos_end.copy()
-            ))
-            
-        expr = p_result.register(self.expr())
-        if p_result.error:
-            return p_result.failure(NSInvalidSyntaxError(
-                expected(Keyword.RETURN, Keyword.CONTINUE, Keyword.BREAK, Keyword.SETVAR, Keyword.DELETEVAR,
-                         Keyword.NOT, Keyword.IF, Keyword.FOR, Keyword.WHILE, Keyword.SETFUNCTION,
-                         TokenType.NUMBER, TokenType.PLUS, TokenType.MINUS, TokenType.IDENTIFIER, TokenType.LPAREN, TokenType.LSQUARE
-                         ),
-                self.current_token.pos_start, self.current_token.pos_end
-            ))
-            
-        return p_result.success(expr)
-
-    def statements(self):
-        p_result = ParseResult()
-        statements: list[Node] = []
-        pos_start = self.current_token.pos_start.copy()
-        
-        self.advance_if_token_is_semicolon_or_newline(p_result)
-            
-        statement: Node = p_result.register(self.statement())
-        if p_result.error: return p_result
-        statements.append(statement)
-        
-        more_statements = True
-        
-        while True:
-            newline_count = self.advance_if_token_is_semicolon_or_newline(p_result)
-                
-            if not newline_count:
-                more_statements = False
-                
-            if not more_statements: break
-            
-            statement: Node = self.try_register_to_reverse(p_result, self.statement())
-            if not statement:
-                more_statements = False
-                continue
-                   
-            statements.append(statement)
-            
-        return p_result.success(ListNode(
-            pos_start, self.current_token.pos_end.copy(),
-            statements
-        ))
-                
     def func_def(self) -> ParseResult:
         p_result = ParseResult()
         
