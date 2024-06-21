@@ -1,1 +1,15 @@
-# todo: make it
+
+print("What's your name?")
+const NAME = input()
+
+print("Pick a number")
+const NUMBER = inputNumber() # default to -1
+
+if NAME then
+    print("Name: " + NAME)
+else
+    print("Name not specified")
+end
+
+print("Number: " + toString(NUMBER))
+
