@@ -116,6 +116,14 @@ def _run(self: BuiltInFunction, context: Context):
         )
     
     filename = filename.value
+    abspath_filename = osp_abspath(filename)
+    
+    if abspath_filename == context.get_symbol("__file__").value:
+        return self._rt_result_failure(
+            "Cannot run itself",
+            context
+        )
+        
     try:
         script_code = get_filedata(filename)
             
@@ -146,6 +154,12 @@ def _import(self: BuiltInFunction, context: Context):
     
     filename = filename.value
     abspath_filename = osp_abspath(filename)
+    
+    if abspath_filename == context.get_symbol("__file__").value:
+        return self._rt_result_failure(
+            "Cannot import itself",
+            context
+        )
     
     already_imported_module = imported_modules.get(abspath_filename, False)
     

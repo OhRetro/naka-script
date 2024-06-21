@@ -220,4 +220,9 @@ print(constDict) # test
 # aNumber %= 2
 # print(aNumber)
 
+var module = import("../modules/module_name.ns")
+
+# var module.new_attribute = 1
+# module.new_attribute = 1
+
 # Test

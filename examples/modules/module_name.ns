@@ -1,2 +1,5 @@
 var variable = "hello, i've not being changed yet"
 
+# if __name__ == "__module__" then
+#     print("i'm being imported")
+# end

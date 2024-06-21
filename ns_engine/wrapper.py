@@ -48,7 +48,7 @@ def interpret(src_filename: str, src_data: str, **kwargs) -> Tuple[Optional[List
         
         interpreter = Interpreter()
         context = Context(kwargs.get("ctx_name", "__main__"))
-        context.symbol_table = setup_starter_symbol_table() if src_filename != "<shell>" else shell_symbol_table
+        context.symbol_table = setup_starter_symbol_table(__file__=abs_filepath) if src_filename != "<shell>" else shell_symbol_table
         result = interpreter.visit(node, context)
         
         # hey look, it's the walrus operator
@@ -60,4 +60,3 @@ def interpret(src_filename: str, src_data: str, **kwargs) -> Tuple[Optional[List
 __all__ = [
     "interpret"
 ]
-    

@@ -34,7 +34,7 @@ def clean_filetextdata(text: str) -> str:
     
     for text_line in text.split("\n"):
         text_line = text_line.strip()
-        if not text_line: continue
+        # if not text_line: continue
         new_text_in_lines.append(text_line)
 
     return "\n".join(new_text_in_lines)

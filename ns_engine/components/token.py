@@ -85,6 +85,9 @@ class Token:
     
     def __repr__(self) -> str:
         if self.value:
+            if self.is_type_of(TokenType.KEYWORD):
+                return f"Token({self.type.name}, {self.value.name})"
+            
             return f"Token({self.type.name}, {self.value})"
         else:
             return f"Token({self.type.name})"

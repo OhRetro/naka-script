@@ -121,6 +121,30 @@ class Parser:
             return None
         
         return node
+    
+    def display_current_token(self, number_of_neighbors: int = 0):
+        if number_of_neighbors <= 0:
+            print(f"[{self.current_token}]")
+            return
+            
+        left_neighbors = ""
+        right_neighbors = ""
+        
+        # Get left side neighbors
+        for i in range(1, number_of_neighbors + 1):
+            if len(self.tokens) <= self.token_index - i:
+                break
+            
+            left_neighbors = f"{self.tokens[self.token_index - i]} < {left_neighbors}"
+        
+        # Get right side neighbors
+        for i in range(1, number_of_neighbors + 1):
+            if len(self.tokens) <= self.token_index + i:
+                break
+            
+            right_neighbors = f"{right_neighbors} > {self.tokens[self.token_index + i]}"
+        
+        print(f"[{left_neighbors} << {self.current_token} >> {right_neighbors}]")
 
     #!================================================================
 
@@ -405,14 +429,14 @@ class Parser:
                 ))
             
             to_reverse = self.advance_if_token_is_semicolon_or_newline(p_result)
-            
+
         if not self.current_token.is_type_of(TokenType.RSQUARE):
             self.reverse(to_reverse)
             return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.COMMA, TokenType.RSQUARE),
                 self.current_token.pos_start, self.current_token.pos_end
             ))
-            
+        
         self.advance_register_advancement(p_result, False)
         return p_result.success(ListNode(pos_start, self.current_token.pos_end.copy(), element_nodes))
     
