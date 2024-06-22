@@ -9,6 +9,7 @@ class Error:
     details: str
     pos_start: Position
     pos_end: Position
+    priority: int = 0
     
     def __repr__(self) -> str:
         return f"Error({self.name}, {self.pos_start}, {self.pos_end}, \"{self.details}\")"
@@ -43,6 +44,7 @@ class NSInvalidSyntaxError(Error):
 @dataclass(frozen=True, slots=True)
 class NSRuntimeError(Error):
     name: str = field(default="Runtime Error", init=False)
+    priority: int = field(default=10, init=False)
     context: Context
 
     def __repr__(self) -> str:
