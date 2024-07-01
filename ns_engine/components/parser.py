@@ -32,9 +32,6 @@ class ParseResult:
         else:
             return f"ParseResult()"
     
-    def _can_update_error(self, error: Error) -> bool:
-        return (self.error and error.priority >= self.error.priority)
-    
     def register_advancement(self):
         self.last_registered_advance_count = 1
         self.advance_count += 1
@@ -43,13 +40,13 @@ class ParseResult:
         self.last_registered_advance_count = result.advance_count
         self.advance_count += result.advance_count
         
-        if result.error and (not self.error or self._can_update_error(result.error)):
+        if result.error:
             self.error = result.error
             
         return result.node
     
     def try_register(self, result: Self) -> Optional[Node]:
-        if result.error and (not self.error or self._can_update_error(result.error)):
+        if result.error:
             self.to_reverse_count = result.advance_count
             return None
         return self.register(result)
@@ -59,7 +56,7 @@ class ParseResult:
         return self
 
     def failure(self, error: Error) -> Self:
-        if self._can_update_error(error) or (not self.error or self.last_registered_advance_count == 0):
+        if (not self.error or self.last_registered_advance_count == 0):
             self.error = error
         return self
 
@@ -84,26 +81,26 @@ class Parser:
         if self.token_index >= 0 and self.token_index < len(self.tokens):
             self.current_token = self.tokens[self.token_index]
     
-    def current_token_is_semicolon_or_newline(self, newline_exclusive: bool = False) -> bool:
-        args = (TokenType.NEWLINE, ) if newline_exclusive else (TokenType.SEMICOLON, TokenType.NEWLINE)
+    def current_token_is_semicolon_or_newline(self) -> bool:
+        args = (TokenType.SEMICOLON, TokenType.NEWLINE)
         return self.current_token.is_type_of(*args)
     
-    def advance_if_token_is_semicolon_or_newline(self, parse_result: ParseResult, newline_exclusive: bool = False) -> int:
+    def advance_if_token_is_semicolon_or_newline(self, parse_result: ParseResult) -> int:
         semicolon_newline_count = 0
-        while self.current_token_is_semicolon_or_newline(newline_exclusive):
+        while self.current_token_is_semicolon_or_newline():
             parse_result.register_advancement()
             self.advance()
             semicolon_newline_count += 1
             
         return semicolon_newline_count
     
-    def advance_register_advancement(self, parse_result: ParseResult, skip_semicolon_newline: bool, newline_exclusive: bool = False):
+    def advance_register_advancement(self, parse_result: ParseResult, skip_semicolon_newline: bool):
         parse_result.register_advancement()
         self.advance()
         advance_count = 1
         
         if skip_semicolon_newline: 
-            advance_count += self.advance_if_token_is_semicolon_or_newline(parse_result, newline_exclusive)
+            advance_count += self.advance_if_token_is_semicolon_or_newline(parse_result)
             
         return advance_count
     
@@ -171,13 +168,14 @@ class Parser:
 
         # todo: replace with a new implementation
         while True:
-            newline_count = self.advance_if_token_is_semicolon_or_newline(p_result, True)
+            newline_count = self.advance_if_token_is_semicolon_or_newline(p_result)
             if not newline_count:
                 more_statements = False
             if not more_statements: break
              
              # this is making important error messages like "missing a , or ] in list" be ignored, not ideal
             statement: Node = self.try_register_to_reverse(p_result, self.statement())
+
             if not statement:
                 more_statements = False
                 continue
@@ -236,7 +234,7 @@ class Parser:
             
             if self.current_token.is_type_of(TokenType.KEYWORD):
                 return p_result.failure(NSInvalidSyntaxError(
-                    f"Cannot assign values to reserved keywords such as '{self.current_token.value.value}'",
+                    f"Cannot assign values to reserved keywords",
                     self.current_token.pos_start, self.current_token.pos_end
                 ))
                         
@@ -526,7 +524,6 @@ class Parser:
         ))
 
     def list_expr(self) -> ParseResult:
-        ERROR_PRIORITY = 1
         p_result = ParseResult()
         element_nodes: list[Node] = []
         pos_start = self.current_token.pos_start.copy()
@@ -535,8 +532,7 @@ class Parser:
         if not self.current_token.is_type_of(TokenType.LSQUARE):
             return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.LSQUARE),
-                self.current_token.pos_start, self.current_token.pos_end,
-                ERROR_PRIORITY
+                self.current_token.pos_start, self.current_token.pos_end
             ))
 
         to_reverse = self.advance_register_advancement(p_result, True)
@@ -554,8 +550,7 @@ class Parser:
                         TokenType.LPAREN, TokenType.LSQUARE, TokenType.LBRACE,
                         Keyword.SETVAR, Keyword.NOT, Keyword.IF,
                         Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
-                self.current_token.pos_start, self.current_token.pos_end,
-                ERROR_PRIORITY
+                self.current_token.pos_start, self.current_token.pos_end
             ))
         
         to_reverse = self.advance_if_token_is_semicolon_or_newline(p_result)
@@ -572,8 +567,7 @@ class Parser:
                             TokenType.LPAREN, TokenType.LSQUARE, TokenType.LBRACE,
                             Keyword.SETVAR, Keyword.NOT, Keyword.IF,
                             Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
-                    self.current_token.pos_start, self.current_token.pos_end,
-                    ERROR_PRIORITY
+                    self.current_token.pos_start, self.current_token.pos_end
                 ))
             
             to_reverse = self.advance_if_token_is_semicolon_or_newline(p_result)
@@ -582,15 +576,13 @@ class Parser:
             self.reverse(to_reverse)
             return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.COMMA, TokenType.RSQUARE),
-                self.current_token.pos_start, self.current_token.pos_end,
-                ERROR_PRIORITY
+                self.current_token.pos_start, self.current_token.pos_end
             ))
 
         self.advance_register_advancement(p_result, False)
         return p_result.success(ListNode(pos_start, self.current_token.pos_end.copy(), element_nodes))
     
     def dict_expr(self) -> ParseResult:
-        ERROR_PRIORITY = 1
         p_result = ParseResult()
         key_tokens: list[Token] = []
         value_nodes: list[Node] = []
@@ -600,8 +592,7 @@ class Parser:
         if not self.current_token.is_type_of(TokenType.LBRACE):
             return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.LBRACE),
-                self.current_token.pos_start, self.current_token.pos_end,
-                ERROR_PRIORITY
+                self.current_token.pos_start, self.current_token.pos_end
             ))
 
         to_reverse = self.advance_register_advancement(p_result, True)
@@ -614,8 +605,7 @@ class Parser:
             self.reverse(to_reverse - 1)
             return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.IDENTIFIER, TokenType.STRING),
-                self.current_token.pos_start, self.current_token.pos_end,
-                ERROR_PRIORITY
+                self.current_token.pos_start, self.current_token.pos_end
             ))
         
         key_tokens.append(self.current_token)
@@ -625,8 +615,7 @@ class Parser:
             self.reverse(to_reverse - 1)
             return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.COLON),
-                self.current_token.pos_start, self.current_token.pos_end, 
-                ERROR_PRIORITY
+                self.current_token.pos_start, self.current_token.pos_end
             ))
 
         to_reverse = self.advance_register_advancement(p_result, True)
@@ -639,8 +628,7 @@ class Parser:
                         TokenType.LPAREN, TokenType.LSQUARE, TokenType.LBRACE,
                         Keyword.SETVAR, Keyword.NOT, Keyword.IF,
                         Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
-                self.current_token.pos_start, self.current_token.pos_end,
-                ERROR_PRIORITY
+                self.current_token.pos_start, self.current_token.pos_end
             ))
         
         to_reverse = self.advance_if_token_is_semicolon_or_newline(p_result)
@@ -652,8 +640,7 @@ class Parser:
                 self.reverse(to_reverse - 1)
                 return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.IDENTIFIER, TokenType.STRING),
-                    self.current_token.pos_start, self.current_token.pos_end,
-                    ERROR_PRIORITY
+                    self.current_token.pos_start, self.current_token.pos_end
                 ))
             
             key_tokens.append(self.current_token)
@@ -663,8 +650,7 @@ class Parser:
                 self.reverse(to_reverse - 1)
                 return p_result.failure(NSInvalidSyntaxError(
                     expected(TokenType.COLON),
-                    self.current_token.pos_start, self.current_token.pos_end,
-                    ERROR_PRIORITY
+                    self.current_token.pos_start, self.current_token.pos_end
                 ))
 
             to_reverse = self.advance_register_advancement(p_result, True)
@@ -677,8 +663,7 @@ class Parser:
                             TokenType.LPAREN, TokenType.LSQUARE, TokenType.LBRACE,
                             Keyword.SETVAR, Keyword.NOT, Keyword.IF,
                             Keyword.WHILE, Keyword.FOR, Keyword.SETFUNCTION),
-                    self.current_token.pos_start, self.current_token.pos_end,
-                    ERROR_PRIORITY
+                    self.current_token.pos_start, self.current_token.pos_end
                 ))
             
             to_reverse = self.advance_if_token_is_semicolon_or_newline(p_result)
@@ -687,8 +672,7 @@ class Parser:
             self.reverse(to_reverse)
             return p_result.failure(NSInvalidSyntaxError(
                 expected(TokenType.COMMA, TokenType.RBRACE),
-                self.current_token.pos_start, self.current_token.pos_end,
-                ERROR_PRIORITY
+                self.current_token.pos_start, self.current_token.pos_end
             ))
             
         self.advance_register_advancement(p_result, False)
