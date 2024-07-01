@@ -15,6 +15,7 @@ class TokenType(Enum):
     # Data types
     NUMBER = "number"
     STRING = "string"
+    FSTRING = "fstring"
     
     # Mathematical operators
     PLUS = "+"
@@ -64,6 +65,7 @@ class TokenType(Enum):
     AT = "@" # unused
     AND = "&" # unused
     PIPE = "|" # unused
+    CURRENCY = "$" # unused
     
     # Others
     NEWLINE = "newline"
